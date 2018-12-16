@@ -5,12 +5,12 @@
  * License: MIT
  */
 
-import NodeComponent_test from "./NodeComponent.test";
-import Property_test from "./Property.test";
+import { assert } from "chai";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-suite("FF Graph", function() {
-    NodeComponent_test();
-    Property_test();
-});
+export default function() {
+    suite("NodeComponent", function() {
+        // TODO: Write tests
+    });
+};
