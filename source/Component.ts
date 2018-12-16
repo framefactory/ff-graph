@@ -13,21 +13,28 @@ import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
 import Node, { IComponentTypeEvent } from "./Node";
 import System, { IUpdateContext, IRenderContext } from "./System";
+import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface IComponentEvent<T extends Component = Component> extends IPublisherEvent<T>
-{
-}
+export interface IComponentEvent<T extends Component = Component> extends IPublisherEvent<T> { }
 
 /**
  * Emitted by [[Component]] after the instance's state has changed.
  * @event
  */
-export interface IComponentChangeEvent<T extends Component = Component> extends IPublisherEvent<T>
+export interface IComponentChangeEvent<T extends Component = Component> extends IComponentEvent<T>
 {
     what: string;
 }
+
+/**
+ * Emitted by [[Component]] if the component is about to be disposed.
+ * @event
+ */
+export interface IComponentDisposeEvent<T extends Component = Component> extends IComponentEvent<T> { }
+
+
 
 /** The constructor function of a [[Component]]. */
 export type ComponentType<T extends Component = Component> = TypeOf<T> & { type: string };
@@ -142,6 +149,7 @@ export default class Component extends Publisher<Component> implements ILinkable
     static readonly isSystemSingleton: boolean = false;
 
     static readonly changeEvent = "change";
+    static readonly disposeEvent = "dispose";
 
     /**
      * Creates a new component and attaches it to the given node.
@@ -197,6 +205,10 @@ export default class Component extends Publisher<Component> implements ILinkable
      */
     get components() {
         return this.node.components;
+    }
+
+    get hierarchy() {
+        return this.node.components.get(Hierarchy);
     }
 
     /**
@@ -300,45 +312,43 @@ export default class Component extends Publisher<Component> implements ILinkable
      */
     dispose()
     {
-        this.unlink();
+        // remove all links and trackers
+        this.ins.dispose();
+        this.outs.dispose();
+
         this._trackers.forEach(tracker => tracker.dispose());
+
+        // remove component from node
         this.node._removeComponent(this);
+
+        // emit dispose event
+        this.emit(Component.disposeEvent);
     }
 
-    in(path: string)
+    in<T>(path: string): Property<T>
     {
-        return this.ins.getProperty(path);
-    }
-
-    out(path: string)
-    {
-        return this.outs.getProperty(path);
-    }
-
-    setValue(path: string, value: any)
-    {
-        const prop = this.ins.properties.find(prop => prop.path === path);
-        if (!prop) {
-            throw new Error(`property '${path}' not found on '${this.name || this.type}': `);
+        const property = this.ins.getProperty(path);
+        if (!property) {
+            throw new Error(`${this.type} - input property not found in path: '${path}'`);
         }
 
-        prop.setValue(value);
+        return property;
     }
 
-    getValue(path: string): any
+    out<T>(path: string): Property<T>
     {
-        const prop = this.ins.properties.find(prop => prop.path === path);
-        if (!prop) {
-            throw new Error(`property '${path}' not found on '${this.name}': `);
+        const property = this.outs.getProperty(path);
+        if (!property) {
+            throw new Error(`${this.type} - output property not found in path: '${path}'`);
         }
 
-        return prop.value;
+        return property;
     }
 
     unlink()
     {
-        this.ins.properties.forEach(property => property.unlink());
-        this.outs.properties.forEach(property => property.unlink());
+        this.ins.unlink();
+        this.outs.unlink();
     }
 
     resetChanged()
@@ -348,26 +358,6 @@ export default class Component extends Publisher<Component> implements ILinkable
         for (let i = 0, n = ins.length; i < n; ++i) {
             ins[i].changed = false;
         }
-    }
-
-    /**
-     * Convenience function, creates and returns a new node.
-     * @param name
-     */
-    createNode(name?: string): Node
-    {
-        return this.graph.createNode(name);
-    }
-
-    /**
-     * Creates a new component of the given type. Adds it to the same node as this component.
-     * @param {ComponentOrType<T>} componentOrType Type of the component to create.
-     * @param {string} name Optional name for the component.
-     * @returns {T} The created component.
-     */
-    createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string)
-    {
-        return this.node.createComponent(componentOrType, name);
     }
 
     /**

@@ -24,6 +24,7 @@ import Component, {
     ComponentLink,
     IComponentEvent,
     IComponentChangeEvent,
+    IComponentDisposeEvent,
     ComponentType,
     ComponentOrType
 } from "./Component";
@@ -34,7 +35,8 @@ import ComponentSet, {
 
 import Node, {
     INodeComponentEvent,
-    INodeChangeEvent
+    INodeChangeEvent,
+    INodeDisposeEvent
 } from "./Node";
 
 import Hierarchy from "./Hierarchy";
@@ -74,6 +76,7 @@ export {
     ComponentLink,
     IComponentEvent,
     IComponentChangeEvent,
+    IComponentDisposeEvent,
     ComponentType,
     ComponentOrType,
     ComponentSet,
@@ -81,6 +84,7 @@ export {
     Node,
     INodeComponentEvent,
     INodeChangeEvent,
+    INodeDisposeEvent,
     NodeSet,
     Graph,
     IGraphNodeEvent,

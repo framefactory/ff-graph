@@ -19,14 +19,22 @@ import System from "./System";
 
 export { IComponentTypeEvent };
 
+export interface INodeEvent extends IPublisherEvent<Node> { }
+
 /**
  * Emitted by [[Node]] after the instance's state has changed.
  * @event
  */
-export interface INodeChangeEvent extends IPublisherEvent<Node>
+export interface INodeChangeEvent extends INodeEvent
 {
     what: "name"
 }
+
+/**
+ * Emitted by [[Node]] if the component is about to be disposed.
+ * @event
+ */
+export interface INodeDisposeEvent extends INodeEvent { }
 
 export interface INodeComponentEvent<T extends Component = Component>
     extends IPublisherEvent<Node>
@@ -50,6 +58,7 @@ export default class Node extends Publisher<Node>
 {
     static readonly changeEvent = "change";
     static readonly componentEvent = "component";
+    static readonly disposeEvent = "dispose";
 
     static create(graph: Graph, id?: string): Node
     {
@@ -69,7 +78,7 @@ export default class Node extends Publisher<Node>
     constructor(graph: Graph, id?: string)
     {
         super();
-        this.addEvents(Node.changeEvent, Node.componentEvent);
+        this.addEvents(Node.changeEvent, Node.componentEvent, Node.disposeEvent);
 
         this.id = id || uniqueId(8);
 
@@ -92,6 +101,9 @@ export default class Node extends Publisher<Node>
 
         // remove node from system and graph
         this.graph._removeNode(this);
+
+        // emit dispose event
+        this.emit(Node.disposeEvent);
     }
 
     /**
@@ -170,7 +182,7 @@ export default class Node extends Publisher<Node>
             throw new Error("invalid path");
         }
 
-        component.setValue(path, value);
+        component.in(path).setValue(value);
     }
 
     /**

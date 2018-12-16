@@ -67,6 +67,11 @@ export default class PropertySet extends Publisher<PropertySet>
         this._propsByPath = {};
     }
 
+    dispose()
+    {
+        this.unlink();
+    }
+
     get length()
     {
         return this.properties.length;
@@ -252,6 +257,11 @@ export default class PropertySet extends Publisher<PropertySet>
         const target = this.getPropertyWithIndex(targetPath);
 
         target.property.unlinkFrom(source.property, source.index, target.index);
+    }
+
+    unlink()
+    {
+        this.properties.forEach(property => property.unlink());
     }
 
     isInput()

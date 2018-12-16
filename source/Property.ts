@@ -6,7 +6,7 @@
  */
 
 import { Dictionary, Readonly, TypeOf } from "@ff/core/types";
-import Publisher from "@ff/core/Publisher";
+import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import { ValueType, canConvert } from "./convert";
 import PropertySet, { ILinkable } from "./PropertySet";
@@ -36,12 +36,15 @@ export interface IPropertySchema<T = any>
     semantic?: string;
 }
 
+export interface IPropertyDisposeEvent<T = any> extends IPublisherEvent<Property<T>> { }
+
 /**
  * Linkable property.
  */
 export default class Property<T = any> extends Publisher<Property<T>>
 {
     static readonly valueEvent = "value";
+    static readonly disposeEvent = "dispose";
 
     props: PropertySet;
     key: string;
@@ -72,7 +75,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
     constructor(path: string, presetOrSchema: PresetOrSchema<T>, preset?: T, user?: boolean)
     {
         super();
-        this.addEvent(Property.valueEvent);
+        this.addEvents(Property.valueEvent, Property.disposeEvent);
 
         let schema: IPropertySchema;
 
@@ -105,6 +108,12 @@ export default class Property<T = any> extends Publisher<Property<T>>
         this.outLinks = [];
 
         this.reset();
+    }
+
+    dispose()
+    {
+        this.unlink();
+        this.emit(Property.disposeEvent);
     }
 
     setValue(value: T)
