@@ -178,7 +178,6 @@ export default class Component extends Publisher<Component> implements ILinkable
     constructor(node: Node, id?: string)
     {
         super({ knownEvents: false });
-        this.addEvents(Component.changeEvent);
 
         this.id = id || uniqueId();
         this.node = node;
@@ -370,8 +369,6 @@ export default class Component extends Publisher<Component> implements ILinkable
     {
         return this.node.createComponent(componentOrType, name);
     }
-
-
 
     /**
      * Tracks the given component type. If a component of this type is added

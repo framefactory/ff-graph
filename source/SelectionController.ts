@@ -88,12 +88,12 @@ export default class SelectionController extends Controller<SelectionController>
         };
     }
 
-    selectNode(node: Node, toggle: boolean = false)
+    selectNode(node?: Node, toggle: boolean = false)
     {
         const selectedNodes = this._selectedNodes;
         const multiSelect = this.multiSelect && toggle;
 
-        if (selectedNodes.has(node)) {
+        if (node && selectedNodes.has(node)) {
             if (multiSelect) {
                 selectedNodes.delete(node);
                 this.emitSelectNodeEvent(node, false);
@@ -112,17 +112,24 @@ export default class SelectionController extends Controller<SelectionController>
                 }
                 selectedNodes.clear();
             }
-            selectedNodes.add(node);
-            this.emitSelectNodeEvent(node, true);
+            if (node) {
+                selectedNodes.add(node);
+                this.emitSelectNodeEvent(node, true);
+            }
         }
     }
 
-    selectComponent(component: Component, toggle: boolean = false)
+    isNodeSelected(node: Node)
+    {
+        return this._selectedNodes.has(node);
+    }
+
+    selectComponent(component?: Component, toggle: boolean = false)
     {
         const selectedComponents = this._selectedComponents;
         const multiSelect = this.multiSelect && toggle;
 
-        if (selectedComponents.has(component)) {
+        if (component && selectedComponents.has(component)) {
             if (multiSelect) {
                 selectedComponents.delete(component);
                 this.emitSelectComponentEvent(component, false);
@@ -141,9 +148,30 @@ export default class SelectionController extends Controller<SelectionController>
                 }
                 selectedComponents.clear();
             }
-            selectedComponents.add(component);
-            this.emitSelectComponentEvent(component, true);
+            if (component) {
+                selectedComponents.add(component);
+                this.emitSelectComponentEvent(component, true);
+            }
         }
+    }
+
+    isComponentSelected(component: Component)
+    {
+        return this._selectedComponents.has(component);
+    }
+
+
+    clearSelection()
+    {
+        for (let selectedNode of this._selectedNodes) {
+            this.emitSelectNodeEvent(selectedNode, false);
+        }
+        this._selectedNodes.clear();
+
+        for (let selectedComponent of this._selectedComponents) {
+            this.emitSelectComponentEvent(selectedComponent, false);
+        }
+        this._selectedComponents.clear();
     }
 
     protected emitSelectNodeEvent(node: Node, selected: boolean)
@@ -157,7 +185,7 @@ export default class SelectionController extends Controller<SelectionController>
     {
         const event = { component, selected };
         this.emit<ISelectComponentEvent>(SelectionController.selectComponentEvent, event);
-        this.system.emitComponentEvent(component, SelectionController.selectNodeEvent, event);
+        this.system.emitComponentEvent(component, SelectionController.selectComponentEvent, event);
     }
 
     protected onSystemNode(event: ISystemNodeEvent)

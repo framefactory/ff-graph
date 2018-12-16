@@ -57,8 +57,7 @@ export default class System extends Publisher<System>
 
     constructor(registry?: Registry)
     {
-        super();
-        this.addEvents(System.nodeEvent, System.componentEvent);
+        super({ knownEvents: false });
 
         this.registry = registry || new Registry();
         this.nodes = new NodeSet();

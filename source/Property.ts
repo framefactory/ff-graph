@@ -363,14 +363,51 @@ export default class Property<T = any> extends Publisher<Property<T>>
         return value === preset;
     }
 
-    hasInLinks()
+    hasInLinks(index?: number)
     {
-        return this.inLinks.length > 0;
+        const links = this.inLinks;
+
+        if (!(index >= 0)) {
+            return links.length > 0;
+        }
+
+        for (let i = 0, n = links.length; i < n; ++i) {
+            if (links[i].destinationIndex === index) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    hasOutLinks()
+    hasMainInLinks()
     {
-        return this.outLinks.length > 0;
+        const links = this.inLinks;
+
+        for (let i = 0, n = links.length; i < n; ++i) {
+            if (!(links[i].destinationIndex >= 0)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    hasOutLinks(index?: number)
+    {
+        const links = this.outLinks;
+
+        if (!(index >= 0)) {
+            return links.length > 0;
+        }
+
+        for (let i = 0, n = links.length; i < n; ++i) {
+            if (links[i].sourceIndex === index) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     inLinkCount()
@@ -391,7 +428,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
             preset: this.preset
         } : null;
 
-        if (!this.hasInLinks() && !this.isDefault() && this.type !== "object") {
+        if (!this.hasMainInLinks() && !this.isDefault() && this.type !== "object") {
             json = json || {};
             json.value = this.value;
         }
