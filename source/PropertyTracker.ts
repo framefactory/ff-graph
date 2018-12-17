@@ -6,14 +6,15 @@
  */
 
 import System from "./System";
+import Graph from "./Graph";
 import Node from "./Node";
 import Hierarchy from "./Hierarchy";
-import { ComponentType } from "./Component";
+import { ComponentOrType } from "./Component";
 import Property from "./Property";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const _findInSubtree = function(componentType: ComponentType, node: Node) {
+const _findInSubtree = function(componentType: ComponentOrType, node: Node) {
     const component = node.components.get(componentType);
     if (component) {
         return component;
@@ -36,14 +37,14 @@ const _findInSubtree = function(componentType: ComponentType, node: Node) {
 
 export default class PropertyTracker<T extends any = any>
 {
-    onValue: (value: T) => void;
-    readonly system: System;
+    private _property: Property<T> = null;
+    private _callback: (value: T) => void;
+    private _context: any;
 
-    protected _property: Property<T>;
-
-    constructor(system: System)
+    constructor(callback?: (value: T) => void, context?: any)
     {
-        this.system = system;
+        this._callback = callback;
+        this._context = context;
     }
 
     get property() {
@@ -52,16 +53,26 @@ export default class PropertyTracker<T extends any = any>
 
     set property(property: Property<T>) {
         this.detach();
-        property.on("value", this.onPropertyValue, this);
-        this._property.on("dispose", this.onPropertyDispose, this);
         this._property = property;
+        property.on("value", this.onPropertyValue, this);
+        property.on("dispose", this.onPropertyDispose, this);
     }
 
-    attachInput(componentType: ComponentType, path: string, scope?: Node)
+    getValue(defaultValue?: T) {
+        return this._property ? this._property.value : defaultValue;
+    }
+
+    setValue(value: T) {
+        if (this._property) {
+            this._property.setValue(value);
+        }
+    }
+
+    attachInput(scope: Node | Graph | System, componentType: ComponentOrType, path: string)
     {
-        const component = scope
+        let component = scope instanceof Node
             ? _findInSubtree(componentType, scope)
-            : this.system.components.get(componentType);
+            : scope.components.get(componentType);
 
         if (!component) {
             throw new Error(`component type not found: '${componentType}'`);
@@ -70,11 +81,11 @@ export default class PropertyTracker<T extends any = any>
         this.property = component.in(path);
     }
 
-    attachOutput(componentType: ComponentType, path: string, scope?: Node)
+    attachOutput(scope: Node | Graph | System, componentType: ComponentOrType, path: string)
     {
-        const component = scope
+        let component = scope instanceof Node
             ? _findInSubtree(componentType, scope)
-            : this.system.components.get(componentType);
+            : scope.components.get(componentType);
 
         if (!component) {
             throw new Error(`component type not found: '${componentType}'`);
@@ -98,7 +109,14 @@ export default class PropertyTracker<T extends any = any>
 
     protected onPropertyValue(value: T)
     {
-        this.onValue && this.onValue(value);
+        if (this._callback) {
+            if (this._context) {
+                this._callback.call(this._context, value);
+            }
+            else {
+                this._callback(value);
+            }
+        }
     }
 
     protected onPropertyDispose()

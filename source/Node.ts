@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import { Dictionary } from "@ff/core/types";
+import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
@@ -44,6 +44,10 @@ export interface INodeComponentEvent<T extends Component = Component>
     component: T;
 }
 
+/** The constructor function of a [[Node]]. */
+export type NodeType<T extends Node = Node> = TypeOf<T>;
+
+
 /**
  * Node in an node/component system.
  *
@@ -60,9 +64,11 @@ export default class Node extends Publisher<Node>
     static readonly componentEvent = "component";
     static readonly disposeEvent = "dispose";
 
-    static create(graph: Graph, id?: string): Node
+    static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): Node
     {
-        const node = new Node(graph, id);
+        const node = type ? new type(graph, id) : new Node(graph, id);
+
+        node.create();
         graph._addNode(node);
         return node;
     }
@@ -90,23 +96,6 @@ export default class Node extends Publisher<Node>
     }
 
     /**
-     * Must be called to delete/destroy the node. This unregisters the node
-     * and all its components from the system.
-     */
-    dispose()
-    {
-        // dispose components
-        const componentList = this.components.getArray().slice();
-        componentList.forEach(component => component.dispose());
-
-        // remove node from system and graph
-        this.graph._removeNode(this);
-
-        // emit dispose event
-        this.emit(Node.disposeEvent);
-    }
-
-    /**
      * Returns the name of this node.
      * @returns {string}
      */
@@ -122,6 +111,27 @@ export default class Node extends Publisher<Node>
     set name(value: string) {
         this._name = value;
         this.emit<INodeChangeEvent>(Node.changeEvent, { what: "name" });
+    }
+
+    create()
+    {
+    }
+
+    /**
+     * Must be called to delete/destroy the node. This unregisters the node
+     * and all its components from the system.
+     */
+    dispose()
+    {
+        // dispose components
+        const componentList = this.components.getArray().slice();
+        componentList.forEach(component => component.dispose());
+
+        // remove node from system and graph
+        this.graph._removeNode(this);
+
+        // emit dispose event
+        this.emit(Node.disposeEvent);
     }
 
     /**

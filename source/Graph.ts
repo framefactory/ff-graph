@@ -10,7 +10,7 @@ import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 import LinkableSorter from "./LinkableSorter";
 import Component, { ComponentOrType, getType } from "./Component";
 import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
-import Node from "./Node";
+import Node, { NodeType } from "./Node";
 import NodeSet from "./NodeSet";
 import System, { IUpdateContext, IRenderContext } from "./System";
 
@@ -76,9 +76,11 @@ export default class Graph extends Publisher<Graph>
 
         for (let i = 0, n = components.length; i < n; ++i) {
             const component = components[i];
+            component.updated = false;
+
             if (component.changed) {
                 if (component.update && component.update(context)) {
-                    updated = true;
+                    component.updated = updated = true;
                 }
 
                 component.resetChanged();
@@ -117,7 +119,7 @@ export default class Graph extends Publisher<Graph>
 
     postRender(context: IRenderContext)
     {
-        const components = this.preRenderList;
+        const components = this.postRenderList;
         for (let i = 0, n = components.length; i < n; ++i) {
             components[i].postRender(context);
         }
@@ -134,7 +136,12 @@ export default class Graph extends Publisher<Graph>
 
     createNode(name?: string, id?: string)
     {
-        const node = Node.create(this, id);
+        return this.createCustomNode(Node, name, id);
+    }
+
+    createCustomNode(type: NodeType, name?: string, id?: string)
+    {
+        const node = Node.create(type, this, id);
 
         if (name) {
             node.name = name;

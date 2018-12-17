@@ -17,6 +17,8 @@ import PropertySet, {
     ILinkable
 } from "./PropertySet";
 
+import PropertyTracker from "./PropertyTracker";
+
 import LinkableSorter from "./LinkableSorter";
 
 import Component, {
@@ -69,6 +71,7 @@ export {
     PresetOrSchema,
     IPropertySchema,
     PropertySet,
+    PropertyTracker,
     ILinkable,
     LinkableSorter,
     Component,

@@ -13,7 +13,6 @@ import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
 import Node, { IComponentTypeEvent } from "./Node";
 import System, { IUpdateContext, IRenderContext } from "./System";
-import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -174,6 +173,7 @@ export default class Component extends Publisher<Component> implements ILinkable
     outs: PropertySet = new PropertySet(this);
 
     changed: boolean = true;
+    updated: boolean = false;
 
     private _name: string = "";
     private _trackers: ComponentTracker[] = [];
@@ -208,7 +208,7 @@ export default class Component extends Publisher<Component> implements ILinkable
     }
 
     get hierarchy() {
-        return this.node.components.get(Hierarchy);
+        return this.node.components.get("Hierarchy");
     }
 
     /**
