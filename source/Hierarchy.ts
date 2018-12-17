@@ -171,22 +171,22 @@ export default class Hierarchy extends Component
         return root;
     }
 
-    findNodeInSubtree(name: string): Node | null
+    findChildNode(name: string): Node | null
     {
         return _findNode(this, name);
     }
 
-    getComponentInSubtree<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
     {
         return _findOne(this, componentOrType);
     }
 
-    getComponentsInSubtree<T extends Component>(componentOrType: ComponentOrType<T>): T[]
+    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): Readonly<T[]>
     {
         return _findAll(this, componentOrType);
     }
 
-    hasComponentsInSubtree<T extends Component>(componentOrType: ComponentOrType<T>): boolean
+    hasChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): boolean
     {
         return !!_findOne(this, componentOrType);
     }
@@ -197,7 +197,7 @@ export default class Hierarchy extends Component
      * @param {ComponentOrType<T>} componentOrType
      * @returns {T | undefined} The component if found or undefined else.
      */
-    getNearestAncestor<T extends Component>(componentOrType: ComponentOrType<T>): T | undefined
+    getNearestParentComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | undefined
     {
         let root: Hierarchy = this;
         let component = undefined;

@@ -134,12 +134,12 @@ export default class Graph extends Publisher<Graph>
         this._sortRequested = true;
     }
 
-    createNode(name?: string, id?: string)
+    createNode(name?: string, id?: string): Node
     {
         return this.createCustomNode(Node, name, id);
     }
 
-    createCustomNode(type: NodeType, name?: string, id?: string)
+    createCustomNode<T extends Node>(type: NodeType<T>, name?: string, id?: string): T
     {
         const node = Node.create(type, this, id);
 

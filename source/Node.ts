@@ -14,8 +14,11 @@ import Component, { ComponentOrType, getType } from "./Component";
 import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
 import Graph from "./Graph";
 import System from "./System";
+import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+const _EMPTY_ARRAY = [];
 
 export { IComponentTypeEvent };
 
@@ -64,13 +67,13 @@ export default class Node extends Publisher<Node>
     static readonly componentEvent = "component";
     static readonly disposeEvent = "dispose";
 
-    static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): Node
+    static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T
     {
         const node = type ? new type(graph, id) : new Node(graph, id);
 
         node.create();
         graph._addNode(node);
-        return node;
+        return node as T;
     }
 
     readonly id: string;
@@ -111,6 +114,10 @@ export default class Node extends Publisher<Node>
     set name(value: string) {
         this._name = value;
         this.emit<INodeChangeEvent>(Node.changeEvent, { what: "name" });
+    }
+
+    get hierarchy(): Hierarchy {
+        return this.components.get<Hierarchy>("Hierarchy");
     }
 
     create()
@@ -165,6 +172,36 @@ export default class Node extends Publisher<Node>
         }
 
         return this.createComponent(componentOrType, name);
+    }
+
+    findChildNode(name: string): Node | null
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.findChildNode(name) : null;
+    }
+
+    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.getChildComponent(componentOrType) : null;
+    }
+
+    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): Readonly<T[]>
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.getChildComponents(componentOrType) : _EMPTY_ARRAY;
+    }
+
+    hasChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): boolean
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.hasChildComponents(componentOrType) : false;
+    }
+
+    getNearestParentComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.getNearestParentComponent(componentOrType) : null;
     }
 
     setValue(path: string, value: any);

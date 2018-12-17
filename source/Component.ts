@@ -16,6 +16,8 @@ import System, { IUpdateContext, IRenderContext } from "./System";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+const _EMPTY_ARRAY = [];
+
 export interface IComponentEvent<T extends Component = Component> extends IPublisherEvent<T> { }
 
 /**
@@ -349,6 +351,36 @@ export default class Component extends Publisher<Component> implements ILinkable
     {
         this.ins.unlink();
         this.outs.unlink();
+    }
+
+    findChildNode(name: string): Node | null
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.findChildNode(name) : null;
+    }
+
+    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.getChildComponent(componentOrType) : null;
+    }
+
+    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): Readonly<T[]>
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.getChildComponents(componentOrType) : _EMPTY_ARRAY;
+    }
+
+    hasChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): boolean
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.hasChildComponents(componentOrType) : false;
+    }
+
+    getNearestParentComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        const hierarchy = this.hierarchy;
+        return hierarchy ? hierarchy.getNearestParentComponent(componentOrType) : null;
     }
 
     resetChanged()
