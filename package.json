@@ -1,6 +1,6 @@
 {
     "name": "ff-graph",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "description": "FF Graph Typescript Foundation Library",
     "scripts": {
         "build": "tsc -p source",
