@@ -87,7 +87,7 @@ export default class Node extends Publisher<Node>
     constructor(graph: Graph, id?: string)
     {
         super();
-        this.addEvents(Node.changeEvent, Node.componentEvent, Node.disposeEvent);
+        this.addEvents(Node.changeEvent, Node.componentEvent, Node.disposeEvent, Hierarchy.hierarchyEvent);
 
         this.id = id || uniqueId(8);
 

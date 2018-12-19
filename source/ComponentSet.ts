@@ -147,6 +147,11 @@ export default class ComponentSet extends Publisher<ComponentSet>
         return this._list as T[];
     }
 
+    cloneArray<T extends Component>(componentOrType?: ComponentOrType<T> | T): Readonly<T[]>
+    {
+        return this.getArray(componentOrType).slice();
+    }
+
     /**
      * Returns the first found component in this set of the given type.
      * @param componentOrType Type of component to return.

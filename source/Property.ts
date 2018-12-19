@@ -44,6 +44,7 @@ export interface IPropertyDisposeEvent<T = any> extends IPublisherEvent<Property
 export default class Property<T = any> extends Publisher<Property<T>>
 {
     static readonly valueEvent = "value";
+    static readonly updateEvent = "update";
     static readonly disposeEvent = "dispose";
 
     props: PropertySet;
@@ -75,7 +76,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
     constructor(path: string, presetOrSchema: PresetOrSchema<T>, preset?: T, user?: boolean)
     {
         super();
-        this.addEvents(Property.valueEvent, Property.disposeEvent);
+        this.addEvents(Property.valueEvent, Property.updateEvent, Property.disposeEvent);
 
         let schema: IPropertySchema;
 
@@ -327,6 +328,26 @@ export default class Property<T = any> extends Publisher<Property<T>>
         }
 
         this.changed = true;
+    }
+
+    getOptionText()
+    {
+        const options = this.schema.options;
+        if (this.type === "number" && options) {
+            const i = Math.trunc(this.value as any);
+            return options[i < 0 ? 0 : (i >= options.length ? 0 : i)] || "";
+        }
+    }
+
+    getOptionIndex()
+    {
+        const options = this.schema.options;
+        if (this.type === "number" && options && options.length > 0) {
+            const i = Math.trunc(this.value as any);
+            return i < 0 ? 0 : (i >= options.length ? 0 : i);
+        }
+
+        return -1;
     }
 
     isInput(): boolean

@@ -34,13 +34,13 @@ export const types = {
     getOptionIndex: function(arr: any[], index: number): number {
         const n = arr.length;
         const i = Math.trunc(index);
-        return i < 0 ? 0 : (i > n ? 0 : i);
+        return i < 0 ? 0 : (i >= n ? 0 : i);
     },
 
     getOptionValue: function<T>(arr: T[], index: number): T {
         const n = arr.length;
         const i = Math.trunc(index);
-        return arr[i < 0 ? 0 : (i > n ? 0 : i)];
+        return arr[i < 0 ? 0 : (i >= n ? 0 : i)];
     },
 
     getEnumIndex: function<T>(e: T, index: any): PropOf<T> {
@@ -79,8 +79,8 @@ export const types = {
     Enum: <T>(path: string, enumeration: T, preset?: number) =>
         new Property<PropOf<T>>(path, { options: enumToArray(enumeration), preset: (preset || 0) as any as PropOf<T> }),
 
-    Option: (path: string, options: string[], preset?: number) =>
-        new Property<number>(path, { options, preset: preset || 0 }),
+    Option: (path: string, options?: string[], preset?: number) =>
+        new Property<number>(path, { options: options || [], preset: preset || 0 }),
 
     Object: <T>(path: string, type?: TypeOf<PropertyObject<T>>) =>
         new Property<PropertyObject<T>>(path, type || null),

@@ -6,7 +6,7 @@
  */
 import { Readonly } from "@ff/core/types";
 
-import Component, { ComponentOrType, IComponentChangeEvent } from "./Component";
+import Component, { ComponentOrType, IComponentEvent } from "./Component";
 import Node from "./Node";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -67,10 +67,12 @@ const _findAll = <T extends Component>(hierarchy: Hierarchy, componentOrType: Co
  * Emitted by [[Hierarchy]] component after the instance's state has changed.
  * @event
  */
-export interface IHierarchyChangeEvent extends IComponentChangeEvent<Hierarchy>
+export interface IHierarchyEvent extends IComponentEvent<Hierarchy>
 {
-    what: "add-parent" | "remove-parent" | "add-child" | "remove-child";
-    component: Hierarchy;
+    parent: Hierarchy;
+    child: Hierarchy;
+    add: boolean;
+    remove: boolean;
 }
 
 /**
@@ -83,8 +85,16 @@ export default class Hierarchy extends Component
 {
     static readonly type: string = "Hierarchy";
 
+    static readonly hierarchyEvent: "hierarchy";
+
     protected _parent: Hierarchy = null;
     protected _children: Hierarchy[] = [];
+
+    constructor(node: Node, id?: string)
+    {
+        super(node, id);
+        this.addEvent(Hierarchy.hierarchyEvent);
+    }
 
     /**
      * Returns the parent component of this.
@@ -119,8 +129,7 @@ export default class Hierarchy extends Component
 
     /**
      * Adds another hierarchy component as a child to this component.
-     * Emits a change/add-child event at this component and
-     * a change/add-parent event at the child component.
+     * Emits a hierarchy event at this component, its node and all their parents.
      * @param {Hierarchy} component
      */
     addChild(component: Hierarchy)
@@ -132,14 +141,22 @@ export default class Hierarchy extends Component
         component._parent = this;
         this._children.push(component);
 
-        component.emit<IHierarchyChangeEvent>("change", { what: "add-parent", component: this });
-        this.emit<IHierarchyChangeEvent>("change", { what: "add-child", component });
+        const event = {
+            add: true, remove: false, parent: this, child: component
+        };
+
+        while (component) {
+            component.emit(Hierarchy.hierarchyEvent, event);
+            component.node.emit(Hierarchy.hierarchyEvent, event);
+            component = component._parent;
+        }
+
+        this.system.emit(Hierarchy.hierarchyEvent, event);
     }
 
     /**
      * Removes a child component from this hierarchy component.
-     * Emits a change/remove-child event at this component and
-     * a change/remove-parent event at the child component.
+     * Emits a hierarchy event at this component, its node and all their parents.
      * @param {Hierarchy} component
      */
     removeChild(component: Hierarchy)
@@ -152,8 +169,17 @@ export default class Hierarchy extends Component
         this._children.splice(index, 1);
         component._parent = null;
 
-        component.emit<IHierarchyChangeEvent>("change", { what: "remove-parent", component: this });
-        this.emit<IHierarchyChangeEvent>("change", { what: "remove-child", component });
+        const event = {
+            add: false, remove: true, parent: this, child: component
+        };
+
+        while (component) {
+            component.emit(Hierarchy.hierarchyEvent, event);
+            component.node.emit(Hierarchy.hierarchyEvent, event);
+            component = component._parent;
+        }
+
+        this.system.emit(Hierarchy.hierarchyEvent, event);
     }
 
     /**
