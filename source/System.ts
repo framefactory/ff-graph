@@ -7,7 +7,7 @@
 
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrType, getType } from "./Component";
+import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
 import Node from "./Node";
 import NodeSet from "./NodeSet";
@@ -113,7 +113,7 @@ export default class System extends Publisher<System>
     emitComponentEvent(target: Component, name: string, event: any)
     {
         while (target) {
-            target.emit(name, event);
+            target.emitAny(name, event);
 
             if (event.stopPropagation) {
                 return;
@@ -123,7 +123,7 @@ export default class System extends Publisher<System>
             for (let i = 0, n = components.length; i < n; ++i) {
                 const component = components[i];
                 if (component !== target) {
-                    component.emit(name, event);
+                    component.emitAny(name, event);
 
                     if (event.stopPropagation) {
                         return;
@@ -133,6 +133,10 @@ export default class System extends Publisher<System>
 
             const hierarchy = target.components.get(Hierarchy);
             target = hierarchy ? hierarchy.parent : null;
+        }
+
+        if (!event.stopPropagation) {
+            this.emitAny(name, event);
         }
     }
 
@@ -145,7 +149,7 @@ export default class System extends Publisher<System>
     addComponentTypeListener<T extends Component>(
         componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
     {
-        this.components.on(getType(componentOrType), callback, context);
+        this.components.on(getComponentTypeString(componentOrType), callback, context);
     }
 
     /**
@@ -157,7 +161,7 @@ export default class System extends Publisher<System>
     removeComponentTypeListener<T extends Component>(
         componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
     {
-        this.components.off(getType(componentOrType), callback, context);
+        this.components.off(getComponentTypeString(componentOrType), callback, context);
     }
 
     deflate()

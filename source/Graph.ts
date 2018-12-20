@@ -8,7 +8,7 @@
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import LinkableSorter from "./LinkableSorter";
-import Component, { ComponentOrType, getType } from "./Component";
+import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
 import Node, { NodeType } from "./Node";
 import NodeSet from "./NodeSet";
@@ -169,7 +169,7 @@ export default class Graph extends Publisher<Graph>
     addComponentTypeListener<T extends Component>(
         componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
     {
-        this.components.on(getType(componentOrType), callback, context);
+        this.components.on(getComponentTypeString(componentOrType), callback, context);
     }
 
     /**
@@ -181,7 +181,7 @@ export default class Graph extends Publisher<Graph>
     removeComponentTypeListener<T extends Component>(
         componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
     {
-        this.components.off(getType(componentOrType), callback, context);
+        this.components.off(getComponentTypeString(componentOrType), callback, context);
     }
 
     deflate()

@@ -9,7 +9,7 @@ import { Dictionary, Readonly } from "@ff/core/types";
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertySet";
-import Component, { ComponentOrType, getType } from "./Component";
+import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +120,7 @@ export default class ComponentSet extends Publisher<ComponentSet>
      */
     has(componentOrType: ComponentOrType): boolean
     {
-        const components = this._typeDict[getType(componentOrType)];
+        const components = this._typeDict[getComponentTypeString(componentOrType)];
         return components && components.length > 0;
     }
 
@@ -130,7 +130,7 @@ export default class ComponentSet extends Publisher<ComponentSet>
      */
     count(componentOrType?: ComponentOrType): number
     {
-        const components = componentOrType ? this._typeDict[getType(componentOrType)] : this._list;
+        const components = componentOrType ? this._typeDict[getComponentTypeString(componentOrType)] : this._list;
         return components ? components.length : 0;
     }
 
@@ -141,7 +141,7 @@ export default class ComponentSet extends Publisher<ComponentSet>
     getArray<T extends Component>(componentOrType?: ComponentOrType<T> | T): Readonly<T[]>
     {
         if (componentOrType) {
-            return (this._typeDict[getType(componentOrType)] || _EMPTY_ARRAY) as T[];
+            return (this._typeDict[getComponentTypeString(componentOrType)] || _EMPTY_ARRAY) as T[];
         }
 
         return this._list as T[];
@@ -158,7 +158,7 @@ export default class ComponentSet extends Publisher<ComponentSet>
      */
     get<T extends Component>(componentOrType: ComponentOrType<T> | T): T | undefined
     {
-        const components = this._typeDict[getType(componentOrType)];
+        const components = this._typeDict[getComponentTypeString(componentOrType)];
         return components ? components[0] as T : undefined;
     }
 
@@ -172,16 +172,21 @@ export default class ComponentSet extends Publisher<ComponentSet>
     }
 
     /**
-     * Returns the first component of the given type with the given name.
-     * @param name
-     * @param componentOrType
+     * Returns the first component of the given type with the given name, or null if no component
+     * with the given name exists. Performs a linear search, returns the first matching component found.
+     * @param name Name of the component to find.
+     * @param componentOrType Optional type restriction.
      */
     findByName<T extends Component>(name: string, componentOrType?: ComponentOrType<T>): T | undefined
     {
-        const type = componentOrType ? getType(componentOrType) : null;
+        const components = this.getArray(componentOrType);
 
-        return this._list.find(component =>
-            component.name === name && (!type || component.type === type)
-        ) as T;
+        for (let i = 0, n = components.length; i < n; ++i) {
+            if (components[i].name === name) {
+                return components[i];
+            }
+        }
+
+        return null;
     }
 }

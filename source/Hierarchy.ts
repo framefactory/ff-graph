@@ -13,52 +13,49 @@ import Node from "./Node";
 
 export { Node };
 
-const _findNode = (hierarchy: Hierarchy, name: string): Node | null => {
-    if (hierarchy.node.name === name) {
-        return hierarchy.node;
-    }
+const _getChildComponent = <T extends Component>(
+    hierarchy: Hierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T | null => {
+
+    let component;
 
     const children = hierarchy.children;
     for (let i = 0, n = children.length; i < n; ++i) {
-        const descendant = _findNode(children[i], name);
-        if (descendant) {
-            return descendant;
+        component = children[i].components.get(componentOrType);
+
+        if (component) {
+            return component;
+        }
+    }
+
+    if (recursive) {
+        for (let i = 0, n = children.length; i < n; ++i) {
+            component = _getChildComponent(children[i], componentOrType, true);
+            if (component) {
+                return component;
+            }
         }
     }
 
     return null;
 };
 
-const _findOne = <T extends Component>(hierarchy: Hierarchy, componentOrType: ComponentOrType<T>): T | null => {
-    const sibling = hierarchy.components.get(componentOrType);
-    if (sibling) {
-        return sibling;
-    }
+const _getChildComponents = <T extends Component>(
+    hierarchy: Hierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T[] => {
+
+    let components = [];
 
     const children = hierarchy.children;
     for (let i = 0, n = children.length; i < n; ++i) {
-        const descendant = _findOne(children[i], componentOrType);
-        if (descendant) {
-            return descendant;
+        components = components.concat(children[i].components.getArray(componentOrType));
+    }
+
+    if (recursive) {
+        for (let i = 0, n = children.length; i < n; ++i) {
+            components = components.concat(_getChildComponents(children[i], componentOrType, true));
         }
     }
 
-    return null;
-};
-
-const _findAll = <T extends Component>(hierarchy: Hierarchy, componentOrType: ComponentOrType<T>): T[] => {
-
-    let result = hierarchy.components.getArray(componentOrType);
-
-    const children = hierarchy.children;
-    for (let i = 0, n = children.length; i < n; ++i) {
-        const descendants = _findAll(children[i], componentOrType);
-        if (descendants.length > 0) {
-            result = result.concat(descendants);
-        }
-    }
-
-    return result;
+    return components;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -128,6 +125,76 @@ export default class Hierarchy extends Component
     }
 
     /**
+     * Returns the root element of the hierarchy this component belongs to.
+     * The root element is the hierarchy component that has no parent.
+     * @returns {Hierarchy} The root hierarchy component.
+     */
+    getRoot<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        let root: Hierarchy = this;
+        while(root._parent) {
+            root = root._parent;
+        }
+
+        return root ? root.node.components.get(componentOrType) : null;
+    }
+
+    getParent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        const parent = this.parent;
+        return parent ? parent.node.components.get(componentOrType) : null;
+    }
+
+    /**
+     * Searches for the given component type in this node and then recursively
+     * in all parent nodes.
+     * @param componentOrType
+     * @returns The component if found or undefined else.
+     */
+    getNearestParent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    {
+        let root = this.hierarchy;
+        let component = null;
+
+        while(!component && root) {
+            component = root.node.components.get(componentOrType);
+            root = root._parent;
+        }
+
+        return component;
+    }
+
+    /**
+     * Returns the child component of the given type.
+     * @param componentOrType
+     * @param recursive If true, extends search to entire subtree (breadth-first).
+     */
+    getChild<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
+    {
+        return _getChildComponent(this, componentOrType, recursive);
+    }
+
+    /**
+     * Returns all child components of the given type.
+     * @param componentOrType
+     * @param recursive If true, extends search to entire subtree (breadth-first).
+     */
+    getChildren<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): Readonly<T[]>
+    {
+        return _getChildComponents(this, componentOrType, recursive);
+    }
+
+    /**
+     * Returns true if there is a child component of the given type.
+     * @param componentOrType
+     * @param recursive If true, extends search to entire subtree (breadth-first).
+     */
+    hasChildren<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): boolean
+    {
+        return !!_getChildComponent(this, componentOrType, recursive);
+    }
+
+    /**
      * Adds another hierarchy component as a child to this component.
      * Emits a hierarchy event at this component, its node and all their parents.
      * @param {Hierarchy} component
@@ -180,60 +247,6 @@ export default class Hierarchy extends Component
         }
 
         this.system.emit(Hierarchy.hierarchyEvent, event);
-    }
-
-    /**
-     * Returns the root element of the hierarchy this component belongs to.
-     * The root element is the hierarchy component that has no parent.
-     * @returns {Hierarchy} The root hierarchy component.
-     */
-    getRoot(): Hierarchy
-    {
-        let root: Hierarchy = this;
-        while(root._parent) {
-            root = root._parent;
-        }
-
-        return root;
-    }
-
-    findChildNode(name: string): Node | null
-    {
-        return _findNode(this, name);
-    }
-
-    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
-    {
-        return _findOne(this, componentOrType);
-    }
-
-    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): Readonly<T[]>
-    {
-        return _findAll(this, componentOrType);
-    }
-
-    hasChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): boolean
-    {
-        return !!_findOne(this, componentOrType);
-    }
-
-    /**
-     * Searches for the given component type in this node and then recursively
-     * in all parent nodes.
-     * @param {ComponentOrType<T>} componentOrType
-     * @returns {T | undefined} The component if found or undefined else.
-     */
-    getNearestParentComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | undefined
-    {
-        let root: Hierarchy = this;
-        let component = undefined;
-
-        while(!component && root) {
-            component = root.components.get(componentOrType);
-            root = root._parent;
-        }
-
-        return component;
     }
 
     /**

@@ -13,10 +13,9 @@ import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
 import Node, { IComponentTypeEvent } from "./Node";
 import System, { IUpdateContext, IRenderContext } from "./System";
+import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-const _EMPTY_ARRAY = [];
 
 export interface IComponentEvent<T extends Component = Component> extends IPublisherEvent<T> { }
 
@@ -40,11 +39,11 @@ export interface IComponentDisposeEvent<T extends Component = Component> extends
 /** The constructor function of a [[Component]]. */
 export type ComponentType<T extends Component = Component> = TypeOf<T> & { type: string };
 
-/** A [[Component]] instance, [[Component]] constructor function or a type string. */
+/** A [[Component]] instance, [[Component]] constructor function or a component's type string. */
 export type ComponentOrType<T extends Component = Component> = T | ComponentType<T> | string;
 
 /** Returns the type string of the given [[ComponentOrType]]. */
-export function getType<T extends Component>(componentOrType: ComponentOrType<T>): string {
+export function getComponentTypeString<T extends Component>(componentOrType: ComponentOrType<T> | string): string {
     return typeof componentOrType === "string" ? componentOrType : componentOrType.type;
 }
 
@@ -111,7 +110,7 @@ export class ComponentLink<T extends Component = Component>
     private readonly _system: System;
 
     constructor(owner: Component, componentOrType?: ComponentOrType<T>) {
-        this._type = componentOrType ? getType(componentOrType) : null;
+        this._type = componentOrType ? getComponentTypeString(componentOrType) : null;
         this._id = componentOrType instanceof Component ? componentOrType.id : undefined;
         this._system = owner.system;
     }
@@ -126,6 +125,8 @@ export class ComponentLink<T extends Component = Component>
         this._id = component ? component.id : undefined;
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Base class for components in an node-component system.
@@ -181,9 +182,9 @@ export default class Component extends Publisher<Component> implements ILinkable
     private _trackers: ComponentTracker[] = [];
 
     /**
-     * Protected constructor. Use the static [[Component.create]] method instead.
-     * @param node Node to attach the component new to.
-     * @param id Unique id for the component. Can be omitted, will be created automatically.
+     * Protected constructor. Use the static [[Component.create]] method to create component instances.
+     * @param node Node to attach the new component to.
+     * @param id Unique id for the component. Should be omitted except for de-serialization, will be created automatically.
      */
     constructor(node: Node, id?: string)
     {
@@ -202,15 +203,10 @@ export default class Component extends Publisher<Component> implements ILinkable
     }
 
     /**
-     * Returns the set of sibling components of this component.
-     * Sibling components are components belonging to the same node.
+     * Returns the system this component and its node belong to.
      */
-    get components() {
-        return this.node.components;
-    }
-
-    get hierarchy() {
-        return this.node.components.get("Hierarchy");
+    get system(): System {
+        return this.node.system;
     }
 
     /**
@@ -221,18 +217,15 @@ export default class Component extends Publisher<Component> implements ILinkable
     }
 
     /**
-     * Returns the system this component and its node belong to.
+     * Returns the set of sibling components of this component.
+     * Sibling components are components belonging to the same node.
      */
-    get system(): System {
-        return this.node.system;
+    get components() {
+        return this.node.components;
     }
 
-    /**
-     * Returns the name of this component.
-     * @returns {string}
-     */
-    get name() {
-        return this._name;
+    get hierarchy() {
+        return this.node.components.get("Hierarchy") as Hierarchy;
     }
 
     get isNodeSingleton() {
@@ -245,6 +238,14 @@ export default class Component extends Publisher<Component> implements ILinkable
 
     get isSystemSingleton() {
         return (this.constructor as typeof Component).isSystemSingleton;
+    }
+
+    /**
+     * Returns the name of this component.
+     * @returns {string}
+     */
+    get name() {
+        return this._name;
     }
 
     /**
@@ -351,36 +352,6 @@ export default class Component extends Publisher<Component> implements ILinkable
     {
         this.ins.unlink();
         this.outs.unlink();
-    }
-
-    findChildNode(name: string): Node | null
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.findChildNode(name) : null;
-    }
-
-    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.getChildComponent(componentOrType) : null;
-    }
-
-    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): Readonly<T[]>
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.getChildComponents(componentOrType) : _EMPTY_ARRAY;
-    }
-
-    hasChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): boolean
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.hasChildComponents(componentOrType) : false;
-    }
-
-    getNearestParentComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.getNearestParentComponent(componentOrType) : null;
     }
 
     resetChanged()

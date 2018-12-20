@@ -10,7 +10,7 @@ import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertySet";
-import Component, { ComponentOrType, getType } from "./Component";
+import Component, { ComponentOrType, ComponentType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
 import Graph from "./Graph";
 import System from "./System";
@@ -19,6 +19,76 @@ import Hierarchy from "./Hierarchy";
 ////////////////////////////////////////////////////////////////////////////////
 
 const _EMPTY_ARRAY = [];
+
+const _getChildNode = <T extends Node>(node: Node, type: string, recursive: boolean): T | null => {
+
+    const children = node.hierarchy.children;
+    for (let i = 0, n = children.length; i < n; ++i) {
+        const child = children[i].node;
+
+        if (child.type === type) {
+            return child as T;
+        }
+    }
+
+    if (recursive) {
+        for (let i = 0, n = children.length; i < n; ++i) {
+            const descendant = _getChildNode(children[i].node, type, true);
+            if (descendant) {
+                return descendant as T;
+            }
+        }
+    }
+
+    return null;
+};
+
+const _getChildNodes = <T extends Node>(node: Node, type: string, recursive: boolean): T[] => {
+
+    const children = node.hierarchy.children;
+    let result = [];
+
+    for (let i = 0, n = children.length; i < n; ++i) {
+        const childNode = children[i].node;
+
+        if (childNode.type === type) {
+            result.push(childNode);
+        }
+    }
+
+    if (recursive) {
+        for (let i = 0, n = children.length; i < n; ++i) {
+            result = result.concat(_getChildNodes(children[i].node, type, true));
+        }
+    }
+
+    return result;
+};
+
+const _findChildNode = <T extends Node>(node: Node, name: string, recursive: boolean): T | null => {
+
+    const children = node.hierarchy.children;
+    for (let i = 0, n = children.length; i < n; ++i) {
+        const child = children[i].node;
+
+        if (child.name === name) {
+            return child as T;
+        }
+    }
+
+    if (recursive) {
+        for (let i = 0, n = children.length; i < n; ++i) {
+            const descendant = _findChildNode(children[i].node, name, true);
+            if (descendant) {
+                return descendant as T;
+            }
+        }
+    }
+
+    return null;
+};
+
+////////////////////////////////////////////////////////////////////////////////
 
 export { IComponentTypeEvent };
 
@@ -48,8 +118,15 @@ export interface INodeComponentEvent<T extends Component = Component>
 }
 
 /** The constructor function of a [[Node]]. */
-export type NodeType<T extends Node = Node> = TypeOf<T>;
+export type NodeType<T extends Node = Node> = TypeOf<T> & { type: string };
 
+/** A [[Node]] instance, [[Node]] constructor function or a node's type string. */
+export type NodeOrType<T extends Node = Node> = T | NodeType<T> | string;
+
+/** Returns the type string of the given [[NodeOrType]]. */
+export function getNodeTypeString<T extends Node>(nodeOrType: NodeOrType<T> | string): string {
+    return typeof nodeOrType === "string" ? nodeOrType : nodeOrType.type;
+}
 
 /**
  * Node in an node/component system.
@@ -63,39 +140,56 @@ export type NodeType<T extends Node = Node> = TypeOf<T>;
  */
 export default class Node extends Publisher<Node>
 {
+    static readonly type: string = "Node";
+
     static readonly changeEvent = "change";
     static readonly componentEvent = "component";
     static readonly disposeEvent = "dispose";
 
     static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T
     {
-        const node = type ? new type(graph, id) : new Node(graph, id);
+        const Ctor = type as TypeOf<T>;
+        const node = new Ctor(graph, id);
 
         node.create();
         graph._addNode(node);
-        return node as T;
+        return node;
     }
 
     readonly id: string;
     readonly graph: Graph;
     readonly system: System;
-    readonly components: ComponentSet;
+    readonly components = new ComponentSet();
 
-    private _name: string;
+    private _name: string = "";
 
-
+    /**
+     * Protected constructor. Please use the static [[Node.create]] method to create node instances.
+     * @param graph Graph to attach the new node to.
+     * @param id Unique id for the node. Should be omitted except for de-serialization, will be created automatically.
+     */
     constructor(graph: Graph, id?: string)
     {
-        super();
-        this.addEvents(Node.changeEvent, Node.componentEvent, Node.disposeEvent, Hierarchy.hierarchyEvent);
+        super({ knownEvents: false });
 
         this.id = id || uniqueId(8);
 
         this.graph = graph;
         this.system = graph.system;
-        this.components = new ComponentSet();
 
         this._name = "";
+    }
+
+    /**
+     * Returns the type identifier of this component.
+     * @returns {string}
+     */
+    get type() {
+        return (this.constructor as typeof Node).type;
+    }
+
+    get hierarchy(): Hierarchy {
+        return this.components.get<Hierarchy>("Hierarchy");
     }
 
     /**
@@ -114,10 +208,6 @@ export default class Node extends Publisher<Node>
     set name(value: string) {
         this._name = value;
         this.emit<INodeChangeEvent>(Node.changeEvent, { what: "name" });
-    }
-
-    get hierarchy(): Hierarchy {
-        return this.components.get<Hierarchy>("Hierarchy");
     }
 
     create()
@@ -149,7 +239,9 @@ export default class Node extends Publisher<Node>
      */
     createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string, id?: string): T
     {
-        const component = this.system.registry.createComponent<T>(getType(componentOrType), this, id);
+        const component = this.system.registry.createComponent<T>(
+            getComponentTypeString(componentOrType), this, id
+        );
 
         if (name) {
             component.name = name;
@@ -159,49 +251,46 @@ export default class Node extends Publisher<Node>
     }
 
     /**
-     * Creates a new component only if a component of this type doesn't exist yet in this node.
-     * Otherwise returns the existing component.
-     * @param componentOrType Type of the component to create.
-     * @param name Optional name for the component.
+     * Returns the child node with the given name.
+     * @param name
+     * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getOrCreateComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string)
+    findChild(name: string, recursive: boolean): Node | null
     {
-        const component = this.components.get(componentOrType);
-        if (component) {
-            return component;
-        }
-
-        return this.createComponent(componentOrType, name);
+        return this.hierarchy ? _findChildNode(this, name, recursive) : null;
     }
 
-    findChildNode(name: string): Node | null
+    /**
+     * Returns the child node of the given type.
+     * @param nodeOrType
+     * @param recursive If true, extends search to entire subtree (breadth-first).
+     */
+    getChild<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
     {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.findChildNode(name) : null;
+        const type = getNodeTypeString(nodeOrType);
+        return this.hierarchy ? _getChildNode(this, type, recursive) : null;
     }
 
-    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    /**
+     * Returns all child nodes of the given type.
+     * @param nodeOrType
+     * @param recursive If true, extends search to entire subtree (breadth-first).
+     */
+    getChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): Readonly<T[]>
     {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.getChildComponent(componentOrType) : null;
+        const type = getNodeTypeString(nodeOrType);
+        return this.hierarchy ? _getChildNodes(this, type, recursive) : _EMPTY_ARRAY;
     }
 
-    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): Readonly<T[]>
+    /**
+     * Returns true if there is a child node of the given type.
+     * @param nodeOrType
+     * @param recursive If true, extends search to entire subtree (breadth-first).
+     */
+    hasChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): boolean
     {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.getChildComponents(componentOrType) : _EMPTY_ARRAY;
-    }
-
-    hasChildComponents<T extends Component>(componentOrType: ComponentOrType<T>): boolean
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.hasChildComponents(componentOrType) : false;
-    }
-
-    getNearestParentComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
-    {
-        const hierarchy = this.hierarchy;
-        return hierarchy ? hierarchy.getNearestParentComponent(componentOrType) : null;
+        const type = getNodeTypeString(nodeOrType);
+        return this.hierarchy ? !!_getChildNode(this, type, recursive) : false;
     }
 
     setValue(path: string, value: any);
@@ -241,7 +330,7 @@ export default class Node extends Publisher<Node>
     addComponentTypeListener<T extends Component>(
         componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
     {
-        this.components.on(getType(componentOrType), callback, context);
+        this.components.on(getComponentTypeString(componentOrType), callback, context);
     }
 
     /**
@@ -253,7 +342,7 @@ export default class Node extends Publisher<Node>
     removeComponentTypeListener<T extends Component>(
         componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
     {
-        this.components.off(getType(componentOrType), callback, context);
+        this.components.off(getComponentTypeString(componentOrType), callback, context);
     }
 
     deflate()
