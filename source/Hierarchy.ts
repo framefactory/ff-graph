@@ -125,9 +125,8 @@ export default class Hierarchy extends Component
     }
 
     /**
-     * Returns the root element of the hierarchy this component belongs to.
-     * The root element is the hierarchy component that has no parent.
-     * @returns {Hierarchy} The root hierarchy component.
+     * Returns a component at the root of the hierarchy.
+     * @returns A component of the given type that is a sibling of the root hierarchy component.
      */
     getRoot<T extends Component>(componentOrType: ComponentOrType<T>): T | null
     {

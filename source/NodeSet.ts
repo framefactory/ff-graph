@@ -48,18 +48,16 @@ export default class NodeSet extends Publisher<NodeSet>
 
         const event: INodeTypeEvent = { add: true, remove: false, node, sender: this };
 
-        // add to actual type
-        let type = node.type;
-        (this._typeDict[type] || (this._typeDict[type] = [])).push(node);
-        this.emit(type, event);
+        let prototype = node;
 
-        // add to base types
-        let baseType = Object.getPrototypeOf(node);
-        while((baseType = Object.getPrototypeOf(baseType)).type !== Node.type) {
-            type = baseType.type;
+        // add all types in prototype chain
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+            const type = prototype.type;
             (this._typeDict[type] || (this._typeDict[type] = [])).push(node);
             this.emit(type, event);
-        }
+
+        } while(prototype.type !== Node.type);
     }
 
     /**
@@ -73,8 +71,24 @@ export default class NodeSet extends Publisher<NodeSet>
             throw new Error("node not found");
         }
 
+        // remove node
         delete this._dict[node.id];
         this._list.splice(index, 1);
+
+        const event: INodeTypeEvent = { add: false, remove: true, node, sender: this };
+
+        let prototype = node;
+
+        // remove all types in prototype chain
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+            const type = prototype.type;
+            const nodes = this._typeDict[type];
+            const index = nodes.indexOf(node);
+            nodes.splice(index, 1);
+            this.emit(type, event);
+
+        } while(prototype.type !== Node.type);
     }
 
     get length() {

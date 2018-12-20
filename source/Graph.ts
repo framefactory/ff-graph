@@ -129,35 +129,20 @@ export default class Graph extends Publisher<Graph>
      * Requests a topological sort of the list of components based on how they are interlinked.
      * The sort is executed before the next update.
      */
-    requestSort()
+    sort()
     {
         this._sortRequested = true;
     }
 
-    createNode(name?: string, id?: string): Node
+    createNode<T extends Node>(nodeType: NodeType<T>, name?: string, id?: string): T
     {
-        return this.createCustomNode(Node, name, id);
-    }
-
-    createCustomNode<T extends Node>(type: NodeType<T>, name?: string, id?: string): T
-    {
-        const node = Node.create(type, this, id);
+        const node = Node.create(nodeType, this, id);
 
         if (name) {
             node.name = name;
         }
 
         return node;
-    }
-
-    findOrCreateNode(name: string): Node
-    {
-        const node = this.nodes.findByName(name);
-        if (node) {
-            return node;
-        }
-
-        return this.createNode(name);
     }
 
     /**

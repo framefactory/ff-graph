@@ -55,18 +55,15 @@ export default class ComponentSet extends Publisher<ComponentSet>
 
         const event: IComponentTypeEvent = { add: true, remove: false, component, sender: this };
 
-        // add to actual type
-        let type = component.type;
-        (this._typeDict[type] || (this._typeDict[type] = [])).push(component);
-        this.emit(type, event);
+        let prototype = component;
 
-        // add to base types
-        let baseType = Object.getPrototypeOf(component);
-        while((baseType = Object.getPrototypeOf(baseType)).type !== Component.type) {
-            type = baseType.type;
+        // add all types in prototype chain
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+            const type = prototype.type;
             (this._typeDict[type] || (this._typeDict[type] = [])).push(component);
             this.emit(type, event);
-        }
+        } while(prototype.type !== Component.type);
     }
 
     /**
@@ -86,22 +83,17 @@ export default class ComponentSet extends Publisher<ComponentSet>
 
         const event: IComponentTypeEvent = { add: false, remove: true, component, sender: this };
 
-        // remove from actual type
-        let type = component.type;
-        const components = this._typeDict[type];
-        index = components.indexOf(component);
-        components.splice(index, 1);
-        this.emit(type, event);
+        let prototype = component;
 
-        // remove from base types
-        let baseType = Object.getPrototypeOf(component);
-        while((baseType = Object.getPrototypeOf(baseType)).type !== Component.type) {
-            type = baseType.type;
+        // remove all types in prototype chain
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+            const type = prototype.type;
             const components = this._typeDict[type];
-            const index = components.indexOf(component);
+            index = components.indexOf(component);
             components.splice(index, 1);
             this.emit(type, event);
-        }
+        } while(prototype.type !== Component.type);
     }
 
     get length() {

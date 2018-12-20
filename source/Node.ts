@@ -148,6 +148,10 @@ export default class Node extends Publisher<Node>
 
     static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T
     {
+        if (!type || !type.type) {
+            throw new Error("invalid node type");
+        }
+
         const Ctor = type as TypeOf<T>;
         const node = new Ctor(graph, id);
 

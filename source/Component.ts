@@ -161,6 +161,10 @@ export default class Component extends Publisher<Component> implements ILinkable
      */
     static create<T extends Component = Component>(type: ComponentType<T>, node: Node, id?: string): T
     {
+        if (!type || !type.type) {
+            throw new Error("invalid component type");
+        }
+
         const Ctor = type as TypeOf<T>;
         const component = new Ctor(node, id);
 
