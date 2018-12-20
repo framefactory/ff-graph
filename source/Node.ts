@@ -10,7 +10,7 @@ import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertySet";
-import Component, { ComponentOrType, ComponentType, getComponentTypeString } from "./Component";
+import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
 import Graph from "./Graph";
 import System from "./System";
@@ -20,20 +20,20 @@ import Hierarchy from "./Hierarchy";
 
 const _EMPTY_ARRAY = [];
 
-const _getChildNode = <T extends Node>(node: Node, type: string, recursive: boolean): T | null => {
+const _getChildNode = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, recursive: boolean): T | null => {
 
     const children = node.hierarchy.children;
     for (let i = 0, n = children.length; i < n; ++i) {
-        const child = children[i].node;
+        const childNode = children[i].node;
 
-        if (child.type === type) {
-            return child as T;
+        if (childNode.is(nodeOrType)) {
+            return childNode as T;
         }
     }
 
     if (recursive) {
         for (let i = 0, n = children.length; i < n; ++i) {
-            const descendant = _getChildNode(children[i].node, type, true);
+            const descendant = _getChildNode(children[i].node, nodeOrType, true);
             if (descendant) {
                 return descendant as T;
             }
@@ -43,7 +43,7 @@ const _getChildNode = <T extends Node>(node: Node, type: string, recursive: bool
     return null;
 };
 
-const _getChildNodes = <T extends Node>(node: Node, type: string, recursive: boolean): T[] => {
+const _getChildNodes = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, recursive: boolean): T[] => {
 
     const children = node.hierarchy.children;
     let result = [];
@@ -51,28 +51,28 @@ const _getChildNodes = <T extends Node>(node: Node, type: string, recursive: boo
     for (let i = 0, n = children.length; i < n; ++i) {
         const childNode = children[i].node;
 
-        if (childNode.type === type) {
+        if (childNode.is(nodeOrType)) {
             result.push(childNode);
         }
     }
 
     if (recursive) {
         for (let i = 0, n = children.length; i < n; ++i) {
-            result = result.concat(_getChildNodes(children[i].node, type, true));
+            result = result.concat(_getChildNodes(children[i].node, nodeOrType, true));
         }
     }
 
     return result;
 };
 
-const _findChildNode = <T extends Node>(node: Node, name: string, recursive: boolean): T | null => {
+const _findChildNode = (node: Node, name: string, recursive: boolean): Node | null => {
 
     const children = node.hierarchy.children;
     for (let i = 0, n = children.length; i < n; ++i) {
-        const child = children[i].node;
+        const childNode = children[i].node;
 
-        if (child.name === name) {
-            return child as T;
+        if (childNode.name === name) {
+            return childNode;
         }
     }
 
@@ -80,7 +80,7 @@ const _findChildNode = <T extends Node>(node: Node, name: string, recursive: boo
         for (let i = 0, n = children.length; i < n; ++i) {
             const descendant = _findChildNode(children[i].node, name, true);
             if (descendant) {
-                return descendant as T;
+                return descendant;
             }
         }
     }
@@ -254,6 +254,59 @@ export default class Node extends Publisher<Node>
         return component;
     }
 
+    getRoot(): Node
+    {
+        let node = this as Node;
+        let hierarchy = this.hierarchy;
+
+        while(hierarchy) {
+            node = hierarchy.node;
+            hierarchy = hierarchy.parent;
+        }
+
+        return node;
+    }
+
+    is(nodeOrType: NodeOrType): boolean
+    {
+        const type = getNodeTypeString(nodeOrType);
+
+        let prototype = Object.getPrototypeOf(this);
+
+        do {
+            if (prototype.type === type) {
+                return true;
+            }
+        } while(prototype.type !== Node.type);
+
+        return false;
+    }
+
+    getParent<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
+    {
+        let hierarchy = this.hierarchy;
+        let parent = hierarchy ? hierarchy.parent : null;
+
+        if (!parent) {
+            return null;
+        }
+
+        if (parent.node.is(nodeOrType)) {
+            return parent.node as T;
+        }
+
+        if (recursive) {
+            parent = parent.parent;
+            while(parent) {
+                if (parent.node.is(nodeOrType)) {
+                    return parent.node as T;
+                }
+            }
+        }
+
+        return null;
+    }
+
     /**
      * Returns the child node with the given name.
      * @param name
@@ -271,8 +324,7 @@ export default class Node extends Publisher<Node>
      */
     getChild<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
     {
-        const type = getNodeTypeString(nodeOrType);
-        return this.hierarchy ? _getChildNode(this, type, recursive) : null;
+        return this.hierarchy ? _getChildNode(this, nodeOrType, recursive) : null;
     }
 
     /**
@@ -282,8 +334,7 @@ export default class Node extends Publisher<Node>
      */
     getChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): Readonly<T[]>
     {
-        const type = getNodeTypeString(nodeOrType);
-        return this.hierarchy ? _getChildNodes(this, type, recursive) : _EMPTY_ARRAY;
+        return this.hierarchy ? _getChildNodes(this, nodeOrType, recursive) : _EMPTY_ARRAY;
     }
 
     /**
@@ -293,8 +344,7 @@ export default class Node extends Publisher<Node>
      */
     hasChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): boolean
     {
-        const type = getNodeTypeString(nodeOrType);
-        return this.hierarchy ? !!_getChildNode(this, type, recursive) : false;
+        return this.hierarchy ? !!_getChildNode(this, nodeOrType, recursive) : false;
     }
 
     setValue(path: string, value: any);

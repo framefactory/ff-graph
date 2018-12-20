@@ -52,8 +52,6 @@ export default class System extends Publisher<System>
     readonly components: ComponentSet;
     readonly graph: Graph;
 
-    private _updateWaitList: any[];
-
 
     constructor(registry?: Registry)
     {
@@ -63,8 +61,6 @@ export default class System extends Publisher<System>
         this.nodes = new NodeSet();
         this.components = new ComponentSet();
         this.graph = new Graph(this);
-
-        this._updateWaitList = [];
     }
 
     /**
@@ -74,13 +70,7 @@ export default class System extends Publisher<System>
      */
     update(context: IUpdateContext): boolean
     {
-        const dirty = this.graph.update(context);
-
-        // call pending callbacks on update wait list
-        this._updateWaitList.forEach(resolve => resolve());
-        this._updateWaitList.length = 0;
-
-        return dirty;
+        return this.graph.update(context);
     }
 
     /**
@@ -101,13 +91,6 @@ export default class System extends Publisher<System>
     postRender(context: IRenderContext)
     {
         this.graph.postRender(context);
-    }
-
-    waitForUpdate(): Promise<void>
-    {
-        return new Promise((resolve, reject) => {
-            this._updateWaitList.push(resolve);
-        });
     }
 
     emitComponentEvent(target: Component, name: string, event: any)

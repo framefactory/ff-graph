@@ -119,11 +119,6 @@ export default class SelectionController extends Controller<SelectionController>
         }
     }
 
-    isNodeSelected(node: Node)
-    {
-        return this._selectedNodes.has(node);
-    }
-
     selectComponent(component?: Component, toggle: boolean = false)
     {
         const selectedComponents = this._selectedComponents;
@@ -155,12 +150,6 @@ export default class SelectionController extends Controller<SelectionController>
         }
     }
 
-    isComponentSelected(component: Component)
-    {
-        return this._selectedComponents.has(component);
-    }
-
-
     clearSelection()
     {
         for (let selectedNode of this._selectedNodes) {
@@ -172,6 +161,40 @@ export default class SelectionController extends Controller<SelectionController>
             this.emitSelectComponentEvent(selectedComponent, false);
         }
         this._selectedComponents.clear();
+    }
+
+    isNodeSelected(node: Node)
+    {
+        return this._selectedNodes.has(node);
+    }
+
+    isComponentSelected(component: Component)
+    {
+        return this._selectedComponents.has(component);
+    }
+
+    getFirstSelectedNode(): Node | undefined
+    {
+        return this._selectedNodes.values().next().value;
+    }
+
+    getSelectedNodes(): Node[]
+    {
+        const result = [];
+        this._selectedNodes.forEach(node => result.push(node));
+        return result;
+    }
+
+    getFirstSelectedComponent(): Component | undefined
+    {
+        return this._selectedComponents.values().next().value;
+    }
+
+    getSelectedComponents(): Component[]
+    {
+        const result = [];
+        this._selectedComponents.forEach(component => result.push(component));
+        return result;
     }
 
     protected emitSelectNodeEvent(node: Node, selected: boolean)

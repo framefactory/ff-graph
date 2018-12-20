@@ -138,29 +138,35 @@ export default class Hierarchy extends Component
         return root ? root.node.components.get(componentOrType) : null;
     }
 
-    getParent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
-    {
-        const parent = this.parent;
-        return parent ? parent.node.components.get(componentOrType) : null;
-    }
-
     /**
-     * Searches for the given component type in this node and then recursively
-     * in all parent nodes.
+     * Returns a component from the parent node of the node of this component.
      * @param componentOrType
-     * @returns The component if found or undefined else.
+     * @param recursive If true, extends search to entire chain of ancestors.
      */
-    getNearestParent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    getParent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
     {
-        let root = this.hierarchy;
-        let component = null;
+        let parent = this._parent;
 
-        while(!component && root) {
-            component = root.node.components.get(componentOrType);
-            root = root._parent;
+        if (!parent) {
+            return null;
         }
 
-        return component;
+        let component = parent.node.components.get(componentOrType);
+        if (component) {
+            return component;
+        }
+
+        if (recursive) {
+            parent = parent._parent;
+            while(parent) {
+                component = parent.node.components.get(componentOrType);
+                if (component) {
+                    return component;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
