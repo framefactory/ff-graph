@@ -5,7 +5,9 @@
  * License: MIT
  */
 
-import { Component, types, Pulse } from "../index";
+import { types } from "../propertyTypes";
+import Pulse from "../Pulse";
+import Component from "../Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 

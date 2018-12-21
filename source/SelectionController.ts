@@ -5,13 +5,9 @@
  * License: MIT
  */
 
-import {
-    System,
-    ISystemComponentEvent,
-    ISystemNodeEvent,
-    Node,
-    Component
-} from "./index";
+import System, { ISystemComponentEvent, ISystemNodeEvent } from "./System";
+import Node from "./Node";
+import Component from "./Component";
 
 import Controller, {
     Commander,

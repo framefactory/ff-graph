@@ -5,12 +5,9 @@
  * License: MIT
  */
 
-import {
-    types,
-    Component,
-    IUpdateContext,
-    IRenderContext
-} from "./index";
+import { types } from "./propertyTypes";
+import Component from "./Component";
+import { IUpdateContext, IRenderContext } from "./System";
 
 ////////////////////////////////////////////////////////////////////////////////
 
