@@ -8,13 +8,13 @@
 import { Dictionary, Readonly } from "@ff/core/types";
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
-import Node, { getNodeTypeString, NodeOrType } from "./Node";
+import Node, { NodeOrType, getNodeTypeString } from "./Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const _EMPTY_ARRAY = [];
 
-export interface INodeTypeEvent<T extends Node = Node> extends IPublisherEvent<NodeSet>
+export interface INodeEvent<T extends Node = Node> extends IPublisherEvent<NodeSet>
 {
     add: boolean;
     remove: boolean;
@@ -46,7 +46,7 @@ export default class NodeSet extends Publisher<NodeSet>
         this._dict[node.id] = node;
         this._list.push(node);
 
-        const event: INodeTypeEvent = { add: true, remove: false, node, sender: this };
+        const event: INodeEvent = { add: true, remove: false, node, sender: this };
 
         let prototype = node;
 
@@ -75,7 +75,7 @@ export default class NodeSet extends Publisher<NodeSet>
         delete this._dict[node.id];
         this._list.splice(index, 1);
 
-        const event: INodeTypeEvent = { add: false, remove: true, node, sender: this };
+        const event: INodeEvent = { add: false, remove: true, node, sender: this };
 
         let prototype = node;
 
@@ -188,5 +188,50 @@ export default class NodeSet extends Publisher<NodeSet>
         }
 
         return result;
+    }
+
+    /**
+     * Adds a listener for a node add/remove event.
+     * @param name Name of the event, type name of the node, or node constructor.
+     * @param callback Event handler function.
+     * @param context Optional context object on which to call the event handler function.
+     */
+    on(name: string | string[] | NodeOrType, callback: (event: any) => void, context?: any): void
+    {
+        if (typeof name !== "string" && !Array.isArray(name)) {
+            name = name.type;
+        }
+
+        super.on(name, callback, context);
+    }
+
+    /**
+     * Removes a listener for a node add/remove event.
+     * @param name Name of the event, type name of the node, or node constructor.
+     * @param callback Event handler function.
+     * @param context Optional context object on which to call the event handler function.
+     */
+    off(name: string | string[] | NodeOrType, callback?: (event: any) => void, context?: any): void
+    {
+        if (typeof name !== "string" && !Array.isArray(name)) {
+            name = name.type;
+        }
+
+        super.off(name, callback, context);
+    }
+
+    /**
+     * Adds a one-time listener for a node add/remove event.
+     * @param name Name of the event, type name of the node, or node constructor.
+     * @param callback Event handler function.
+     * @param context Optional context object on which to call the event handler function.
+     */
+    once(name: string | string[] | NodeOrType, callback: (event: any) => void, context?: any): void
+    {
+        if (typeof name !== "string" && !Array.isArray(name)) {
+            name = name.type;
+        }
+
+        super.once(name, callback, context);
     }
 }

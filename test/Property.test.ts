@@ -6,19 +6,18 @@
  */
 
 import { assert } from "chai";
+import System from "../source/System";
 import TestComponent from "./TestComponent";
-
-import System from "@ff/graph/System";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export default function() {
     suite("Property", function() {
         const system = new System();
-        const entity = system.createEntity("Test");
-        const comp0 = entity.createComponent(TestComponent, "one");
-        const comp1 = entity.createComponent(TestComponent, "two");
-        const comp2 = entity.createComponent(TestComponent, "three");
+        const node = system.graph.createNode("Test");
+        const comp0 = node.createComponent(TestComponent, "one");
+        const comp1 = node.createComponent(TestComponent, "two");
+        const comp2 = node.createComponent(TestComponent, "three");
 
         test("construction/path", function() {
             const ins = comp0.ins;
@@ -123,7 +122,7 @@ export default function() {
 
         test("linking/sort", function() {
             const system = new System();
-            const entity = system.createEntity("Test");
+            const entity = system.graph.createNode("Test");
             const comps = new Array(10).fill(null).map(el => new TestComponent(entity));
             const indices = [ 5, 7, 1, 0, 6, 9, 4, 8, 2, 3 ];
             for (let i = 1; i < indices.length; ++i) {
@@ -131,8 +130,8 @@ export default function() {
                 const c1 = comps[indices[i]];
                 c0.outs.num0.linkTo(c1.ins.num0);
             }
-            system.sort();
-            const sorted = system.getComponents();
+            system.graph.sort();
+            const sorted = system.graph.components.getArray();
             assert.equal(sorted.length, comps.length);
             for (let i = 0; i < comps.length; ++i) {
                 assert.equal(comps[indices[i]], sorted[i]);

@@ -20,7 +20,7 @@ export interface ILinkableSorter
     sort(linkables: ILinkable[]): ILinkable[];
 }
 
-export interface IComponentTypeEvent<T extends Component = Component>
+export interface IComponentEvent<T extends Component = Component>
     extends IPublisherEvent<ComponentSet>
 {
     add: boolean;
@@ -53,7 +53,7 @@ export default class ComponentSet extends Publisher<ComponentSet>
         this._list.push(component);
         this._dict[component.id] = component;
 
-        const event: IComponentTypeEvent = { add: true, remove: false, component, sender: this };
+        const event: IComponentEvent = { add: true, remove: false, component, sender: this };
 
         let prototype = component;
 
@@ -81,7 +81,7 @@ export default class ComponentSet extends Publisher<ComponentSet>
         delete this._dict[component.id];
         this._list.splice(index, 1);
 
-        const event: IComponentTypeEvent = { add: false, remove: true, component, sender: this };
+        const event: IComponentEvent = { add: false, remove: true, component, sender: this };
 
         let prototype = component;
 
@@ -180,5 +180,50 @@ export default class ComponentSet extends Publisher<ComponentSet>
         }
 
         return null;
+    }
+
+    /**
+     * Adds a listener for a component add/remove event.
+     * @param name Name of the event, type name of the component, or component constructor.
+     * @param callback Event handler function.
+     * @param context Optional context object on which to call the event handler function.
+     */
+    on(name: string | string[] | ComponentOrType, callback: (event: any) => void, context?: any): void
+    {
+        if (typeof name !== "string" && !Array.isArray(name)) {
+            name = name.type;
+        }
+
+        super.on(name, callback, context);
+    }
+
+    /**
+     * Removes a listener for a component add/remove event.
+     * @param name Name of the event, type name of the component, or component constructor.
+     * @param callback Event handler function.
+     * @param context Optional context object on which to call the event handler function.
+     */
+    off(name: string | string[] | ComponentOrType, callback?: (event: any) => void, context?: any): void
+    {
+        if (typeof name !== "string" && !Array.isArray(name)) {
+            name = name.type;
+        }
+
+        super.off(name, callback, context);
+    }
+
+    /**
+     * Adds a one-time listener for a component add/remove event.
+     * @param name Name of the event, type name of the component, or component constructor.
+     * @param callback Event handler function.
+     * @param context Optional context object on which to call the event handler function.
+     */
+    once(name: string | string[] | ComponentOrType, callback: (event: any) => void, context?: any): void
+    {
+        if (typeof name !== "string" && !Array.isArray(name)) {
+            name = name.type;
+        }
+
+        super.once(name, callback, context);
     }
 }

@@ -7,17 +7,17 @@
 
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrType, getComponentTypeString } from "./Component";
-import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
+import Component from "./Component";
+import ComponentSet, { IComponentEvent } from "./ComponentSet";
 import Node from "./Node";
-import NodeSet from "./NodeSet";
+import NodeSet, { INodeEvent } from "./NodeSet";
 import Graph from "./Graph";
 import Registry from "./Registry";
 import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IComponentTypeEvent };
+export { IComponentEvent, INodeEvent };
 
 export interface ISystemNodeEvent extends IPublisherEvent<System>
 {
@@ -121,30 +121,6 @@ export default class System extends Publisher<System>
         if (!event.stopPropagation) {
             this.emitAny(name, event);
         }
-    }
-
-    /**
-     * Adds a listener for component add/remove events for a specific component type.
-     * @param componentOrType The component type as example object, constructor function or string.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    addComponentTypeListener<T extends Component>(
-        componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
-    {
-        this.components.on(getComponentTypeString(componentOrType), callback, context);
-    }
-
-    /**
-     * Removes a listener for component add/remove events for a specific component type.
-     * @param componentOrType The component type as example object, constructor function or string.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    removeComponentTypeListener<T extends Component>(
-        componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
-    {
-        this.components.off(getComponentTypeString(componentOrType), callback, context);
     }
 
     deflate()

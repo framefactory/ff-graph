@@ -5,8 +5,9 @@
  * License: MIT
  */
 import { Readonly } from "@ff/core/types";
+import { IPublisherEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrType, IComponentEvent } from "./Component";
+import Component, { ComponentOrType } from "./Component";
 import Node from "./Node";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +65,7 @@ const _getChildComponents = <T extends Component>(
  * Emitted by [[Hierarchy]] component after the instance's state has changed.
  * @event
  */
-export interface IHierarchyEvent extends IComponentEvent<Hierarchy>
+export interface IHierarchyEvent extends IPublisherEvent<Hierarchy>
 {
     parent: Hierarchy;
     child: Hierarchy;
@@ -223,7 +224,7 @@ export default class Hierarchy extends Component
             component = component._parent;
         }
 
-        this.system.emit(Hierarchy.hierarchyEvent, event);
+        this.emit<IHierarchyEvent>(Hierarchy.hierarchyEvent, event);
     }
 
     /**
@@ -251,7 +252,7 @@ export default class Hierarchy extends Component
             component = component._parent;
         }
 
-        this.system.emit(Hierarchy.hierarchyEvent, event);
+        this.emit<IHierarchyEvent>(Hierarchy.hierarchyEvent, event);
     }
 
     /**

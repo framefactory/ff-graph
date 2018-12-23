@@ -11,19 +11,19 @@ import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
-import Node, { IComponentTypeEvent } from "./Node";
+import Node, { IComponentEvent } from "./Node";
 import System, { IUpdateContext, IRenderContext } from "./System";
 import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export interface IComponentEvent<T extends Component = Component> extends IPublisherEvent<T> { }
+export { IUpdateContext, IRenderContext };
 
 /**
  * Emitted by [[Component]] after the instance's state has changed.
  * @event
  */
-export interface IComponentChangeEvent<T extends Component = Component> extends IComponentEvent<T>
+export interface IComponentChangeEvent<T extends Component = Component> extends IPublisherEvent<T>
 {
     what: string;
 }
@@ -32,7 +32,7 @@ export interface IComponentChangeEvent<T extends Component = Component> extends 
  * Emitted by [[Component]] if the component is about to be disposed.
  * @event
  */
-export interface IComponentDisposeEvent<T extends Component = Component> extends IComponentEvent<T> { }
+export interface IComponentDisposeEvent<T extends Component = Component> extends IPublisherEvent<T> { }
 
 
 
@@ -73,7 +73,7 @@ export class ComponentTracker<T extends Component = Component>
         this._node = node;
         this._type = componentOrType;
 
-        node.addComponentTypeListener(this._type, this.onComponent, this);
+        node.components.on(this._type, this.onComponent, this);
         this.component = node.components.get(componentOrType);
 
         if (this.component && didAdd) {
@@ -83,17 +83,17 @@ export class ComponentTracker<T extends Component = Component>
 
     dispose()
     {
-        this._node.removeComponentTypeListener(this._type, this.onComponent, this);
+        this._node.components.off(this._type, this.onComponent, this);
     }
 
-    protected onComponent(event: IComponentTypeEvent<T>)
+    protected onComponent(event: IComponentEvent<T>)
     {
         if (event.add) {
             this.component = event.component;
-            this.didAdd(event.component);
+            this.didAdd && this.didAdd(event.component);
         }
         else if (event.remove) {
-            this.willRemove(event.component);
+            this.willRemove && this.willRemove(event.component);
             this.component = null;
         }
     }

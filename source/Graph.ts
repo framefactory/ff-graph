@@ -8,15 +8,15 @@
 import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import LinkableSorter from "./LinkableSorter";
-import Component, { ComponentOrType, getComponentTypeString } from "./Component";
-import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
+import Component from "./Component";
+import ComponentSet, { IComponentEvent } from "./ComponentSet";
 import Node, { NodeType } from "./Node";
-import NodeSet from "./NodeSet";
+import NodeSet, { INodeEvent } from "./NodeSet";
 import System, { IUpdateContext, IRenderContext } from "./System";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IComponentTypeEvent };
+export { IComponentEvent, INodeEvent };
 
 export interface IGraphNodeEvent extends IPublisherEvent<Graph>
 {
@@ -134,39 +134,23 @@ export default class Graph extends Publisher<Graph>
         this._sortRequested = true;
     }
 
-    createNode<T extends Node>(nodeType: NodeType<T>, name?: string, id?: string): T
+    createNode<T extends Node>(name?: string, id?: string): T;
+    createNode<T extends Node>(nodeType: NodeType<T>, name?: string, id?: string): T;
+    createNode(nodeTypeOrName?, nameOrId?, id?)
     {
-        const node = Node.create(nodeType, this, id);
+        if (typeof nodeTypeOrName === "string") {
+            id = nameOrId;
+            nameOrId = nodeTypeOrName;
+            nodeTypeOrName = Node;
+        }
 
-        if (name) {
-            node.name = name;
+        const node = Node.create(nodeTypeOrName, this, id);
+
+        if (nameOrId) {
+            node.name = nameOrId;
         }
 
         return node;
-    }
-
-    /**
-     * Adds a listener for component add/remove events for a specific component type.
-     * @param componentOrType The component type as example object, constructor function or string.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    addComponentTypeListener<T extends Component>(
-        componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
-    {
-        this.components.on(getComponentTypeString(componentOrType), callback, context);
-    }
-
-    /**
-     * Removes a listener for component add/remove events for a specific component type.
-     * @param componentOrType The component type as example object, constructor function or string.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    removeComponentTypeListener<T extends Component>(
-        componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
-    {
-        this.components.off(getComponentTypeString(componentOrType), callback, context);
     }
 
     deflate()

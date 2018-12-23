@@ -11,7 +11,7 @@ import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertySet";
 import Component, { ComponentOrType, getComponentTypeString } from "./Component";
-import ComponentSet, { IComponentTypeEvent } from "./ComponentSet";
+import ComponentSet, { IComponentEvent } from "./ComponentSet";
 import Graph from "./Graph";
 import System from "./System";
 import Hierarchy from "./Hierarchy";
@@ -90,15 +90,13 @@ const _findChildNode = (node: Node, name: string, recursive: boolean): Node | nu
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IComponentTypeEvent };
-
-export interface INodeEvent extends IPublisherEvent<Node> { }
+export { IComponentEvent };
 
 /**
  * Emitted by [[Node]] after the instance's state has changed.
  * @event
  */
-export interface INodeChangeEvent extends INodeEvent
+export interface INodeChangeEvent extends IPublisherEvent<Node>
 {
     what: "name"
 }
@@ -107,7 +105,7 @@ export interface INodeChangeEvent extends INodeEvent
  * Emitted by [[Node]] if the component is about to be disposed.
  * @event
  */
-export interface INodeDisposeEvent extends INodeEvent { }
+export interface INodeDisposeEvent extends IPublisherEvent<Node> { }
 
 export interface INodeComponentEvent<T extends Component = Component>
     extends IPublisherEvent<Node>
@@ -373,30 +371,6 @@ export default class Node extends Publisher<Node>
         }
 
         component.in(path).setValue(value);
-    }
-
-    /**
-     * Adds a listener for component add/remove events for a specific component type.
-     * @param componentOrType The component type as example object, constructor function or string.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    addComponentTypeListener<T extends Component>(
-        componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
-    {
-        this.components.on(getComponentTypeString(componentOrType), callback, context);
-    }
-
-    /**
-     * Removes a listener for component add/remove events for a specific component type.
-     * @param componentOrType The component type as example object, constructor function or string.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    removeComponentTypeListener<T extends Component>(
-        componentOrType: ComponentOrType<T>, callback: (event: IComponentTypeEvent<T>) => void, context?: any)
-    {
-        this.components.off(getComponentTypeString(componentOrType), callback, context);
     }
 
     deflate()
