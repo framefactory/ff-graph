@@ -5,42 +5,38 @@
  * License: MIT
  */
 
-import System, { ISystemComponentEvent, ISystemNodeEvent } from "./System";
+import System, { IComponentEvent, INodeEvent } from "./System";
 import Node from "./Node";
 import Component from "./Component";
 
 import Controller, {
     Commander,
     Actions,
-    IPublisherEvent
+    ITypedEvent
 } from "@ff/core/Controller";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export type SelectionActions = Actions<SelectionController>;
 
-export interface ISelectNodeEvent extends IPublisherEvent<SelectionController>
+export interface ISelectNodeEvent extends ITypedEvent<"select-node">
 {
     node: Node;
     selected: boolean;
 }
 
-export interface ISelectComponentEvent extends IPublisherEvent<SelectionController>
+export interface ISelectComponentEvent extends ITypedEvent<"select-component">
 {
     component: Component;
     selected: boolean;
 }
 
-export interface IControllerUpdateEvent extends IPublisherEvent<SelectionController>
+export interface IControllerUpdateEvent extends ITypedEvent<"update">
 {
 }
 
 export default class SelectionController extends Controller<SelectionController>
 {
-    static readonly selectNodeEvent = "node";
-    static readonly selectComponentEvent = "component";
-    static readonly updateEvent = "update";
-
     multiSelect = false;
     exclusiveSelect = true;
 
@@ -53,23 +49,19 @@ export default class SelectionController extends Controller<SelectionController>
     constructor(system: System, commander: Commander)
     {
         super(commander);
-        this.addEvents(
-            SelectionController.selectNodeEvent,
-            SelectionController.selectComponentEvent,
-            SelectionController.updateEvent
-        );
+        this.addEvents("select-node", "select-component", "update");
 
         this.system = system;
         this.actions = this.createActions(commander);
 
-        system.on(System.nodeEvent, this.onSystemNode, this);
-        system.on(System.componentEvent, this.onSystemComponent, this);
+        system.nodes.on("node", this.onSystemNode, this);
+        system.components.on("component", this.onSystemComponent, this);
     }
 
     dispose()
     {
-        this.system.off(System.nodeEvent, this.onSystemNode, this);
-        this.system.off(System.componentEvent, this.onSystemComponent, this);
+        this.system.nodes.off("node", this.onSystemNode, this);
+        this.system.components.off("component", this.onSystemComponent, this);
     }
 
     createActions(commander: Commander)
@@ -195,33 +187,33 @@ export default class SelectionController extends Controller<SelectionController>
 
     protected emitSelectNodeEvent(node: Node, selected: boolean)
     {
-        this.emit<ISelectNodeEvent>(
-            SelectionController.selectNodeEvent, { node: node, selected }
-        );
+        const event: ISelectNodeEvent = { type: "select-node", node, selected };
+        this.emit(event);
+        node.emit(event);
     }
 
     protected emitSelectComponentEvent(component: Component, selected: boolean)
     {
-        const event = { component, selected };
-        this.emit<ISelectComponentEvent>(SelectionController.selectComponentEvent, event);
-        this.system.emitComponentEvent(component, SelectionController.selectComponentEvent, event);
+        const event: ISelectComponentEvent = { type: "select-component", component, selected };
+        this.emit(event);
+        component.emit(event);
     }
 
-    protected onSystemNode(event: ISystemNodeEvent)
+    protected onSystemNode(event: INodeEvent)
     {
         if (event.remove && this._selectedNodes.has(event.node)) {
             this.selectNode(event.node, false);
         }
 
-        this.emit<IControllerUpdateEvent>(SelectionController.updateEvent);
+        this.emit<IControllerUpdateEvent>({ type: "update" });
     }
 
-    protected onSystemComponent(event: ISystemComponentEvent)
+    protected onSystemComponent(event: IComponentEvent)
     {
         if (event.remove && this._selectedComponents.has(event.component)) {
             this.selectComponent(event.component, false);
         }
 
-        this.emit<IControllerUpdateEvent>(SelectionController.updateEvent);
+        this.emit<IControllerUpdateEvent>({ type: "update" });
     }
 }

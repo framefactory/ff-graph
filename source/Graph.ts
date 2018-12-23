@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import Publisher from "@ff/core/Publisher";
 
 import LinkableSorter from "./LinkableSorter";
 import Component from "./Component";
@@ -18,26 +18,8 @@ import System, { IUpdateContext, IRenderContext } from "./System";
 
 export { IComponentEvent, INodeEvent };
 
-export interface IGraphNodeEvent extends IPublisherEvent<Graph>
+export default class Graph extends Publisher
 {
-    add: boolean;
-    remove: boolean;
-    node: Node;
-}
-
-export interface IGraphComponentEvent<T extends Component = Component>
-    extends IPublisherEvent<Graph>
-{
-    add: boolean;
-    remove: boolean;
-    component: T;
-}
-
-export default class Graph extends Publisher<Graph>
-{
-    static readonly nodeEvent = "node";
-    static readonly componentEvent = "component";
-
     readonly system: System;
 
     nodes = new NodeSet();
@@ -46,15 +28,18 @@ export default class Graph extends Publisher<Graph>
     protected preRenderList: Component[] = [];
     protected postRenderList: Component[] = [];
 
+    private _parent: Component = null;
     private _sorter = new LinkableSorter();
     private _sortRequested = false;
 
     constructor(system: System)
     {
         super({ knownEvents: false });
-        this.addEvents(Graph.nodeEvent, Graph.componentEvent);
-
         this.system = system;
+    }
+
+    get parent() {
+        return this._parent;
     }
 
     /**
@@ -198,16 +183,12 @@ export default class Graph extends Publisher<Graph>
     {
         this.system._addNode(node);
         this.nodes._add(node);
-
-        this.emit<IGraphNodeEvent>(Graph.nodeEvent, { add: true, remove: false, node: node });
     }
 
     _removeNode(node: Node)
     {
         this.nodes._remove(node);
         this.system._removeNode(node);
-
-        this.emit<IGraphNodeEvent>(Graph.nodeEvent, { add: false, remove: true, node: node });
     }
 
     _addComponent(component: Component)
@@ -225,18 +206,10 @@ export default class Graph extends Publisher<Graph>
         if (component.postRender) {
             this.postRenderList.push(component);
         }
-
-        const event = { add: true, remove: false, component, sender: this };
-        this.emit<IGraphComponentEvent>(Graph.componentEvent, event);
-        this.emit<IGraphComponentEvent>(component.type, event);
     }
 
     _removeComponent(component: Component)
     {
-        const event = { add: false, remove: true, component, sender: this };
-        this.emit<IGraphComponentEvent>(Graph.componentEvent, event);
-        this.emit<IGraphComponentEvent>(component.type, event);
-
         this.components._remove(component);
         this.system._addComponent(component);
 

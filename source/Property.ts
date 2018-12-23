@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import { Dictionary, Readonly, TypeOf } from "@ff/core/types";
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import { Dictionary, TypeOf } from "@ff/core/types";
+import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ValueType, canConvert } from "./convert";
 import PropertySet, { ILinkable } from "./PropertySet";
@@ -36,17 +36,22 @@ export interface IPropertySchema<T = any>
     semantic?: string;
 }
 
-export interface IPropertyDisposeEvent<T = any> extends IPublisherEvent<Property<T>> { }
+export interface IPropertyChangeEvent extends ITypedEvent<"change">
+{
+    what: string;
+    property: Property;
+}
+
+export interface IPropertyDisposeEvent extends ITypedEvent<"dispose">
+{
+    property: Property;
+}
 
 /**
  * Linkable property.
  */
-export default class Property<T = any> extends Publisher<Property<T>>
+export default class Property<T = any> extends Publisher
 {
-    static readonly valueEvent = "value";
-    static readonly updateEvent = "update";
-    static readonly disposeEvent = "dispose";
-
     props: PropertySet;
     key: string;
 
@@ -76,7 +81,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
     constructor(path: string, presetOrSchema: PresetOrSchema<T>, preset?: T, user?: boolean)
     {
         super();
-        this.addEvents(Property.valueEvent, Property.updateEvent, Property.disposeEvent);
+        this.addEvents("value", "change", "dispose");
 
         let schema: IPropertySchema;
 
@@ -114,7 +119,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
     dispose()
     {
         this.unlink();
-        this.emit(Property.disposeEvent);
+        this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
     setValue(value: T)
@@ -126,7 +131,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
             this.props.linkable.changed = true;
         }
 
-        this.emitAny("value", value);
+        this.emit("value", value);
 
         const outLinks = this.outLinks;
         for (let i = 0, n = outLinks.length; i < n; ++i) {
@@ -142,7 +147,7 @@ export default class Property<T = any> extends Publisher<Property<T>>
             this.props.linkable.changed = true;
         }
 
-        this.emitAny("value", this.value);
+        this.emit("value", this.value);
 
         const outLinks = this.outLinks;
         for (let i = 0, n = outLinks.length; i < n; ++i) {
@@ -328,6 +333,16 @@ export default class Property<T = any> extends Publisher<Property<T>>
         }
 
         this.changed = true;
+    }
+
+    setOptions(options: string[])
+    {
+        if (!this.schema.options) {
+            throw new Error(`property type mismatch, can't set options on '${this.path}'`);
+        }
+
+        (this.schema as IPropertySchema).options = options.slice();
+        this.emit<IPropertyChangeEvent>({ type: "change", what: "options", property: this });
     }
 
     getOptionText()

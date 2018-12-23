@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import { Dictionary, Readonly } from "@ff/core/types";
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import { Dictionary } from "@ff/core/types";
+import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import Node, { NodeOrType, getNodeTypeString } from "./Node";
 
@@ -14,14 +14,14 @@ import Node, { NodeOrType, getNodeTypeString } from "./Node";
 
 const _EMPTY_ARRAY = [];
 
-export interface INodeEvent<T extends Node = Node> extends IPublisherEvent<NodeSet>
+export interface INodeEvent<T extends Node = Node> extends ITypedEvent<string>
 {
     add: boolean;
     remove: boolean;
     node: T;
 }
 
-export default class NodeSet extends Publisher<NodeSet>
+export default class NodeSet extends Publisher
 {
     protected _typeDict: Dictionary<Node[]> = {};
     protected _dict: Dictionary<Node> = {};
@@ -46,16 +46,19 @@ export default class NodeSet extends Publisher<NodeSet>
         this._dict[node.id] = node;
         this._list.push(node);
 
-        const event: INodeEvent = { add: true, remove: false, node, sender: this };
-
         let prototype = node;
+
+        const event = { type: "node", add: true, remove: false, node };
+        this.emit<INodeEvent>(event);
 
         // add all types in prototype chain
         do {
             prototype = Object.getPrototypeOf(prototype);
             const type = prototype.type;
             (this._typeDict[type] || (this._typeDict[type] = [])).push(node);
-            this.emit(type, event);
+
+            event.type = type;
+            this.emit<INodeEvent>(event);
 
         } while(prototype.type !== Node.type);
     }
@@ -75,9 +78,10 @@ export default class NodeSet extends Publisher<NodeSet>
         delete this._dict[node.id];
         this._list.splice(index, 1);
 
-        const event: INodeEvent = { add: false, remove: true, node, sender: this };
-
         let prototype = node;
+
+        const event = { type: "node", add: false, remove: true, node };
+        this.emit<INodeEvent>(event);
 
         // remove all types in prototype chain
         do {
@@ -86,7 +90,9 @@ export default class NodeSet extends Publisher<NodeSet>
             const nodes = this._typeDict[type];
             const index = nodes.indexOf(node);
             nodes.splice(index, 1);
-            this.emit(type, event);
+
+            event.type = type;
+            this.emit<INodeEvent>(event);
 
         } while(prototype.type !== Node.type);
     }

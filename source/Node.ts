@@ -7,7 +7,7 @@
 
 import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertySet";
 import Component, { ComponentOrType, getComponentTypeString } from "./Component";
@@ -96,23 +96,19 @@ export { IComponentEvent };
  * Emitted by [[Node]] after the instance's state has changed.
  * @event
  */
-export interface INodeChangeEvent extends IPublisherEvent<Node>
+export interface INodeChangeEvent<T extends Node = Node> extends ITypedEvent<"change">
 {
-    what: "name"
+    node: T;
+    what: string;
 }
 
 /**
  * Emitted by [[Node]] if the component is about to be disposed.
  * @event
  */
-export interface INodeDisposeEvent extends IPublisherEvent<Node> { }
-
-export interface INodeComponentEvent<T extends Component = Component>
-    extends IPublisherEvent<Node>
+export interface INodeDisposeEvent<T extends Node = Node> extends ITypedEvent<"dispose">
 {
-    add: boolean;
-    remove: boolean;
-    component: T;
+    node: T;
 }
 
 /** The constructor function of a [[Node]]. */
@@ -136,13 +132,9 @@ export function getNodeTypeString<T extends Node>(nodeOrType: NodeOrType<T> | st
  * - [[Component]]
  * - [[System]]
  */
-export default class Node extends Publisher<Node>
+export default class Node extends Publisher
 {
     static readonly type: string = "Node";
-
-    static readonly changeEvent = "change";
-    static readonly componentEvent = "component";
-    static readonly disposeEvent = "dispose";
 
     static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T
     {
@@ -209,7 +201,7 @@ export default class Node extends Publisher<Node>
      */
     set name(value: string) {
         this._name = value;
-        this.emit<INodeChangeEvent>(Node.changeEvent, { what: "name" });
+        this.emit<INodeChangeEvent>({ type: "change", what: "name", node: this });
     }
 
     create()
@@ -230,7 +222,7 @@ export default class Node extends Publisher<Node>
         this.graph._removeNode(this);
 
         // emit dispose event
-        this.emit(Node.disposeEvent);
+        this.emit<INodeDisposeEvent>({ type: "dispose", node: this });
     }
 
     /**
@@ -434,14 +426,10 @@ export default class Node extends Publisher<Node>
 
         this.graph._addComponent(component);
         this.components._add(component);
-
-        this.emit<INodeComponentEvent>(Node.componentEvent, { add: true, remove: false, component });
     }
 
     _removeComponent(component: Component)
     {
-        this.emit<INodeComponentEvent>(Node.componentEvent, { add: false, remove: true, component });
-
         this.components._remove(component);
         this.graph._removeComponent(component);
     }

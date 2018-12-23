@@ -6,7 +6,7 @@
  */
 
 import { Dictionary } from "@ff/core/types";
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import Property from "./Property";
 
@@ -34,7 +34,7 @@ export interface ILinkable
  * Emitted by [[Properties]] after changes in the properties configuration.
  * @event
  */
-export interface IPropertySetChangeEvent extends IPublisherEvent<PropertySet>
+export interface IPropertySetChangeEvent extends ITypedEvent<"change">
 {
     what: "add" | "remove" | "update";
     property: Property;
@@ -48,10 +48,8 @@ export interface IPropertySetChangeEvent extends IPublisherEvent<PropertySet>
  * ### Events
  * - *"change"* - emits [[IPropertiesChangeEvent]] after properties have been added, removed, or renamed.
  */
-export default class PropertySet extends Publisher<PropertySet>
+export default class PropertySet extends Publisher
 {
-    static readonly changeEvent = "change";
-
     linkable: ILinkable;
     properties: Property[];
 
@@ -60,7 +58,7 @@ export default class PropertySet extends Publisher<PropertySet>
     constructor(linkable: ILinkable)
     {
         super();
-        this.addEvents(PropertySet.changeEvent);
+        this.addEvents("change");
 
         this.linkable = linkable;
         this.properties = [];
@@ -114,7 +112,7 @@ export default class PropertySet extends Publisher<PropertySet>
         this.properties.push(property);
         this._propsByPath[property.path] = property;
 
-        this.emit<IPropertySetChangeEvent>(PropertySet.changeEvent, { what: "add", property });
+        this.emit<IPropertySetChangeEvent>({ type: "change", what: "add", property });
     }
 
     /**
@@ -135,7 +133,7 @@ export default class PropertySet extends Publisher<PropertySet>
 
         delete this._propsByPath[property.path];
 
-        this.emit<IPropertySetChangeEvent>(PropertySet.changeEvent, { what: "remove", property });
+        this.emit<IPropertySetChangeEvent>({ type: "change", what: "remove", property });
     }
 
     /**

@@ -7,7 +7,7 @@
 
 import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import Publisher, { IBubblingEvent, ITypedEvent } from "@ff/core/Publisher";
 
 import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
@@ -23,8 +23,9 @@ export { IUpdateContext, IRenderContext };
  * Emitted by [[Component]] after the instance's state has changed.
  * @event
  */
-export interface IComponentChangeEvent<T extends Component = Component> extends IPublisherEvent<T>
+export interface IComponentChangeEvent<T extends Component = Component> extends ITypedEvent<"change">
 {
+    component: T;
     what: string;
 }
 
@@ -32,9 +33,10 @@ export interface IComponentChangeEvent<T extends Component = Component> extends 
  * Emitted by [[Component]] if the component is about to be disposed.
  * @event
  */
-export interface IComponentDisposeEvent<T extends Component = Component> extends IPublisherEvent<T> { }
-
-
+export interface IComponentDisposeEvent<T extends Component = Component> extends ITypedEvent<"dispose">
+{
+    component: T;
+}
 
 /** The constructor function of a [[Component]]. */
 export type ComponentType<T extends Component = Component> = TypeOf<T> & { type: string };
@@ -142,16 +144,13 @@ export class ComponentLink<T extends Component = Component>
  * - [[Node]]
  * - [[System]]
  */
-export default class Component extends Publisher<Component> implements ILinkable
+export default class Component extends Publisher implements ILinkable
 {
     static readonly type: string = "Component";
 
     static readonly isNodeSingleton: boolean = true;
     static readonly isGraphSingleton: boolean = false;
     static readonly isSystemSingleton: boolean = false;
-
-    static readonly changeEvent = "change";
-    static readonly disposeEvent = "dispose";
 
     /**
      * Creates a new component and attaches it to the given node.
@@ -260,7 +259,7 @@ export default class Component extends Publisher<Component> implements ILinkable
     set name(value: string)
     {
         this._name = value;
-        this.emit<IComponentChangeEvent>(Component.changeEvent, { what: "name" });
+        this.emit<IComponentChangeEvent>({ type: "change", component: this, what: "name" });
     }
 
     /**
@@ -329,7 +328,7 @@ export default class Component extends Publisher<Component> implements ILinkable
         this.node._removeComponent(this);
 
         // emit dispose event
-        this.emit(Component.disposeEvent);
+        this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
     }
 
     in<T>(path: string): Property<T>
@@ -391,10 +390,41 @@ export default class Component extends Publisher<Component> implements ILinkable
         return new ComponentLink<T>(this, component);
     }
 
-    // is(componentOrType: ComponentOrType)
-    // {
-    //     return this.type === getType(componentOrType);
-    // }
+    bubbleEvent(event: IBubblingEvent<string>)
+    {
+        let target = this as Component;
+
+        while (target) {
+            target.emit(event);
+
+            if (event.stopPropagation) {
+                return;
+            }
+
+            const components = target.components.getArray();
+            for (let i = 0, n = components.length; i < n; ++i) {
+                const component = components[i];
+                if (component !== target) {
+                    component.emit(event);
+
+                    if (event.stopPropagation) {
+                        return;
+                    }
+                }
+            }
+
+            const hierarchy = target.components.get("Hierarchy") as Hierarchy;
+            target = hierarchy ? hierarchy.parent : null;
+
+            if (!target) {
+                target = hierarchy.graph.parent;
+            }
+        }
+
+        if (!event.stopPropagation) {
+            this.system.emit(event);
+        }
+    }
 
     /**
      * Use "this.ins.append" instead.

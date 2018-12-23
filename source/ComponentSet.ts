@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import { Dictionary, Readonly } from "@ff/core/types";
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import { Dictionary } from "@ff/core/types";
+import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertySet";
 import Component, { ComponentOrType, getComponentTypeString } from "./Component";
@@ -20,15 +20,14 @@ export interface ILinkableSorter
     sort(linkables: ILinkable[]): ILinkable[];
 }
 
-export interface IComponentEvent<T extends Component = Component>
-    extends IPublisherEvent<ComponentSet>
+export interface IComponentEvent<T extends Component = Component> extends ITypedEvent<string>
 {
     add: boolean;
     remove: boolean;
     component: T;
 }
 
-export default class ComponentSet extends Publisher<ComponentSet>
+export default class ComponentSet extends Publisher
 {
     protected _typeDict: Dictionary<Component[]> = {};
     protected _dict: Dictionary<Component> = {};
@@ -53,16 +52,20 @@ export default class ComponentSet extends Publisher<ComponentSet>
         this._list.push(component);
         this._dict[component.id] = component;
 
-        const event: IComponentEvent = { add: true, remove: false, component, sender: this };
-
         let prototype = component;
+
+        const event = { type: "component", add: true, remove: false, component };
+        this.emit<IComponentEvent>(event);
 
         // add all types in prototype chain
         do {
             prototype = Object.getPrototypeOf(prototype);
             const type = prototype.type;
             (this._typeDict[type] || (this._typeDict[type] = [])).push(component);
-            this.emit(type, event);
+
+            event.type = type;
+            this.emit<IComponentEvent>(event);
+
         } while(prototype.type !== Component.type);
     }
 
@@ -81,9 +84,10 @@ export default class ComponentSet extends Publisher<ComponentSet>
         delete this._dict[component.id];
         this._list.splice(index, 1);
 
-        const event: IComponentEvent = { add: false, remove: true, component, sender: this };
-
         let prototype = component;
+
+        const event = { type: "component", add: false, remove: true, component };
+        this.emit<IComponentEvent>(event);
 
         // remove all types in prototype chain
         do {
@@ -92,7 +96,10 @@ export default class ComponentSet extends Publisher<ComponentSet>
             const components = this._typeDict[type];
             index = components.indexOf(component);
             components.splice(index, 1);
-            this.emit(type, event);
+
+            event.type = type;
+            this.emit<IComponentEvent>(event);
+
         } while(prototype.type !== Component.type);
     }
 

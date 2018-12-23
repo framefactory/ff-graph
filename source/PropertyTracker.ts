@@ -10,7 +10,7 @@ import Graph from "./Graph";
 import Node from "./Node";
 import Hierarchy from "./Hierarchy";
 import { ComponentOrType } from "./Component";
-import Property from "./Property";
+import Property, { IPropertyDisposeEvent } from "./Property";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -55,7 +55,7 @@ export default class PropertyTracker<T extends any = any>
         this.detach();
         this._property = property;
         property.on("value", this.onPropertyValue, this);
-        property.on("dispose", this.onPropertyDispose, this);
+        property.on<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
     }
 
     getValue(defaultValue?: T) {
@@ -98,7 +98,7 @@ export default class PropertyTracker<T extends any = any>
     {
         if (this._property) {
             this._property.off("value", this.onPropertyValue, this);
-            this._property.off("dispose", this.onPropertyDispose, this);
+            this._property.off<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
         }
     }
 

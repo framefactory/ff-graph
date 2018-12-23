@@ -4,8 +4,8 @@
  *
  * License: MIT
  */
-import { Readonly } from "@ff/core/types";
-import { IPublisherEvent } from "@ff/core/Publisher";
+
+import { ITypedEvent } from "@ff/core/Publisher";
 
 import Component, { ComponentOrType } from "./Component";
 import Node from "./Node";
@@ -62,10 +62,10 @@ const _getChildComponents = <T extends Component>(
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Emitted by [[Hierarchy]] component after the instance's state has changed.
+ * Emitted by [[Hierarchy]] component after it's parent has changed.
  * @event
  */
-export interface IHierarchyEvent extends IPublisherEvent<Hierarchy>
+export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
 {
     parent: Hierarchy;
     child: Hierarchy;
@@ -83,16 +83,8 @@ export default class Hierarchy extends Component
 {
     static readonly type: string = "Hierarchy";
 
-    static readonly hierarchyEvent: "hierarchy";
-
     protected _parent: Hierarchy = null;
     protected _children: Hierarchy[] = [];
-
-    constructor(node: Node, id?: string)
-    {
-        super(node, id);
-        this.addEvent(Hierarchy.hierarchyEvent);
-    }
 
     /**
      * Returns the parent component of this.
@@ -214,17 +206,15 @@ export default class Hierarchy extends Component
         component._parent = this;
         this._children.push(component);
 
-        const event = {
-            add: true, remove: false, parent: this, child: component
+        const event: IHierarchyEvent = {
+            type: "hierarchy", add: true, remove: false, parent: this, child: component
         };
 
         while (component) {
-            component.emit(Hierarchy.hierarchyEvent, event);
-            component.node.emit(Hierarchy.hierarchyEvent, event);
+            component.emit<IHierarchyEvent>(event);
+            component.node.emit<IHierarchyEvent>(event);
             component = component._parent;
         }
-
-        this.emit<IHierarchyEvent>(Hierarchy.hierarchyEvent, event);
     }
 
     /**
@@ -242,17 +232,15 @@ export default class Hierarchy extends Component
         this._children.splice(index, 1);
         component._parent = null;
 
-        const event = {
-            add: false, remove: true, parent: this, child: component
+        const event: IHierarchyEvent = {
+            type: "hierarchy", add: false, remove: true, parent: this, child: component
         };
 
         while (component) {
-            component.emit(Hierarchy.hierarchyEvent, event);
-            component.node.emit(Hierarchy.hierarchyEvent, event);
+            component.emit<IHierarchyEvent>(event);
+            component.node.emit<IHierarchyEvent>(event);
             component = component._parent;
         }
-
-        this.emit<IHierarchyEvent>(Hierarchy.hierarchyEvent, event);
     }
 
     /**

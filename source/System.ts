@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Publisher, { IPublisherEvent } from "@ff/core/Publisher";
+import Publisher, { ITypedEvent, IBubblingEvent } from "@ff/core/Publisher";
 
 import Component from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
@@ -19,21 +19,6 @@ import Hierarchy from "./Hierarchy";
 
 export { IComponentEvent, INodeEvent };
 
-export interface ISystemNodeEvent extends IPublisherEvent<System>
-{
-    add: boolean;
-    remove: boolean;
-    node: Node;
-}
-
-export interface ISystemComponentEvent<T extends Component = Component>
-    extends IPublisherEvent<System>
-{
-    add: boolean;
-    remove: boolean;
-    component: T;
-}
-
 export interface IUpdateContext
 {
 }
@@ -42,7 +27,7 @@ export interface IRenderContext
 {
 }
 
-export default class System extends Publisher<System>
+export default class System extends Publisher
 {
     static readonly nodeEvent = "node";
     static readonly componentEvent = "component";
@@ -93,36 +78,6 @@ export default class System extends Publisher<System>
         this.graph.postRender(context);
     }
 
-    emitComponentEvent(target: Component, name: string, event: any)
-    {
-        while (target) {
-            target.emitAny(name, event);
-
-            if (event.stopPropagation) {
-                return;
-            }
-
-            const components = target.components.getArray();
-            for (let i = 0, n = components.length; i < n; ++i) {
-                const component = components[i];
-                if (component !== target) {
-                    component.emitAny(name, event);
-
-                    if (event.stopPropagation) {
-                        return;
-                    }
-                }
-            }
-
-            const hierarchy = target.components.get(Hierarchy);
-            target = hierarchy ? hierarchy.parent : null;
-        }
-
-        if (!event.stopPropagation) {
-            this.emitAny(name, event);
-        }
-    }
-
     deflate()
     {
         return this.graph.deflate();
@@ -150,17 +105,13 @@ export default class System extends Publisher<System>
     _addNode(node: Node)
     {
         this.nodes._add(node);
-
         this.nodeAdded(node);
-        this.emit<ISystemNodeEvent>(System.nodeEvent, { add: true, remove: false, node: node });
     }
 
     _removeNode(node: Node)
     {
         this.nodes._remove(node);
-
         this.nodeRemoved(node);
-        this.emit<ISystemNodeEvent>(System.nodeEvent, { add: false, remove: true, node: node });
     }
 
     _addComponent(component: Component)
@@ -170,17 +121,13 @@ export default class System extends Publisher<System>
         }
 
         this.components._add(component);
-
         this.componentAdded(component);
-        this.emit<ISystemComponentEvent>(System.componentEvent, { add: true, remove: false, component });
     }
 
     _removeComponent(component: Component)
     {
         this.components._remove(component);
-
         this.componentRemoved(component);
-        this.emit<ISystemComponentEvent>(System.componentEvent, { add: false, remove: true, component });
     }
 
     /**
