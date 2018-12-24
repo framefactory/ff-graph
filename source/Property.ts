@@ -122,13 +122,16 @@ export default class Property<T = any> extends Publisher
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
-    setValue(value: T)
+    setValue(value: T, silent?: boolean)
     {
         this.value = value;
-        this.changed = true;
 
-        if (this.props && this.props === this.props.linkable.ins) {
-            this.props.linkable.changed = true;
+        if (!silent) {
+            this.changed = true;
+
+            if (this.props && this.props === this.props.linkable.ins) {
+                this.props.linkable.changed = true;
+            }
         }
 
         this.emit("value", value);
@@ -139,12 +142,14 @@ export default class Property<T = any> extends Publisher
         }
     }
 
-    set()
+    set(silent?: boolean)
     {
-        this.changed = true;
+        if (!silent) {
+            this.changed = true;
 
-        if (this.props === this.props.linkable.ins) {
-            this.props.linkable.changed = true;
+            if (this.props === this.props.linkable.ins) {
+                this.props.linkable.changed = true;
+            }
         }
 
         this.emit("value", this.value);

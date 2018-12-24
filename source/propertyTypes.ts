@@ -16,6 +16,8 @@ type Vector<T = number> = T[];
 type Matrix<T = number> = T[];
 
 export const schemas = {
+    boolean: { preset: false },
+    boolean_true: { preset: true },
     vector2: { preset: [0, 0] },
     vector2_ones: { preset: [1, 1] },
     vector3: { preset: [0, 0, 0] },
@@ -71,7 +73,10 @@ export const types = {
         new Property<number>(path, presetOrSchema || 0, preset),
 
     Boolean: (path: string, presetOrSchema?: PresetOrSchema<boolean>, preset?: boolean) =>
-        new Property<boolean>(path, presetOrSchema || false, preset),
+        new Property<boolean>(path, presetOrSchema || schemas.boolean, preset),
+
+    Boolean_true: (path: string, presetOrSchema?: PresetOrSchema<boolean>, preset?: boolean) =>
+        new Property<boolean>(path, presetOrSchema || schemas.boolean_true, preset),
 
     String: (path: string, presetOrSchema?: PresetOrSchema<string>, preset?: string) =>
         new Property<string>(path, presetOrSchema || "", preset),
@@ -88,13 +93,13 @@ export const types = {
     Vector2: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
         new Property<Vector>(path, presetOrSchema || schemas.vector2, preset),
 
-    Vector2_Ones: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
+    Vector2_ones: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
         new Property<Vector>(path, presetOrSchema || schemas.vector2_ones, preset),
 
     Vector3: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
         new Property<Vector>(path, presetOrSchema || schemas.vector3, preset),
 
-    Vector3_Ones: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
+    Vector3_ones: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
         new Property<Vector>(path, presetOrSchema || schemas.vector3_ones, preset),
 
     Vector4: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>

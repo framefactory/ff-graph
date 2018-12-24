@@ -7,7 +7,7 @@
 
 import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
-import Publisher, { IBubblingEvent, ITypedEvent } from "@ff/core/Publisher";
+import Publisher, { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
 import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
@@ -390,7 +390,7 @@ export default class Component extends Publisher implements ILinkable
         return new ComponentLink<T>(this, component);
     }
 
-    bubbleEvent(event: IBubblingEvent<string>)
+    propagateUp(event: IPropagatingEvent<string>)
     {
         let target = this as Component;
 
@@ -423,6 +423,30 @@ export default class Component extends Publisher implements ILinkable
 
         if (!event.stopPropagation) {
             this.system.emit(event);
+        }
+    }
+
+    propagateDown(event: IPropagatingEvent<string>)
+    {
+        const hierarchy = this.components.get("Hierarchy") as Hierarchy;
+        const children = hierarchy ? hierarchy.children : null;
+
+        for (let i = 0, n = children.length; i < n; ++i) {
+            const components = children[i].components.getArray();
+            for (let j = 0, m = components.length; j < m; ++i) {
+                components[j].emit(event);
+                if (event.stopPropagation) {
+                    return;
+                }
+            }
+            for (let j = 0, m = components.length; j < m; ++i) {
+                components[j].propagateDown(event);
+                if (event.stopPropagation) {
+                    return;
+                }
+
+                // TODO: Should we allow events to travel across graph boundaries?
+            }
         }
     }
 

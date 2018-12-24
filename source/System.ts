@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Publisher, { ITypedEvent, IBubblingEvent } from "@ff/core/Publisher";
+import Publisher, { ITypedEvent, IPropagatingEvent } from "@ff/core/Publisher";
 
 import Component from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";

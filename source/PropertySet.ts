@@ -92,10 +92,27 @@ export default class PropertySet extends Publisher
     }
 
     /**
-     * Adds the given property to the set.
-     * @param {Property} property The property to be added.
+     * Prepends properties to the set.
+     * @param {U} properties plain object with keys and properties.
+     * @returns {this & U}
      */
-    add(property: Property)
+    prepend<U extends Dictionary<Property>>(properties: U): this & U
+    {
+        Object.keys(properties).forEach(key => {
+            const property = properties[key];
+            property.key = key;
+            this.add(property, true);
+        });
+
+        return this as this & U;
+    }
+
+    /**
+     * Adds the given property to the set.
+     * @param property The property to be added.
+     * @param prepend If true inserts the property at the beginning of the property list.
+     */
+    add(property: Property, prepend: boolean = false)
     {
         const key = property.key;
         if (!key) {
@@ -109,7 +126,7 @@ export default class PropertySet extends Publisher
         property.props = this;
 
         this[key] = property;
-        this.properties.push(property);
+        prepend ? this.properties.unshift(property) : this.properties.push(property);
         this._propsByPath[property.path] = property;
 
         this.emit<IPropertySetChangeEvent>({ type: "change", what: "add", property });
