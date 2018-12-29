@@ -215,6 +215,9 @@ export default class Hierarchy extends Component
             component.node.emit<IHierarchyEvent>(event);
             component = component._parent;
         }
+
+        this.graph.emit<IHierarchyEvent>(event);
+        this.system.emit<IHierarchyEvent>(event);
     }
 
     /**
@@ -241,6 +244,9 @@ export default class Hierarchy extends Component
             component.node.emit<IHierarchyEvent>(event);
             component = component._parent;
         }
+
+        this.graph.emit<IHierarchyEvent>(event);
+        this.system.emit<IHierarchyEvent>(event);
     }
 
     /**

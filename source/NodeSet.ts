@@ -34,7 +34,8 @@ export default class NodeSet extends Publisher
 
     /**
      * Adds a node to the set. Automatically called by the node constructor.
-     * @param {Node} node
+     * @param node
+     * @private
      */
     _add(node: Node)
     {
@@ -65,7 +66,8 @@ export default class NodeSet extends Publisher
 
     /**
      * Removes a node from the set. Automatically called by the node's dispose method.
-     * @param {Node} node
+     * @param node
+     * @private
      */
     _remove(node: Node)
     {
@@ -97,6 +99,16 @@ export default class NodeSet extends Publisher
         } while(prototype.type !== Node.type);
     }
 
+    /**
+     * Removes all nodes from the set.
+     * @private
+     */
+    _clear()
+    {
+        const nodes = this.cloneArray();
+        nodes.forEach(node => this._remove(node));
+    }
+
     get length() {
         return this._list.length;
     }
@@ -109,6 +121,15 @@ export default class NodeSet extends Publisher
     {
         const nodes = this._typeDict[getNodeTypeString(nodeOrType)];
         return nodes && nodes.length > 0;
+    }
+
+    /**
+     * Returns true if the given node is part of this set.
+     * @param node
+     */
+    contains(node: Node): boolean
+    {
+        return !!this._dict[node.id];
     }
 
     /**
@@ -147,6 +168,11 @@ export default class NodeSet extends Publisher
     {
         const nodes = this._typeDict[getNodeTypeString(nodeOrType)];
         return nodes ? nodes[0] as T : undefined;
+    }
+
+    getFirst(): Node | undefined
+    {
+        return this._list[0];
     }
 
     /**
@@ -198,46 +224,55 @@ export default class NodeSet extends Publisher
 
     /**
      * Adds a listener for a node add/remove event.
-     * @param name Name of the event, type name of the node, or node constructor.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
+     * @param type Name of the event, type name of the node, or node constructor.
+     * @param callback Callback function, invoked when the event is emitted.
+     * @param context Optional: this context for the callback invocation.
      */
-    on(name: string | string[] | NodeOrType, callback: (event: any) => void, context?: any): void
+    on<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
+    on(type: NodeOrType, callback: (event: INodeEvent) => void, context?: any);
+    on(type: string | string[], callback: (event: any) => void, context?: any);
+    on(type, callback, context?)
     {
-        if (typeof name !== "string" && !Array.isArray(name)) {
-            name = name.type;
+        if (typeof type !== "string" && !Array.isArray(type)) {
+            type = type.type;
         }
 
-        super.on(name, callback, context);
-    }
-
-    /**
-     * Removes a listener for a node add/remove event.
-     * @param name Name of the event, type name of the node, or node constructor.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    off(name: string | string[] | NodeOrType, callback?: (event: any) => void, context?: any): void
-    {
-        if (typeof name !== "string" && !Array.isArray(name)) {
-            name = name.type;
-        }
-
-        super.off(name, callback, context);
+        super.on(type, callback, context);
     }
 
     /**
      * Adds a one-time listener for a node add/remove event.
-     * @param name Name of the event, type name of the node, or node constructor.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
+     * @param type Name of the event, type name of the node, or node constructor.
+     * @param callback Callback function, invoked when the event is emitted.
+     * @param context Optional: this context for the callback invocation.
      */
-    once(name: string | string[] | NodeOrType, callback: (event: any) => void, context?: any): void
+    once<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
+    once(type: NodeOrType, callback: (event: INodeEvent) => void, context?: any);
+    once(type: string | string[], callback: (event: any) => void, context?: any)
+    once(type, callback, context?)
     {
-        if (typeof name !== "string" && !Array.isArray(name)) {
-            name = name.type;
+        if (typeof type !== "string" && !Array.isArray(type)) {
+            type = type.type;
         }
 
-        super.once(name, callback, context);
+        super.once(type, callback, context);
+    }
+
+    /**
+     * Removes a listener for a node add/remove event.
+     * @param type Name of the event, type name of the node, or node constructor.
+     * @param callback Callback function, invoked when the event is emitted.
+     * @param context Optional: this context for the callback invocation.
+     */
+    off<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback?: (event: T) => void, context?: any);
+    off(type: NodeOrType, callback: (event: INodeEvent) => void, context?: any);
+    off(type: string | string[], callback?: (event: any) => void, context?: any)
+    off(type, callback, context?)
+    {
+        if (typeof type !== "string" && !Array.isArray(type)) {
+            type = type.type;
+        }
+
+        super.off(type, callback, context);
     }
 }

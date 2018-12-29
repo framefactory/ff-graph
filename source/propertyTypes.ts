@@ -15,6 +15,11 @@ import PropertyObject from "./PropertyObject";
 type Vector<T = number> = T[];
 type Matrix<T = number> = T[];
 
+export const labels = {
+    xyzw: [ "X", "Y", "Z", "W" ],
+    rgba: [ "R", "G", "B", "A" ],
+};
+
 export const schemas = {
     boolean: { preset: false },
     boolean_true: { preset: true },
@@ -28,8 +33,8 @@ export const schemas = {
     matrix3: { preset: [1, 0, 0, 0, 1, 0, 0, 0, 1] },
     matrix4: { preset: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
     integer: { preset: 0, step: 1 } as IPropertySchema<number>,
-    colorRGB: { preset: [1, 1, 1], semantic: "color" } as IPropertySchema<Vector>,
-    colorRGBA: { preset: [1, 1, 1, 1], semantic: "color" } as IPropertySchema<Vector>
+    colorRGB: { preset: [1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true } as IPropertySchema<Vector>,
+    colorRGBA: { preset: [1, 1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true } as IPropertySchema<Vector>
 };
 
 export const types = {

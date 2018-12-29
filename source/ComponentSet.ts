@@ -40,7 +40,8 @@ export default class ComponentSet extends Publisher
 
     /**
      * Adds a new component to the set.
-     * @param {Component} component
+     * @param component
+     * @private
      */
     _add(component: Component)
     {
@@ -72,6 +73,7 @@ export default class ComponentSet extends Publisher
     /**
      * Removes a component from the set.
      * @param component
+     * @private
      */
     _remove(component: Component)
     {
@@ -103,6 +105,16 @@ export default class ComponentSet extends Publisher
         } while(prototype.type !== Component.type);
     }
 
+    /**
+     * Removes all components from the set.
+     * @private
+     */
+    _clear()
+    {
+        const components = this.cloneArray();
+        components.forEach(component => this._remove(component));
+    }
+
     get length() {
         return this._list.length;
     }
@@ -121,6 +133,15 @@ export default class ComponentSet extends Publisher
     {
         const components = this._typeDict[getComponentTypeString(componentOrType)];
         return components && components.length > 0;
+    }
+
+    /**
+     * Returns true if the given component is part of this set.
+     * @param component
+     */
+    contains(component: Component): boolean
+    {
+        return !!this._dict[component.id];
     }
 
     /**
@@ -161,6 +182,11 @@ export default class ComponentSet extends Publisher
         return components ? components[0] as T : undefined;
     }
 
+    getFirst(): Component | undefined
+    {
+        return this._list[0];
+    }
+
     /**
      * Returns the component with the given identifier in this set.
      * @param id Identifier of the node to retrieve.
@@ -191,46 +217,55 @@ export default class ComponentSet extends Publisher
 
     /**
      * Adds a listener for a component add/remove event.
-     * @param name Name of the event, type name of the component, or component constructor.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
+     * @param type Name of the event, type name of the component, or component constructor.
+     * @param callback Callback function, invoked when the event is emitted.
+     * @param context Optional: this context for the callback invocation.
      */
-    on(name: string | string[] | ComponentOrType, callback: (event: any) => void, context?: any): void
+    on<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
+    on(type: ComponentOrType, callback: (event: IComponentEvent) => void, context?: any);
+    on(type: string | string[], callback: (event: any) => void, context?: any);
+    on(type, callback, context?)
     {
-        if (typeof name !== "string" && !Array.isArray(name)) {
-            name = name.type;
+        if (typeof type !== "string" && !Array.isArray(type)) {
+            type = type.type;
         }
 
-        super.on(name, callback, context);
-    }
-
-    /**
-     * Removes a listener for a component add/remove event.
-     * @param name Name of the event, type name of the component, or component constructor.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
-     */
-    off(name: string | string[] | ComponentOrType, callback?: (event: any) => void, context?: any): void
-    {
-        if (typeof name !== "string" && !Array.isArray(name)) {
-            name = name.type;
-        }
-
-        super.off(name, callback, context);
+        super.on(type, callback, context);
     }
 
     /**
      * Adds a one-time listener for a component add/remove event.
-     * @param name Name of the event, type name of the component, or component constructor.
-     * @param callback Event handler function.
-     * @param context Optional context object on which to call the event handler function.
+     * @param type Name of the event, type name of the component, or component constructor.
+     * @param callback Callback function, invoked when the event is emitted.
+     * @param context Optional: this context for the callback invocation.
      */
-    once(name: string | string[] | ComponentOrType, callback: (event: any) => void, context?: any): void
+    once<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
+    once(type: ComponentOrType, callback: (event: IComponentEvent) => void, context?: any);
+    once(type: string | string[], callback: (event: any) => void, context?: any);
+    once(type, callback, context?)
     {
-        if (typeof name !== "string" && !Array.isArray(name)) {
-            name = name.type;
+        if (typeof type !== "string" && !Array.isArray(type)) {
+            type = type.type;
         }
 
-        super.once(name, callback, context);
+        super.once(type, callback, context);
+    }
+
+    /**
+     * Removes a listener for a component add/remove event.
+     * @param type Name of the event, type name of the component, or component constructor.
+     * @param callback Callback function, invoked when the event is emitted.
+     * @param context Optional: this context for the callback invocation.
+     */
+    off<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
+    off(type: ComponentOrType, callback: (event: IComponentEvent) => void, context?: any);
+    off(type: string | string[], callback: (event: any) => void, context?: any);
+    off(type, callback, context?)
+    {
+        if (typeof type !== "string" && !Array.isArray(type)) {
+            type = type.type;
+        }
+
+        super.off(type, callback, context);
     }
 }
