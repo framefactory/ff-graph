@@ -53,7 +53,9 @@ export interface IPropertyDisposeEvent extends ITypedEvent<"dispose">
 export default class Property<T = any> extends Publisher
 {
     props: PropertySet;
+
     key: string;
+    scope: object;
 
     value: T;
     changed: boolean;
@@ -99,6 +101,7 @@ export default class Property<T = any> extends Publisher
 
         this.props = null;
         this.key = null;
+        this.scope = null;
 
         this.path = path;
         this.preset = preset;
@@ -122,9 +125,20 @@ export default class Property<T = any> extends Publisher
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
+    setTarget(key: string, scope: object)
+    {
+        this.key = key;
+        this.scope = scope;
+        scope[key] = this.value;
+    }
+
     setValue(value: T, silent?: boolean)
     {
         this.value = value;
+
+        if (this.scope) {
+            this.scope[this.key] = value;
+        }
 
         if (!silent) {
             this.changed = true;
@@ -144,6 +158,10 @@ export default class Property<T = any> extends Publisher
 
     set(silent?: boolean)
     {
+        if (this.scope) {
+            this.scope[this.key] = this.value;
+        }
+
         if (!silent) {
             this.changed = true;
 

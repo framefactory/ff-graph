@@ -68,6 +68,12 @@ export default class PropertyTracker<T extends any = any>
         }
     }
 
+    set() {
+        if (this._property) {
+            this._property.set();
+        }
+    }
+
     attachInput(scope: Node | Graph | System, componentType: ComponentOrType, path: string)
     {
         let component = scope instanceof Node
