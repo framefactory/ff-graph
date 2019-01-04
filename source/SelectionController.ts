@@ -20,9 +20,9 @@ import Controller, {
 
 export { INodeEvent, IComponentEvent };
 
-export type SelectionActions = Actions<Selection>;
+export type SelectionActions = Actions<SelectionController>;
 
-export default class Selection extends Controller<Selection>
+export default class SelectionController extends Controller<SelectionController>
 {
     multiSelect = false;
     exclusiveSelect = true;

@@ -53,21 +53,21 @@ export default class ComponentSet extends Publisher
         this._list.push(component);
         this._dict[component.id] = component;
 
-        let prototype = component;
+        let prototype = Object.getPrototypeOf(component);
 
         const event = { type: "component", add: true, remove: false, component };
         this.emit<IComponentEvent>(event);
 
         // add all types in prototype chain
-        do {
-            prototype = Object.getPrototypeOf(prototype);
+        while (prototype.type !== Component.type) {
             const type = prototype.type;
             (this._typeDict[type] || (this._typeDict[type] = [])).push(component);
 
             event.type = type;
             this.emit<IComponentEvent>(event);
 
-        } while(prototype.type !== Component.type);
+            prototype = Object.getPrototypeOf(prototype);
+        }
     }
 
     /**
@@ -86,14 +86,13 @@ export default class ComponentSet extends Publisher
         delete this._dict[component.id];
         this._list.splice(index, 1);
 
-        let prototype = component;
+        let prototype = Object.getPrototypeOf(component);
 
         const event = { type: "component", add: false, remove: true, component };
         this.emit<IComponentEvent>(event);
 
         // remove all types in prototype chain
-        do {
-            prototype = Object.getPrototypeOf(prototype);
+        while (prototype.type !== Component.type) {
             const type = prototype.type;
             const components = this._typeDict[type];
             index = components.indexOf(component);
@@ -102,7 +101,8 @@ export default class ComponentSet extends Publisher
             event.type = type;
             this.emit<IComponentEvent>(event);
 
-        } while(prototype.type !== Component.type);
+            prototype = Object.getPrototypeOf(prototype);
+        }
     }
 
     /**

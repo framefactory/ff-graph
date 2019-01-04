@@ -14,6 +14,9 @@ import Node, { NodeType } from "./Node";
 import NodeSet, { INodeEvent } from "./NodeSet";
 import System, { IUpdateContext, IRenderContext } from "./System";
 
+import Hierarchy from "./Hierarchy";
+import Subgraph from "./Subgraph";
+
 ////////////////////////////////////////////////////////////////////////////////
 
 export { IComponentEvent, INodeEvent };
@@ -28,7 +31,8 @@ export default class Graph extends Publisher
     protected preRenderList: Component[] = [];
     protected postRenderList: Component[] = [];
 
-    private _parent: Component = null;
+    private _root: Hierarchy;
+    private _parent: Subgraph = null;
     private _sorter = new LinkableSorter();
     private _sortRequested = false;
 
@@ -40,6 +44,18 @@ export default class Graph extends Publisher
 
     get parent() {
         return this._parent;
+    }
+
+    set root(root: Hierarchy) {
+        this._root = root;
+
+        if (this._parent) {
+            this._parent.root = root;
+        }
+    }
+
+    get root() {
+        return this._root;
     }
 
     /**
@@ -119,20 +135,23 @@ export default class Graph extends Publisher
         this._sortRequested = true;
     }
 
-    createNode<T extends Node>(name?: string, id?: string): T;
+    createNode(name?: string, id?: string): Node;
     createNode<T extends Node>(nodeType: NodeType<T>, name?: string, id?: string): T;
     createNode(nodeTypeOrName?, nameOrId?, id?)
     {
-        if (typeof nodeTypeOrName === "string") {
-            id = nameOrId;
-            nameOrId = nodeTypeOrName;
-            nodeTypeOrName = Node;
+        let node, name;
+
+        if (typeof nodeTypeOrName === "function") {
+            node = Node.create(nodeTypeOrName, this, id);
+            name = nameOrId;
+        }
+        else {
+            node = Node.create(this, nameOrId);
+            name = nodeTypeOrName;
         }
 
-        const node = Node.create(nodeTypeOrName, this, id);
-
-        if (nameOrId) {
-            node.name = nameOrId;
+        if (name) {
+            node.name = name;
         }
 
         return node;

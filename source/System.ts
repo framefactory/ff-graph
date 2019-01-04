@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Publisher, { ITypedEvent, IPropagatingEvent } from "@ff/core/Publisher";
+import Publisher from "@ff/core/Publisher";
 
 import Component from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
@@ -13,7 +13,6 @@ import Node from "./Node";
 import NodeSet, { INodeEvent } from "./NodeSet";
 import Graph from "./Graph";
 import Registry from "./Registry";
-import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,9 +28,6 @@ export interface IRenderContext
 
 export default class System extends Publisher
 {
-    static readonly nodeEvent = "node";
-    static readonly componentEvent = "component";
-
     readonly registry: Registry;
     readonly nodes: NodeSet;
     readonly components: ComponentSet;

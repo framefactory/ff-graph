@@ -47,21 +47,21 @@ export default class NodeSet extends Publisher
         this._dict[node.id] = node;
         this._list.push(node);
 
-        let prototype = node;
+        let prototype = Object.getPrototypeOf(node);
 
         const event = { type: "node", add: true, remove: false, node };
         this.emit<INodeEvent>(event);
 
         // add all types in prototype chain
-        do {
-            prototype = Object.getPrototypeOf(prototype);
+        while (prototype.type !== Node.type) {
             const type = prototype.type;
             (this._typeDict[type] || (this._typeDict[type] = [])).push(node);
 
             event.type = type;
             this.emit<INodeEvent>(event);
 
-        } while(prototype.type !== Node.type);
+            prototype = Object.getPrototypeOf(prototype);
+        }
     }
 
     /**
@@ -86,8 +86,7 @@ export default class NodeSet extends Publisher
         this.emit<INodeEvent>(event);
 
         // remove all types in prototype chain
-        do {
-            prototype = Object.getPrototypeOf(prototype);
+        while (prototype.type !== Node.type) {
             const type = prototype.type;
             const nodes = this._typeDict[type];
             const index = nodes.indexOf(node);
@@ -96,7 +95,8 @@ export default class NodeSet extends Publisher
             event.type = type;
             this.emit<INodeEvent>(event);
 
-        } while(prototype.type !== Node.type);
+            prototype = Object.getPrototypeOf(prototype);
+        }
     }
 
     /**

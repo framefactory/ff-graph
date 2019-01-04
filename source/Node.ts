@@ -136,14 +136,20 @@ export default class Node extends Publisher
 {
     static readonly type: string = "Node";
 
-    static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T
+    static create(graph: Graph, id?: string): Node;
+    static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T;
+    static create(nodeTypeOrGraph, graphOrId, id?)
     {
-        if (!type || !type.type) {
-            throw new Error("invalid node type");
-        }
+        let graph, node;
 
-        const Ctor = type as TypeOf<T>;
-        const node = new Ctor(graph, id);
+        if (nodeTypeOrGraph instanceof Graph) {
+            graph = nodeTypeOrGraph;
+            node = new Node(graph, graphOrId);
+        }
+        else {
+            graph = graphOrId;
+            node = new nodeTypeOrGraph(graph, id);
+        }
 
         node.create();
         graph._addNode(node);
@@ -168,6 +174,10 @@ export default class Node extends Publisher
 
         this.id = id || uniqueId(8);
 
+        if (!graph) {
+            throw new RangeError("missing graph");
+        }
+
         this.graph = graph;
         this.system = graph.system;
 
@@ -182,7 +192,7 @@ export default class Node extends Publisher
         return (this.constructor as typeof Node).type;
     }
 
-    get hierarchy(): Hierarchy {
+    get hierarchy() {
         return this.components.get<Hierarchy>("Hierarchy");
     }
 

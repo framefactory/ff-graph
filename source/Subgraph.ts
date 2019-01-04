@@ -8,14 +8,25 @@
 import Component from "./Component";
 import Graph from "./Graph";
 import { IUpdateContext, IRenderContext } from "./System";
+import Hierarchy from "./Hierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export default class Subgraph extends Component
 {
-    static readonly type: string = "Graph";
+    static readonly type: string = "Subgraph";
 
     readonly graph = new Graph(this.system);
+
+    protected _root: Hierarchy;
+
+    set root(root: Hierarchy) {
+        this._root = root;
+    }
+
+    get root() {
+        return this._root;
+    }
 
     update(context: IUpdateContext): boolean
     {

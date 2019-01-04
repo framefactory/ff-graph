@@ -331,6 +331,21 @@ export default class Component extends Publisher implements ILinkable
         this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
     }
 
+    is(componentOrType: ComponentOrType): boolean
+    {
+        const type = getComponentTypeString(componentOrType);
+        let prototype = this;
+
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+            if (prototype.type === type) {
+                return true;
+            }
+        } while (prototype.type !== Component.type);
+
+        return false;
+    }
+
     in<T>(path: string): Property<T>
     {
         const property = this.ins.getProperty(path);
