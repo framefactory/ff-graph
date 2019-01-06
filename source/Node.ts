@@ -347,34 +347,6 @@ export default class Node extends Publisher
         return this.hierarchy ? !!_getChildNode(this, nodeOrType, recursive) : false;
     }
 
-    setValue(path: string, value: any);
-    setValue(componentOrType: ComponentOrType, path: string, value: any);
-    setValue(location, pathOrValue, value?)
-    {
-        let component: Component;
-        let path;
-
-        if (typeof location === "string") {
-            const parts = location.split(":");
-            component = this.components.findByName(parts[0]) || this.components.get(parts[0]);
-            path = parts[1];
-            value = pathOrValue;
-        }
-        else {
-            component = this.components.get(location);
-            path = pathOrValue;
-        }
-
-        if (!component) {
-            throw new Error("component not found");
-        }
-        if (!path) {
-            throw new Error("invalid path");
-        }
-
-        component.in(path).setValue(value);
-    }
-
     deflate()
     {
         const json: any = {

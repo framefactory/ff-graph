@@ -346,30 +346,10 @@ export default class Component extends Publisher implements ILinkable
         return false;
     }
 
-    in<T>(path: string): Property<T>
+    unlinkAllProperties()
     {
-        const property = this.ins.getProperty(path);
-        if (!property) {
-            throw new Error(`${this.type} - input property not found in path: '${path}'`);
-        }
-
-        return property;
-    }
-
-    out<T>(path: string): Property<T>
-    {
-        const property = this.outs.getProperty(path);
-        if (!property) {
-            throw new Error(`${this.type} - output property not found in path: '${path}'`);
-        }
-
-        return property;
-    }
-
-    unlink()
-    {
-        this.ins.unlink();
-        this.outs.unlink();
+        this.ins.unlinkAllProperties();
+        this.outs.unlinkAllProperties();
     }
 
     resetChanged()

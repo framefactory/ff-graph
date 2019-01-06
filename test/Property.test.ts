@@ -92,8 +92,8 @@ export default function() {
             comp0.outs.str1.setValue("World");
             assert.strictEqual(comp1.ins.str0.value, "World");
 
-            comp0.unlink();
-            comp1.unlink();
+            comp0.unlinkAllProperties();
+            comp1.unlinkAllProperties();
         });
 
         test("linking/conversion", function() {

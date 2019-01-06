@@ -74,7 +74,7 @@ export default class PropertyTracker<T extends any = any>
         }
     }
 
-    attachInput(scope: Node | Graph | System, componentType: ComponentOrType, path: string)
+    attachInput(scope: Node | Graph | System, componentType: ComponentOrType, key: string)
     {
         let component = scope instanceof Node
             ? _findInSubtree(componentType, scope)
@@ -84,10 +84,10 @@ export default class PropertyTracker<T extends any = any>
             throw new Error(`component type not found: '${componentType}'`);
         }
 
-        this.property = component.in(path);
+        this.property = component.ins.getProperty(key);
     }
 
-    attachOutput(scope: Node | Graph | System, componentType: ComponentOrType, path: string)
+    attachOutput(scope: Node | Graph | System, componentType: ComponentOrType, key: string)
     {
         let component = scope instanceof Node
             ? _findInSubtree(componentType, scope)
@@ -97,7 +97,7 @@ export default class PropertyTracker<T extends any = any>
             throw new Error(`component type not found: '${componentType}'`);
         }
 
-        this.property = component.out(path);
+        this.property = component.outs.getProperty(key);
     }
 
     detach()
