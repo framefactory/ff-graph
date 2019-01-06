@@ -24,7 +24,8 @@ export interface IPropertySchema<T = any>
     preset: T;
     min?: number;
     max?: number;
-    step?: number;
+    step?: number; // increment/decrement step
+    speed?: number; // steps per pixel
     precision?: number;
     bar?: boolean;
     percent?: boolean;
@@ -390,12 +391,12 @@ export default class Property<T = any> extends Publisher
 
     isInput(): boolean
     {
-        return this.props.isInput();
+        return this.props === this.props.linkable.ins;
     }
 
     isOutput(): boolean
     {
-        return this.props.isOutput();
+        return this.props === this.props.linkable.outs;
     }
 
     isArray(): boolean
@@ -536,9 +537,14 @@ export default class Property<T = any> extends Publisher
         }
     }
 
+    /**
+     * Returns a text representation.
+     */
     toString()
     {
-
+        const schema = this.schema;
+        const typeName = schema.event ? "event" : (schema.options ? "enum" : this.type);
+        return `${this.path} [${typeName}]`
     }
 
     copyValue(): T

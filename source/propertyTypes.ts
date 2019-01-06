@@ -32,7 +32,8 @@ export const schemas = {
     matrix2: { preset: [1, 0, 0, 1] },
     matrix3: { preset: [1, 0, 0, 0, 1, 0, 0, 0, 1] },
     matrix4: { preset: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
-    integer: { preset: 0, step: 1 } as IPropertySchema<number>,
+    integer: { preset: 0, step: 1, speed: 0.34, precision: 0 } as IPropertySchema<number>,
+    natural: { preset: 0, step: 1, speed: 0.34, precision: 0, min: 0 } as IPropertySchema<number>,
     colorRGB: { preset: [1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true } as IPropertySchema<Vector>,
     colorRGBA: { preset: [1, 1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true } as IPropertySchema<Vector>
 };
@@ -76,6 +77,12 @@ export const types = {
 
     Number: (path: string, presetOrSchema?: PresetOrSchema<number>, preset?: number) =>
         new Property<number>(path, presetOrSchema || 0, preset),
+
+    Integer: (path: string, presetOrSchema?: PresetOrSchema<number>, preset?: number) =>
+        new Property<number>(path, schemas.integer, preset),
+
+    Natural: (path: string, presetOrSchema?: PresetOrSchema<number>, preset?: number) =>
+        new Property<number>(path, schemas.natural, preset),
 
     Boolean: (path: string, presetOrSchema?: PresetOrSchema<boolean>, preset?: boolean) =>
         new Property<boolean>(path, presetOrSchema || schemas.boolean, preset),

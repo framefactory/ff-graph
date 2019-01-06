@@ -12,8 +12,6 @@ import Property from "./Property";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const _rePath = /^(\S*?)(\[(\d+)])*$/;
-
 /**
  * To make use of linkable properties and property sets, classes must implement this interface.
  */
@@ -53,8 +51,6 @@ export default class PropertySet extends Publisher
     linkable: ILinkable;
     properties: Property[];
 
-    private _propsByPath: Dictionary<Property>;
-
     constructor(linkable: ILinkable)
     {
         super();
@@ -62,46 +58,35 @@ export default class PropertySet extends Publisher
 
         this.linkable = linkable;
         this.properties = [];
-        this._propsByPath = {};
     }
 
     dispose()
     {
-        this.unlink();
+        this.unlinkAllProperties();
     }
 
-    get length()
+    isInputSet()
     {
-        return this.properties.length;
+        return this === this.linkable.ins;
+    }
+
+    isOutputSet()
+    {
+        return this === this.linkable.outs;
     }
 
     /**
      * Appends properties to the set.
      * @param {U} properties plain object with keys and properties.
+     * @param index Optional index at which to insert the properties.
      * @returns {this & U}
      */
-    append<U extends Dictionary<Property>>(properties: U): this & U
+    append<U extends Dictionary<Property>>(properties: U, index?: number): this & U
     {
         Object.keys(properties).forEach(key => {
             const property = properties[key];
             property.key = key;
-            this.add(property);
-        });
-
-        return this as this & U;
-    }
-
-    /**
-     * Prepends properties to the set.
-     * @param {U} properties plain object with keys and properties.
-     * @returns {this & U}
-     */
-    prepend<U extends Dictionary<Property>>(properties: U): this & U
-    {
-        Object.keys(properties).forEach(key => {
-            const property = properties[key];
-            property.key = key;
-            this.add(property, true);
+            this.insertProperty(property, index);
         });
 
         return this as this & U;
@@ -110,9 +95,9 @@ export default class PropertySet extends Publisher
     /**
      * Adds the given property to the set.
      * @param property The property to be added.
-     * @param prepend If true inserts the property at the beginning of the property list.
+     * @param index Optional index at which to insert the property.
      */
-    add(property: Property, prepend: boolean = false)
+    insertProperty(property: Property, index?: number)
     {
         const key = property.key;
         if (!key) {
@@ -126,8 +111,12 @@ export default class PropertySet extends Publisher
         property.props = this;
 
         this[key] = property;
-        prepend ? this.properties.unshift(property) : this.properties.push(property);
-        this._propsByPath[property.path] = property;
+        if (index === undefined) {
+            this.properties.push(property);
+        }
+        else {
+            this.properties.splice(index, 0, property);
+        }
 
         this.emit<IPropertySetChangeEvent>({ type: "change", what: "add", property });
     }
@@ -136,7 +125,7 @@ export default class PropertySet extends Publisher
      * Removes the given property from the set.
      * @param {Property} property The property to be removed.
      */
-    remove(property: Property)
+    removeProperty(property: Property)
     {
         if (this[property.key] !== property) {
             throw new Error(`property not found in set: ${property.key}`);
@@ -148,24 +137,7 @@ export default class PropertySet extends Publisher
         const index = props.indexOf(property);
         props.slice(index, 1);
 
-        delete this._propsByPath[property.path];
-
         this.emit<IPropertySetChangeEvent>({ type: "change", what: "remove", property });
-    }
-
-    /**
-     * Returns a property by path.
-     * @param {string} path The path of the property to be returned.
-     * @returns {Property}
-     */
-    getProperty(path: string)
-    {
-        const property = this._propsByPath[path];
-        if (!property) {
-            throw new Error(`no property found at path '${path}'`);
-        }
-
-        return property;
     }
 
     /**
@@ -173,7 +145,7 @@ export default class PropertySet extends Publisher
      * @param {string} key The key of the property to be returned.
      * @returns {Property}
      */
-    getPropertyByKey(key: string)
+    getProperty(key: string)
     {
         const property = this[key];
         if (!property) {
@@ -187,106 +159,16 @@ export default class PropertySet extends Publisher
      * Sets the values of multiple properties. Properties are identified by key.
      * @param values Dictionary of property key/value pairs.
      */
-    setValuesByKey(values: Dictionary<any>)
+    setPropertyValues(values: Dictionary<any>)
     {
         Object.keys(values).forEach(
-            key => this.getPropertyByKey(key).setValue(values[key])
+            key => this.getProperty(key).setValue(values[key])
         );
     }
 
-    /**
-     * Sets the value of a property by path.
-     * @param {string} path The path of the property whose value should be set.
-     * @param value
-     */
-    setValue(path: string, value: any)
-    {
-        this.getProperty(path).setValue(value);
-    }
-
-    /**
-     * Returns the value of a property by path.
-     * @param {string} path The path of the property whose value should be returned.
-     * @returns {any}
-     */
-    getValue(path: string)
-    {
-        return this.getProperty(path).value;
-    }
-
-    /**
-     * Returns the changed flag of a property by path.
-     * @param {string} path The path of the property whose change flag should be returned.
-     * @returns {boolean}
-     */
-    hasChanged(path: string): boolean
-    {
-        return this.getProperty(path).changed;
-    }
-
-    /**
-     * Establishes a link from a property in this set to a property in another set, by path.
-     * @param {string} sourcePath Path of the source property, optionally including a sub-index ("[0]").
-     * @param {PropertySet} targetProps Set containing the property to be linked to.
-     * @param {string} targetPath Path of the target property, optionally including a sub-index ("[0]").
-     */
-    linkTo(sourcePath: string, targetProps: PropertySet, targetPath: string)
-    {
-        targetProps.linkFrom(this, sourcePath, targetPath);
-    }
-
-    /**
-     * Establishes a link from a property in another set to a property in this set, by path.
-     * @param {PropertySet} sourceProps Set containing the property to be linked from.
-     * @param {string} sourcePath Path of the source property, optionally including a sub-index ("[0]").
-     * @param {string} targetPath Path of the target property, optionally including a sub-index ("[0]").
-     */
-    linkFrom(sourceProps: PropertySet, sourcePath: string, targetPath: string)
-    {
-        const source = sourceProps.getPropertyWithIndex(sourcePath);
-        const target = this.getPropertyWithIndex(targetPath);
-
-        target.property.linkFrom(source.property, source.index, target.index);
-    }
-
-    /**
-     * Removes a link from a property in this set to a property in another set, by path.
-     * @param {string} sourcePath Path of the source property, optionally including a sub-index ("[0]").
-     * @param {PropertySet} targetProps Set containing the target property.
-     * @param {string} targetPath Path of the target property, optionally including a sub-index ("[0]").
-     */
-    unlinkTo(sourcePath: string, targetProps: PropertySet, targetPath: string)
-    {
-        targetProps.unlinkFrom(this, sourcePath, targetPath);
-    }
-
-    /**
-     * Removes a link from a property in another set to a property in this set, by path.
-     * @param {PropertySet} sourceProps Set containing the source property.
-     * @param {string} sourcePath Path of the source property, optionally including a sub-index ("[0]").
-     * @param {string} targetPath Path of the target property, optionally including a sub-index ("[0]").
-     */
-    unlinkFrom(sourceProps: PropertySet, sourcePath: string, targetPath: string)
-    {
-        const source = sourceProps.getPropertyWithIndex(sourcePath);
-        const target = this.getPropertyWithIndex(targetPath);
-
-        target.property.unlinkFrom(source.property, source.index, target.index);
-    }
-
-    unlink()
+    unlinkAllProperties()
     {
         this.properties.forEach(property => property.unlink());
-    }
-
-    isInput()
-    {
-        return this.linkable.ins === this;
-    }
-
-    isOutput()
-    {
-        return this.linkable.outs === this;
     }
 
     deflate()
@@ -311,7 +193,7 @@ export default class PropertySet extends Publisher
             if (jsonProp.schema) {
                 const property = new Property(jsonProp.path, jsonProp.schema, jsonProp.preset, true);
                 property.key = key;
-                this.add(property);
+                this.insertProperty(property);
             }
         });
     }
@@ -321,25 +203,5 @@ export default class PropertySet extends Publisher
         Object.keys(json).forEach(key => {
             this[key].inflate(json[key], linkableDict);
         });
-    }
-
-    protected getPropertyWithIndex(path: string): { property: Property, index?: number }
-    {
-        const parts = path.match(_rePath);
-        if (!parts) {
-            throw new Error(`malformed path '${path}'`);
-        }
-
-        const property = this._propsByPath[parts[1]];
-        if (!property) {
-            throw new Error(`no property found at path '${path}'`);
-        }
-
-        const result: any = { property };
-        if (parts[2] !== undefined) {
-            result.index = parseInt(parts[3]);
-        }
-
-        return result;
     }
 }
