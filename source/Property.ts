@@ -56,7 +56,6 @@ export default class Property<T = any> extends Publisher
     props: PropertySet;
 
     key: string;
-    scope: object;
 
     value: T;
     changed: boolean;
@@ -102,7 +101,6 @@ export default class Property<T = any> extends Publisher
 
         this.props = null;
         this.key = null;
-        this.scope = null;
 
         this.path = path;
         this.preset = preset;
@@ -126,20 +124,9 @@ export default class Property<T = any> extends Publisher
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
-    setTarget(key: string, scope: object)
-    {
-        this.key = key;
-        this.scope = scope;
-        scope[key] = this.value;
-    }
-
     setValue(value: T, silent?: boolean)
     {
         this.value = value;
-
-        if (this.scope) {
-            this.scope[this.key] = value;
-        }
 
         if (!silent) {
             this.changed = true;
@@ -157,12 +144,17 @@ export default class Property<T = any> extends Publisher
         }
     }
 
-    set(silent?: boolean)
+    copyValue(value: T, silent?: boolean)
     {
-        if (this.scope) {
-            this.scope[this.key] = this.value;
+        if (Array.isArray(value)) {
+            value = value.slice() as any;
         }
 
+        this.setValue(value, silent);
+    }
+
+    set(silent?: boolean)
+    {
         if (!silent) {
             this.changed = true;
 
@@ -178,6 +170,13 @@ export default class Property<T = any> extends Publisher
             outLinks[i].push();
         }
     }
+
+    cloneValue(): T
+    {
+        const value = this.value;
+        return Array.isArray(value) ? value.slice() as any : value;
+    }
+
 
     linkTo(destination: Property, sourceIndex?: number, destinationIndex?: number)
     {
@@ -545,12 +544,6 @@ export default class Property<T = any> extends Publisher
         const schema = this.schema;
         const typeName = schema.event ? "event" : (schema.options ? "enum" : this.type);
         return `${this.path} [${typeName}]`
-    }
-
-    copyValue(): T
-    {
-        const value = this.value;
-        return Array.isArray(value) ? value.slice() as any : value;
     }
 
     protected clonePreset(): T

@@ -155,14 +155,54 @@ export default class PropertySet extends Publisher
         return property;
     }
 
+    getKeys(includeObjects: boolean = false)
+    {
+        const keys = [];
+        this.properties.forEach(property => {
+            if (includeObjects || property.type !== "object") {
+                keys.push(property.key)
+            }
+        });
+        return keys;
+    }
+
+    getValues(includeObjects: boolean = false)
+    {
+        const values = [];
+        this.properties.map(property => {
+            if (includeObjects || property.type !== "object") {
+                values.push(property.value)
+            }
+        });
+        return values;
+    }
+
+    cloneValues(includeObjects: boolean = false)
+    {
+        const values = [];
+        this.properties.map(property => {
+            if (includeObjects || property.type !== "object") {
+                values.push(property.cloneValue())
+            }
+        });
+        return values;
+    }
+
+    setValues(values: Dictionary<any>)
+    {
+        Object.keys(values).forEach(
+            key => this.getProperty(key).value = values[key]
+        );
+    }
+
     /**
      * Sets the values of multiple properties. Properties are identified by key.
      * @param values Dictionary of property key/value pairs.
      */
-    setPropertyValues(values: Dictionary<any>)
+    copyValues(values: Dictionary<any>)
     {
         Object.keys(values).forEach(
-            key => this.getProperty(key).setValue(values[key])
+            key => this.getProperty(key).copyValue(values[key])
         );
     }
 

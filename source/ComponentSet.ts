@@ -176,15 +176,31 @@ export default class ComponentSet extends Publisher
      * Returns the first found component in this set of the given type.
      * @param componentOrType Type of component to return.
      */
-    get<T extends Component>(componentOrType: ComponentOrType<T> | T): T | undefined
+    get<T extends Component = Component>(componentOrType?: ComponentOrType<T> | T): T | undefined
     {
-        const components = this._typeDict[getComponentTypeString(componentOrType)];
-        return components ? components[0] as T : undefined;
+        if (componentOrType) {
+            const components = this._typeDict[getComponentTypeString(componentOrType)];
+            return components ? components[0] as T : undefined;
+        }
+
+        return this._list[0] as T;
     }
 
-    getFirst(): Component | undefined
+    /**
+     * Returns the first found component in this set of the given type.
+     * Throws an exception if there is no component of the specified type.
+     * @param componentOrType Type of component to return.
+     */
+    getSafe<T extends Component = Component>(componentOrType: ComponentOrType<T> | T): T
     {
-        return this._list[0];
+        const type = getComponentTypeString(componentOrType);
+        const components = this._typeDict[type];
+        const component = components ? components[0] as T : undefined;
+        if (!component) {
+            throw new Error(`missing component: '${type}'`);
+        }
+
+        return component;
     }
 
     /**

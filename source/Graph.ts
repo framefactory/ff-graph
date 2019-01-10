@@ -30,6 +30,7 @@ export default class Graph extends Publisher
 
     protected preRenderList: Component[] = [];
     protected postRenderList: Component[] = [];
+    protected lateUpdateList: Component[] = [];
 
     private _root: Hierarchy;
     private _parent: Subgraph = null;
@@ -123,6 +124,14 @@ export default class Graph extends Publisher
         const components = this.postRenderList;
         for (let i = 0, n = components.length; i < n; ++i) {
             components[i].postRender(context);
+        }
+    }
+
+    lateUpdate(context: IUpdateContext)
+    {
+        const components = this.lateUpdateList;
+        for (let i = 0, n = components.length; i < n; ++i) {
+            components[i].lateUpdate(context);
         }
     }
 
@@ -225,6 +234,9 @@ export default class Graph extends Publisher
         if (component.postRender) {
             this.postRenderList.push(component);
         }
+        if (component.lateUpdate) {
+            this.lateUpdateList.push(component);
+        }
     }
 
     _removeComponent(component: Component)
@@ -237,6 +249,9 @@ export default class Graph extends Publisher
         }
         if (component.postRender) {
             this.postRenderList.splice(this.preRenderList.indexOf(component), 1);
+        }
+        if (component.lateUpdate) {
+            this.lateUpdateList.splice(this.lateUpdateList.indexOf(component), 1);
         }
     }
 }

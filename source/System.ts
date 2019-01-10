@@ -74,6 +74,11 @@ export default class System extends Publisher
         this.graph.postRender(context);
     }
 
+    lateUpdate(context: IUpdateContext)
+    {
+        this.graph.lateUpdate(context);
+    }
+
     deflate()
     {
         return this.graph.deflate();
