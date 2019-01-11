@@ -161,18 +161,34 @@ export default class NodeSet extends Publisher
     }
 
     /**
-     * Returns the first found component in this set of the given type.
-     * @param nodeOrType Type of component to return.
+     * Returns the first found node in this set of the given type.
+     * @param nodeOrType Type of node to return.
      */
-    get<T extends Node>(nodeOrType: NodeOrType<T>): T | undefined
+    get<T extends Node = Node>(nodeOrType?: NodeOrType<T>): T | null
     {
-        const nodes = this._typeDict[getNodeTypeString(nodeOrType)];
-        return nodes ? nodes[0] as T : undefined;
+        if (nodeOrType) {
+            const nodes = this._typeDict[getNodeTypeString(nodeOrType)];
+            return nodes ? nodes[0] as T : null;
+        }
+
+        return this._list[0] as T || null;
     }
 
-    getFirst(): Node | undefined
+    /**
+     * Returns the first found node in this set of the given type.
+     * Throws an exception if there is no node of the specified type.
+     * @param nodeOrType Type of node to return.
+     */
+    safeGet<T extends Node = Node>(nodeOrType: NodeOrType<T>): T
     {
-        return this._list[0];
+        const type = getNodeTypeString(nodeOrType);
+        const nodes = this._typeDict[type];
+        const node = nodes ? nodes[0] as T : undefined;
+        if (!node) {
+            throw new Error(`missing node: '${type}'`);
+        }
+
+        return node;
     }
 
     /**

@@ -176,14 +176,14 @@ export default class ComponentSet extends Publisher
      * Returns the first found component in this set of the given type.
      * @param componentOrType Type of component to return.
      */
-    get<T extends Component = Component>(componentOrType?: ComponentOrType<T> | T): T | undefined
+    get<T extends Component = Component>(componentOrType?: ComponentOrType<T> | T): T | null
     {
         if (componentOrType) {
             const components = this._typeDict[getComponentTypeString(componentOrType)];
-            return components ? components[0] as T : undefined;
+            return components ? components[0] as T : null;
         }
 
-        return this._list[0] as T;
+        return this._list[0] as T || null;
     }
 
     /**
@@ -191,7 +191,7 @@ export default class ComponentSet extends Publisher
      * Throws an exception if there is no component of the specified type.
      * @param componentOrType Type of component to return.
      */
-    getSafe<T extends Component = Component>(componentOrType: ComponentOrType<T> | T): T
+    safeGet<T extends Component = Component>(componentOrType: ComponentOrType<T> | T): T
     {
         const type = getComponentTypeString(componentOrType);
         const components = this._typeDict[type];
@@ -204,12 +204,12 @@ export default class ComponentSet extends Publisher
     }
 
     /**
-     * Returns the component with the given identifier in this set.
-     * @param id Identifier of the node to retrieve.
+     * Returns a component by its identifier.
+     * @param id A component's identifier.
      */
-    getById(id: string): Component | undefined
+    getById(id: string): Component | null
     {
-        return this._dict[id];
+        return this._dict[id] || null;
     }
 
     /**
@@ -218,7 +218,7 @@ export default class ComponentSet extends Publisher
      * @param name Name of the component to find.
      * @param componentOrType Optional type restriction.
      */
-    findByName<T extends Component>(name: string, componentOrType?: ComponentOrType<T>): T | undefined
+    findByName<T extends Component>(name: string, componentOrType?: ComponentOrType<T>): T | null
     {
         const components = this.getArray(componentOrType);
 
