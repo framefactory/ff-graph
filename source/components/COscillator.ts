@@ -18,9 +18,9 @@ const offsetSchema = { preset: 0, min: 0, max: 1, bar: true };
 export enum ETimeBase { Relative, Absolute }
 export enum EInterpolationMode { Forward, Backward, Alternate }
 
-export default class Oscillator extends Component
+export default class COscillator extends Component
 {
-    static readonly type: string = "Oscillator";
+    static readonly type: string = "COscillator";
 
     ins = this.ins.append({
         run: types.Boolean("Control.Run"),

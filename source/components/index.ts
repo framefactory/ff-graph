@@ -7,17 +7,20 @@
 
 import Registry from "../Registry";
 
-import Oscillator from "./Oscillator";
+import COscillator from "./COscillator";
+import CSelection from "./CSelection";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export {
-    Oscillator
+    COscillator,
+    CSelection
 };
 
 export function registerComponents(registry: Registry)
 {
     registry.registerComponentType([
-        Oscillator
+        COscillator,
+        CSelection
     ]);
 }

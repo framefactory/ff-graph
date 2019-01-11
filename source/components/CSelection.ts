@@ -5,54 +5,60 @@
  * License: MIT
  */
 
-import System from "./System";
-import Node from "./Node";
-import NodeSet, { INodeEvent } from "./NodeSet";
-import Component from "./Component";
-import ComponentSet, { IComponentEvent } from "./ComponentSet";
+import Commander from "@ff/core/Commander";
+import { types } from "../propertyTypes";
 
-import Controller, {
-    Commander,
-    Actions
-} from "@ff/core/Controller";
+import Component from "../Component";
+import ComponentSet, { IComponentEvent } from "../ComponentSet";
+import Node from "../Node";
+import NodeSet, { INodeEvent } from "../NodeSet";
+
+import CController, { Actions } from "./CController";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { INodeEvent, IComponentEvent };
 
-export type SelectionActions = Actions<SelectionController>;
+export type SelectionActions = Actions<CSelection>;
 
-export default class SelectionController extends Controller<SelectionController>
+export default class CSelection extends CController<CSelection>
 {
+    static readonly type: string = "CSelection";
+
+    outs = this.outs.append({
+        selNodeCount: types.Integer("Selection.Nodes"),
+        selComponentCount: types.Integer("Selection.Components")
+    });
+
     multiSelect = false;
     exclusiveSelect = true;
 
-    readonly system: System;
-    readonly actions: SelectionActions;
+    readonly selectedNodes = new NodeSet();
+    readonly selectedComponents = new ComponentSet();
 
-    readonly nodes = new NodeSet();
-    readonly components = new ComponentSet();
-
-
-    constructor(system: System, commander: Commander)
+    constructor(node: Node, id?: string)
     {
-        super(commander);
+        super(node, id);
         this.addEvents("select-node", "select-component", "update");
 
-        this.system = system;
-        this.actions = this.createActions(commander);
+        this.selectedNodes.on<INodeEvent>("node", e => this.onSelectNode(e.node, e.add));
+        this.selectedComponents.on<IComponentEvent>("component", e => this.onSelectComponent(e.component, e.add));
+    }
 
-        this.nodes.on<INodeEvent>("node", e => this.onSelectNode(e.node, e.add));
-        this.components.on<IComponentEvent>("component", e => this.onSelectComponent(e.component, e.add));
+    create()
+    {
+        super.create();
 
-        system.nodes.on("node", this.onSystemNode, this);
-        system.components.on("component", this.onSystemComponent, this);
+        this.system.nodes.on("node", this.onSystemNode, this);
+        this.system.components.on("component", this.onSystemComponent, this);
     }
 
     dispose()
     {
         this.system.nodes.off("node", this.onSystemNode, this);
         this.system.components.off("component", this.onSystemComponent, this);
+
+        super.dispose();
     }
 
     createActions(commander: Commander)
@@ -63,13 +69,16 @@ export default class SelectionController extends Controller<SelectionController>
             }),
             selectComponent: commander.register({
                 name: "Select Component", do: this.selectComponent, target: this
+            }),
+            clearSelection: commander.register({
+                name: "Clear Selection", do: this.clearSelection, target: this
             })
         };
     }
 
     selectNode(node?: Node, toggle: boolean = false)
     {
-        const selectedNodes = this.nodes;
+        const selectedNodes = this.selectedNodes;
 
         const multiSelect = this.multiSelect && toggle;
 
@@ -80,7 +89,7 @@ export default class SelectionController extends Controller<SelectionController>
         }
         else {
             if (this.exclusiveSelect) {
-                this.components._clear();
+                this.selectedComponents._clear();
             }
             if (!multiSelect) {
                 selectedNodes._clear();
@@ -89,11 +98,13 @@ export default class SelectionController extends Controller<SelectionController>
                 selectedNodes._add(node);
             }
         }
+
+        this.updateStats();
     }
 
     selectComponent(component?: Component, toggle: boolean = false)
     {
-        const selectedComponents = this.components;
+        const selectedComponents = this.selectedComponents;
 
         const multiSelect = this.multiSelect && toggle;
 
@@ -104,7 +115,7 @@ export default class SelectionController extends Controller<SelectionController>
         }
         else {
             if (this.exclusiveSelect) {
-                this.nodes._clear();
+                this.selectedNodes._clear();
             }
             if (!multiSelect) {
                 selectedComponents._clear();
@@ -113,12 +124,16 @@ export default class SelectionController extends Controller<SelectionController>
                 selectedComponents._add(component);
             }
         }
+
+        this.updateStats();
     }
 
     clearSelection()
     {
-        this.nodes._clear();
-        this.components._clear();
+        this.selectedNodes._clear();
+        this.selectedComponents._clear();
+
+        this.updateStats();
     }
 
     protected onSelectNode(node: Node, selected: boolean)
@@ -131,15 +146,22 @@ export default class SelectionController extends Controller<SelectionController>
 
     protected onSystemNode(event: INodeEvent)
     {
-        if (event.remove && this.nodes.contains(event.node)) {
-            this.nodes._remove(event.node);
+        if (event.remove && this.selectedNodes.contains(event.node)) {
+            this.selectedNodes._remove(event.node);
         }
     }
 
     protected onSystemComponent(event: IComponentEvent)
     {
-        if (event.remove && this.components.contains(event.component)) {
-            this.components._remove(event.component);
+        if (event.remove && this.selectedComponents.contains(event.component)) {
+            this.selectedComponents._remove(event.component);
         }
+    }
+
+    protected updateStats()
+    {
+        const outs = this.outs;
+        outs.selNodeCount.setValue(this.selectedNodes.length);
+        outs.selComponentCount.setValue(this.selectedComponents.length);
     }
 }
