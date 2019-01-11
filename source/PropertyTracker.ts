@@ -8,9 +8,10 @@
 import System from "./System";
 import Graph from "./Graph";
 import Node from "./Node";
-import Hierarchy from "./Hierarchy";
 import { ComponentOrType } from "./Component";
 import Property, { IPropertyDisposeEvent } from "./Property";
+
+import CHierarchy from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,7 +21,7 @@ const _findInSubtree = function(componentType: ComponentOrType, node: Node) {
         return component;
     }
 
-    const hierarchy = node.components.get(Hierarchy);
+    const hierarchy = node.components.get(CHierarchy);
     if (!hierarchy || hierarchy.children.length === 0) {
         return null;
     }

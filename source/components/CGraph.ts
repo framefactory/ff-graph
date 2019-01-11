@@ -5,22 +5,23 @@
  * License: MIT
  */
 
-import Component from "./Component";
-import Graph from "./Graph";
-import { IUpdateContext, IRenderContext } from "./System";
-import Hierarchy from "./Hierarchy";
+import Component from "../Component";
+import Graph from "../Graph";
+import { IUpdateContext, IRenderContext } from "../System";
+
+import CHierarchy from "./CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class Subgraph extends Component
+export default class CGraph extends Component
 {
-    static readonly type: string = "Subgraph";
+    static readonly type: string = "CGraph";
 
     readonly graph = new Graph(this.system);
 
-    protected _root: Hierarchy;
+    protected _root: CHierarchy;
 
-    set root(root: Hierarchy) {
+    set root(root: CHierarchy) {
         this._root = root;
     }
 

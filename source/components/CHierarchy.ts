@@ -7,15 +7,15 @@
 
 import { ITypedEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrType } from "./Component";
-import Node from "./Node";
+import Component, { ComponentOrType } from "../Component";
+import Node from "../Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Node };
 
 const _getChildComponent = <T extends Component>(
-    hierarchy: Hierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T | null => {
+    hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T | null => {
 
     let component;
 
@@ -41,7 +41,7 @@ const _getChildComponent = <T extends Component>(
 };
 
 const _getChildComponents = <T extends Component>(
-    hierarchy: Hierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T[] => {
+    hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T[] => {
 
     let components = [];
 
@@ -67,8 +67,8 @@ const _getChildComponents = <T extends Component>(
  */
 export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
 {
-    parent: Hierarchy;
-    child: Hierarchy;
+    parent: CHierarchy;
+    child: CHierarchy;
     add: boolean;
     remove: boolean;
 }
@@ -79,27 +79,27 @@ export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
  * ### Events
  * - *"change"* - emits [[IHierarchyChangeEvent]] after the instance's state has changed.
  */
-export default class Hierarchy extends Component
+export default class CHierarchy extends Component
 {
-    static readonly type: string = "Hierarchy";
+    static readonly type: string = "CHierarchy";
 
-    protected _parent: Hierarchy = null;
-    protected _children: Hierarchy[] = [];
+    protected _parent: CHierarchy = null;
+    protected _children: CHierarchy[] = [];
 
     /**
      * Returns the parent component of this.
-     * @returns {Hierarchy}
+     * @returns {CHierarchy}
      */
-    get parent(): Hierarchy
+    get parent(): CHierarchy
     {
         return this._parent;
     }
 
     /**
      * Returns an array of child components of this.
-     * @returns {Readonly<Hierarchy[]>}
+     * @returns {Readonly<CHierarchy[]>}
      */
-    get children(): Readonly<Hierarchy[]>
+    get children(): Readonly<CHierarchy[]>
     {
         return this._children || [];
     }
@@ -123,7 +123,7 @@ export default class Hierarchy extends Component
      */
     getRoot<T extends Component>(componentOrType: ComponentOrType<T>): T | null
     {
-        let root: Hierarchy = this;
+        let root: CHierarchy = this;
         while(root._parent) {
             root = root._parent;
         }
@@ -195,9 +195,9 @@ export default class Hierarchy extends Component
     /**
      * Adds another hierarchy component as a child to this component.
      * Emits a hierarchy event at this component, its node and all their parents.
-     * @param {Hierarchy} component
+     * @param {CHierarchy} component
      */
-    addChild(component: Hierarchy)
+    addChild(component: CHierarchy)
     {
         if (component._parent) {
             throw new Error("component should not have a parent");
@@ -223,9 +223,9 @@ export default class Hierarchy extends Component
     /**
      * Removes a child component from this hierarchy component.
      * Emits a hierarchy event at this component, its node and all their parents.
-     * @param {Hierarchy} component
+     * @param {CHierarchy} component
      */
-    removeChild(component: Hierarchy)
+    removeChild(component: CHierarchy)
     {
         if (component._parent !== this) {
             throw new Error("component not a child of this");

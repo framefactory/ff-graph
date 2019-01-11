@@ -13,7 +13,7 @@ import Property from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
 import Node, { IComponentEvent } from "./Node";
 import System, { IUpdateContext, IRenderContext } from "./System";
-import Hierarchy from "./Hierarchy";
+import CHierarchy from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -228,7 +228,7 @@ export default class Component extends Publisher implements ILinkable
     }
 
     get hierarchy() {
-        return this.node.components.get("Hierarchy") as Hierarchy;
+        return this.node.components.get<CHierarchy>("CHierarchy");
     }
 
     get isNodeSingleton() {
@@ -419,7 +419,7 @@ export default class Component extends Publisher implements ILinkable
                 }
             }
 
-            const hierarchy = target.components.get("Hierarchy") as Hierarchy;
+            const hierarchy = target.components.get<CHierarchy>("CHierarchy");
             target = hierarchy ? hierarchy.parent : null;
 
             if (!target) {
@@ -434,7 +434,7 @@ export default class Component extends Publisher implements ILinkable
 
     propagateDown(event: IPropagatingEvent<string>)
     {
-        const hierarchy = this.components.get("Hierarchy") as Hierarchy;
+        const hierarchy = this.components.get<CHierarchy>("CHierarchy");
         const children = hierarchy ? hierarchy.children : null;
 
         for (let i = 0, n = children.length; i < n; ++i) {

@@ -14,8 +14,8 @@ import Node, { NodeType } from "./Node";
 import NodeSet, { INodeEvent } from "./NodeSet";
 import System, { IUpdateContext, IRenderContext } from "./System";
 
-import Hierarchy from "./Hierarchy";
-import Subgraph from "./Subgraph";
+import CHierarchy from "./components/CHierarchy";
+import CGraph from "./components/CGraph";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,8 +32,8 @@ export default class Graph extends Publisher
     protected postRenderList: Component[] = [];
     protected lateUpdateList: Component[] = [];
 
-    private _root: Hierarchy;
-    private _parent: Subgraph = null;
+    private _root: CHierarchy;
+    private _parent: CGraph = null;
     private _sorter = new LinkableSorter();
     private _sortRequested = false;
 
@@ -47,7 +47,7 @@ export default class Graph extends Publisher
         return this._parent;
     }
 
-    set root(root: Hierarchy) {
+    set root(root: CHierarchy) {
         this._root = root;
 
         if (this._parent) {

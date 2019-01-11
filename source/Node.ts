@@ -14,7 +14,8 @@ import Component, { ComponentOrType, getComponentTypeString } from "./Component"
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
 import Graph from "./Graph";
 import System from "./System";
-import Hierarchy from "./Hierarchy";
+
+import CHierarchy from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -193,7 +194,7 @@ export default class Node extends Publisher
     }
 
     get hierarchy() {
-        return this.components.get<Hierarchy>("Hierarchy");
+        return this.components.get<CHierarchy>("CHierarchy");
     }
 
     /**

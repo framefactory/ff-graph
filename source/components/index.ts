@@ -7,12 +7,18 @@
 
 import Registry from "../Registry";
 
+import CController from "./CController";
+import CGraph from "./CGraph";
+import CHierarchy from "./CHierarchy";
 import COscillator from "./COscillator";
 import CSelection from "./CSelection";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export {
+    CController,
+    CGraph,
+    CHierarchy,
     COscillator,
     CSelection
 };
@@ -20,6 +26,8 @@ export {
 export function registerComponents(registry: Registry)
 {
     registry.registerComponentType([
+        CGraph,
+        CHierarchy,
         COscillator,
         CSelection
     ]);

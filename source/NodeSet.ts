@@ -10,6 +10,8 @@ import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import Node, { NodeOrType, getNodeTypeString } from "./Node";
 
+import CHierarchy from "./components/CHierarchy";
+
 ////////////////////////////////////////////////////////////////////////////////
 
 const _EMPTY_ARRAY = [];
@@ -229,7 +231,7 @@ export default class NodeSet extends Publisher
         const result = [];
 
         for (let i = 0, n = nodes.length; i < n; ++i) {
-            const hierarchy: any = nodes[i].components.get("Hierarchy");
+            const hierarchy = nodes[i].components.get<CHierarchy>("CHierarchy");
             if (!hierarchy || !hierarchy.parent) {
                 result.push(nodes[i]);
             }
