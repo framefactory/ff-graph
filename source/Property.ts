@@ -109,13 +109,12 @@ export default class Property<T = any> extends Publisher
         this.schema = schema;
         this.user = user || false;
 
-        this.value = null;
-        this.changed = !schema.event;
-
         this.inLinks = [];
         this.outLinks = [];
 
+        this.value = null;
         this.reset();
+        this.changed = !schema.event;
     }
 
     dispose()
@@ -315,10 +314,6 @@ export default class Property<T = any> extends Publisher
 
     reset()
     {
-        if (this.hasInLinks()) {
-            throw new Error("can't reset property with input links");
-        }
-
         let value;
 
         if (this.isMulti()) {
