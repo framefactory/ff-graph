@@ -25,7 +25,7 @@ export type TemplatesFromProperties<T> = { [P in keyof T]: TemplateFromProperty<
 
 export interface IPropertyChangeEvent extends ITypedEvent<"change">
 {
-    what: string;
+    what: "path" | "options";
     property: Property;
 }
 
@@ -44,7 +44,6 @@ export default class Property<T = any> extends Publisher
 
     readonly props: PropertySet;
     readonly key: string;
-    readonly path: string;
     readonly type: PropertyType;
     readonly schema: Readonly<IPropertySchema<T>>;
     readonly user: boolean;
@@ -52,6 +51,8 @@ export default class Property<T = any> extends Publisher
 
     readonly inLinks: PropertyLink[];
     readonly outLinks: PropertyLink[];
+
+    private _path: string;
 
     /**
      * Creates a new linkable property.
@@ -75,7 +76,6 @@ export default class Property<T = any> extends Publisher
 
         this.props = props;
         this.key = key;
-        this.path = path;
         this.type = typeof (isArray ? preset[0] : preset) as PropertyType;
         this.schema = schema;
         this.user = user || false;
@@ -84,9 +84,20 @@ export default class Property<T = any> extends Publisher
         this.inLinks = [];
         this.outLinks = [];
 
+        this._path = path;
+
         this.value = null;
         this.reset();
         this.changed = !schema.event;
+    }
+
+    get path() {
+        return this._path;
+    }
+
+    set path(path: string) {
+        this._path = path;
+        this.emit<IPropertyChangeEvent>({ type: "change", what: "path", property: this });
     }
 
     dispose()
