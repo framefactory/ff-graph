@@ -9,11 +9,12 @@ import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
-import Property from "./Property";
+import Property, { IPropertyTemplate, PropertiesFromTemplates } from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
 import Node, { IComponentEvent } from "./Node";
 import System, { IUpdateContext, IRenderContext } from "./System";
 import CHierarchy from "./components/CHierarchy";
+import CTransform from "../../ff-scene/source/components/CTransform";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -456,15 +457,16 @@ export default class Component extends Publisher implements ILinkable
         }
     }
 
-    /**
-     * Use "this.ins.append" instead.
-     * @deprecated
-     * @param {T} props
-     * @returns {PropertySet & T}
-     */
-    protected makeProps<T extends Dictionary<Property>>(props: T): PropertySet & T
+    protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
+        (templates: U, index?: number) : PropertySet & T["ins"] & PropertiesFromTemplates<U>
     {
-        throw new Error("'makeProps' is deprecated. Use 'this.ins.append' instead.");
+        return this.ins.createPropertiesFromTemplates(templates, index) as any;
+    }
+
+    protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
+    (templates: U, index?: number) : PropertySet & T["outs"] & PropertiesFromTemplates<U>
+    {
+        return this.outs.createPropertiesFromTemplates(templates, index) as any;
     }
 
     deflate()

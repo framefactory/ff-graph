@@ -33,13 +33,13 @@ export default class PropertyTrack
         if (property.isArray()) {
             for (let i = 0, n = property.elementCount; i < n; ++i) {
                 const track = new TrackType();
-                track.setDefaultValue(property.preset[i]);
+                track.setDefaultValue(property.schema.preset[i]);
                 this.tracks.push(track);
             }
         }
         else {
             const track = new TrackType();
-            track.setDefaultValue(property.preset);
+            track.setDefaultValue(property.schema.preset);
             this.tracks.push(track);
         }
     }

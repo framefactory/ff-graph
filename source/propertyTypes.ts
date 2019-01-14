@@ -5,12 +5,38 @@
  * License: MIT
  */
 
-import { enumToArray, TypeOf, PropOf } from "@ff/core/types";
-
-import Property, { IPropertySchema, PresetOrSchema } from "./Property";
-import PropertyObject from "./PropertyObject";
+import { TypeOf, PropOf, enumToArray, Dictionary } from "@ff/core/types";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export interface IPropertyTemplate<T = any>
+{
+    path: string;
+    schema: IPropertySchema<T>;
+}
+
+export type TemplateDict = Dictionary<IPropertyTemplate>;
+
+export interface IPropertySchema<T = any>
+{
+    preset: T;
+    min?: number;
+    max?: number;
+    step?: number; // increment/decrement step
+    speed?: number; // steps per pixel
+    precision?: number;
+    bar?: boolean;
+    percent?: boolean;
+    options?: string[];
+    enum?: any;
+    labels?: string[];
+    objectType?: TypeOf<T>;
+    multi?: boolean;
+    event?: boolean;
+    semantic?: string;
+}
+
+export type SchemaProps<T> = Partial<IPropertySchema<T>> | T;
 
 type Vector<T = number> = T[];
 type Matrix<T = number> = T[];
@@ -20,112 +46,68 @@ export const labels = {
     rgba: [ "R", "G", "B", "A" ],
 };
 
-export const schemas = {
-    boolean: { preset: false },
-    boolean_true: { preset: true },
-    vector2: { preset: [0, 0] },
-    vector2_ones: { preset: [1, 1] },
-    vector3: { preset: [0, 0, 0] },
-    vector3_ones: { preset: [1, 1, 1] },
-    vector4: { preset: [0, 0, 0, 0] },
-    vector4_ones: { preset: [1, 1, 1, 1] },
-    matrix2: { preset: [1, 0, 0, 1] },
-    matrix3: { preset: [1, 0, 0, 0, 1, 0, 0, 0, 1] },
-    matrix4: { preset: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
-    integer: { preset: 0, step: 1, speed: 0.34, precision: 0 } as IPropertySchema<number>,
-    natural: { preset: 0, step: 1, speed: 0.34, precision: 0, min: 0 } as IPropertySchema<number>,
-    colorRGB: { preset: [1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true } as IPropertySchema<Vector>,
-    colorRGBA: { preset: [1, 1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true } as IPropertySchema<Vector>
+const parseProps = function<T>(props: SchemaProps<T>) {
+    if (props === undefined || (typeof props === "object" && !Array.isArray(props))) {
+        return props;
+    }
+
+    return { preset: props } as SchemaProps<T>;
+};
+
+export const makeType = function<T>(schema: IPropertySchema<T>, path: string, props: SchemaProps<T>) {
+    props = parseProps(props);
+    return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<T>;
+};
+
+export const makeEnumType = function<T>(enumeration: T, path: string, props: SchemaProps<PropOf<T>>) {
+    props = parseProps(props);
+    const schema = { enum: enumeration, options: enumToArray(enumeration), preset: 0 as any as PropOf<T> };
+    return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<PropOf<T>>;
+};
+
+export const makeOptionType = function(options: string[], path: string, props: SchemaProps<number>) {
+    props = parseProps(props);
+    const schema = { options, preset: 0 };
+    return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<number>;
+};
+
+export const schemas: Dictionary<IPropertySchema> = {
+    Number: { preset: 0 },
+    Integer: { preset: 0, step: 1, speed: 0.34, precision: 0 },
+    Natural: { preset: 0, step: 1, speed: 0.34, precision: 0, min: 0 },
+    Vector2: { preset: [0, 0] },
+    Vector3: { preset: [0, 0, 0] },
+    Vector4: { preset: [0, 0, 0, 0] },
+    Matrix2: { preset: [1, 0, 0, 1] },
+    Matrix3: { preset: [1, 0, 0, 0, 1, 0, 0, 0, 1] },
+    Matrix4: { preset: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] },
+    Scale2: { preset: [1, 1] },
+    Scale3: { preset: [1, 1, 1] },
+    ColorRGB: { preset: [1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true },
+    ColorRGBA: { preset: [1, 1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true },
+    Boolean: { preset: false },
+    String: { preset: "" },
+    Event: { preset: 0, event: true }
 };
 
 export const types = {
-    getOptionIndex: function(arr: any[], index: number): number {
-        const n = arr.length;
-        const i = Math.trunc(index);
-        return i < 0 ? 0 : (i >= n ? 0 : i);
-    },
-
-    getOptionValue: function<T>(arr: T[], index: number): T {
-        const n = arr.length;
-        const i = Math.trunc(index);
-        return arr[i < 0 ? 0 : (i >= n ? 0 : i)];
-    },
-
-    getEnumIndex: function<T>(e: T, index: any): PropOf<T> {
-        const i = Math.trunc(index);
-        return (e[i] ? i : 0) as any as PropOf<T>;
-    },
-
-    getEnumName: function<T>(e: T, index: any): string {
-        const i = Math.trunc(index);
-        return e[i] || e[0];
-    },
-
-    isEnumIndex: function<T>(enumeration: number, index: number): boolean {
-        return enumeration === Math.trunc(index);
-    },
-
-    toInt: function(v: any) {
-        return Math.trunc(v);
-    },
-
-    Property: <T>(path: string, presetOrSchema: PresetOrSchema<T>, preset?: T) =>
-        new Property<T>(path, presetOrSchema, preset),
-
-    Event: (path: string) =>
-        new Property<number>(path, { event: true, preset: 0 }),
-
-    Number: (path: string, presetOrSchema?: PresetOrSchema<number>, preset?: number) =>
-        new Property<number>(path, presetOrSchema || 0, preset),
-
-    Integer: (path: string, presetOrSchema?: PresetOrSchema<number>, preset?: number) =>
-        new Property<number>(path, schemas.integer, preset),
-
-    Natural: (path: string, presetOrSchema?: PresetOrSchema<number>, preset?: number) =>
-        new Property<number>(path, schemas.natural, preset),
-
-    Boolean: (path: string, presetOrSchema?: PresetOrSchema<boolean>, preset?: boolean) =>
-        new Property<boolean>(path, presetOrSchema || schemas.boolean, preset),
-
-    Boolean_true: (path: string, presetOrSchema?: PresetOrSchema<boolean>, preset?: boolean) =>
-        new Property<boolean>(path, presetOrSchema || schemas.boolean_true, preset),
-
-    String: (path: string, presetOrSchema?: PresetOrSchema<string>, preset?: string) =>
-        new Property<string>(path, presetOrSchema || "", preset),
-
-    Enum: <T>(path: string, enumeration: T, preset?: number) =>
-        new Property<PropOf<T>>(path, { options: enumToArray(enumeration), preset: (preset || 0) as any as PropOf<T> }),
-
-    Option: (path: string, options?: string[], preset?: number) =>
-        new Property<number>(path, { options: options || [], preset: preset || 0 }),
-
-    Object: <T>(path: string, type?: TypeOf<PropertyObject<T>>) =>
-        new Property<PropertyObject<T>>(path, type || null),
-
-    Vector2: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
-        new Property<Vector>(path, presetOrSchema || schemas.vector2, preset),
-
-    Vector2_ones: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
-        new Property<Vector>(path, presetOrSchema || schemas.vector2_ones, preset),
-
-    Vector3: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
-        new Property<Vector>(path, presetOrSchema || schemas.vector3, preset),
-
-    Vector3_ones: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
-        new Property<Vector>(path, presetOrSchema || schemas.vector3_ones, preset),
-
-    Vector4: (path: string, presetOrSchema?: PresetOrSchema<Vector>, preset?: Vector) =>
-        new Property<Vector>(path, presetOrSchema || schemas.vector4, preset),
-
-    Matrix3: (path: string) =>
-        new Property<Matrix>(path, schemas.matrix3),
-
-    Matrix4: (path: string) =>
-        new Property<Matrix>(path, schemas.matrix4),
-
-    ColorRGB: (path: string, preset?: Vector) =>
-        new Property<Vector>(path, schemas.colorRGB, preset),
-
-    ColorRGBA: (path: string, preset?: Vector) =>
-        new Property<Vector>(path, schemas.colorRGBA, preset),
+    Property: <T>(path: string, props?: SchemaProps<T>) => makeType<T>(undefined, path, props),
+    Number: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Number, path, props),
+    Integer: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Integer, path, props),
+    Natural: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Natural, path, props),
+    Vector2: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Vector2, path, props),
+    Vector3: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Vector3, path, props),
+    Vector4: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Vector4, path, props),
+    Matrix2: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Matrix2, path, props),
+    Matrix3: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Matrix3, path, props),
+    Matrix4: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Matrix4, path, props),
+    Scale2: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Scale2, path, props),
+    Scale3: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.Scale3, path, props),
+    ColorRGB: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.ColorRGB, path, props),
+    ColorRGBA: (path: string, props?: SchemaProps<Vector>) => makeType<Vector>(schemas.ColorRGBA, path, props),
+    Boolean: (path: string, props?: SchemaProps<boolean>) => makeType<boolean>(schemas.Boolean, path, props),
+    String: (path: string, props?: SchemaProps<string>) => makeType<string>(schemas.String, path, props),
+    Enum: <T>(path: string, enumeration: T, props?: SchemaProps<PropOf<T>>) => makeEnumType(enumeration, path, props),
+    Option: (path: string, options: string[], props?: SchemaProps<number>) => makeOptionType(options, path, props),
+    Event: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Event, path, props)
 };

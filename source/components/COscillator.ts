@@ -18,31 +18,33 @@ const offsetSchema = { preset: 0, min: 0, max: 1, bar: true };
 export enum ETimeBase { Relative, Absolute }
 export enum EInterpolationMode { Forward, Backward, Alternate }
 
+const ins = {
+    run: types.Boolean("Control.Run"),
+    start: types.Event("Control.Start"),
+    pause: types.Event("Control.Pause"),
+    stop: types.Event("Control.Stop"),
+    min: types.Number("Value.Min"),
+    max: types.Number("Value.Max", 1),
+    curve: types.Enum("Interpolation.Curve", EEasingCurve),
+    mode: types.Enum("Interpolation.Mode", EInterpolationMode),
+    duration: types.Number("Time.Duration", 1),
+    base: types.Enum("Time.Base", ETimeBase),
+    offset: types.Number("Time.Offset", offsetSchema),
+    repetitions: types.Natural("Time.Repetitions")
+};
+
+const outs = {
+    value: types.Number("Value"),
+    repetition: types.Natural("Repetition"),
+    repeat: types.Event("Repeat")
+};
+
 export default class COscillator extends Component
 {
     static readonly type: string = "COscillator";
 
-    ins = this.ins.append({
-        run: types.Boolean("Control.Run"),
-        start: types.Event("Control.Start"),
-        pause: types.Event("Control.Pause"),
-        stop: types.Event("Control.Stop"),
-        min: types.Number("Value.Min"),
-        max: types.Number("Value.Max", 1),
-        curve: types.Enum("Interpolation.Curve", EEasingCurve),
-        mode: types.Enum("Interpolation.Mode", EInterpolationMode),
-        duration: types.Number("Time.Duration", 1),
-        base: types.Enum("Time.Base", ETimeBase),
-        offset: types.Number("Time.Offset", offsetSchema),
-        repetitions: types.Natural("Time.Repetitions")
-
-    });
-
-    outs = this.outs.append({
-        value: types.Number("Value"),
-        repetition: types.Natural("Repetition"),
-        repeat: types.Event("Repeat")
-    });
+    ins = this.addInputs(ins);
+    outs = this.addOutputs(outs);
 
     protected lastTime: number = 0;
     protected lastT = 0;
@@ -56,7 +58,7 @@ export default class COscillator extends Component
         const { ins, outs } = this;
 
         if (ins.curve.changed) {
-            this.easingFunction = getEasingFunction(types.getEnumIndex(EEasingCurve, ins.curve.value));
+            this.easingFunction = getEasingFunction(ins.curve.getValidatedValue());
         }
         if (ins.mode.changed) {
             this.isBackward = ins.mode.value === EInterpolationMode.Backward;

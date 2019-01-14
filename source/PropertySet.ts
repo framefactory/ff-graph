@@ -5,12 +5,15 @@
  * License: MIT
  */
 
-import { Dictionary } from "@ff/core/types";
+import { Dictionary, TypeOf } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import Property from "./Property";
+import { TemplateDict } from "./propertyTypes";
+import Property, { PropertiesFromTemplates } from "./Property";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export type Props<T, U = {}, V = {}> = PropertySet & PropertiesFromTemplates<TypeOf<T>> & PropertiesFromTemplates<U> & PropertiesFromTemplates<V>;
 
 /**
  * To make use of linkable properties and property sets, classes must implement this interface.
@@ -77,19 +80,18 @@ export default class PropertySet extends Publisher
 
     /**
      * Appends properties to the set.
-     * @param {U} properties plain object with keys and properties.
+     * @param templates plain object with property templates.
      * @param index Optional index at which to insert the properties.
-     * @returns {this & U}
      */
-    append<U extends Dictionary<Property>>(properties: U, index?: number): this & U
+    createPropertiesFromTemplates<U>(templates: U, index?: number): this & PropertiesFromTemplates<U>
     {
-        Object.keys(properties).forEach(key => {
-            const property = properties[key];
-            property.key = key;
-            this.insertProperty(property, index);
+        Object.keys(templates).forEach(key => {
+            const template = templates[key];
+            const property = new Property(this, key, template.path, template.schema);
+            this.addProperty(property, index);
         });
 
-        return this as this & U;
+        return this as this & PropertiesFromTemplates<U>;
     }
 
     /**
@@ -97,8 +99,12 @@ export default class PropertySet extends Publisher
      * @param property The property to be added.
      * @param index Optional index at which to insert the property.
      */
-    insertProperty(property: Property, index?: number)
+    addProperty(property: Property, index?: number)
     {
+        if (property.props !== this) {
+            throw new Error("property doesn't belong to this set");
+        }
+
         const key = property.key;
         if (!key) {
             throw new Error("can't add property without key");
@@ -108,9 +114,8 @@ export default class PropertySet extends Publisher
             throw new Error(`key already exists in properties: '${key}'`);
         }
 
-        property.props = this;
-
         this[key] = property;
+
         if (index === undefined) {
             this.properties.push(property);
         }
@@ -157,7 +162,7 @@ export default class PropertySet extends Publisher
 
     getKeys(includeObjects: boolean = false)
     {
-        const keys = [];
+        const keys: string[] = [];
         this.properties.forEach(property => {
             if (includeObjects || property.type !== "object") {
                 keys.push(property.key)
@@ -168,7 +173,7 @@ export default class PropertySet extends Publisher
 
     getValues(includeObjects: boolean = false)
     {
-        const values = [];
+        const values: any[] = [];
         this.properties.map(property => {
             if (includeObjects || property.type !== "object") {
                 values.push(property.value)
@@ -179,7 +184,7 @@ export default class PropertySet extends Publisher
 
     cloneValues(includeObjects: boolean = false)
     {
-        const values = [];
+        const values: any[] = [];
         this.properties.map(property => {
             if (includeObjects || property.type !== "object") {
                 values.push(property.cloneValue())
@@ -213,7 +218,7 @@ export default class PropertySet extends Publisher
 
     deflate()
     {
-        let json = null;
+        let json: any = null;
 
         this.properties.forEach(property => {
             const jsonProp = property.deflate();
@@ -231,9 +236,8 @@ export default class PropertySet extends Publisher
         Object.keys(json).forEach(key => {
             const jsonProp = json[key];
             if (jsonProp.schema) {
-                const property = new Property(jsonProp.path, jsonProp.schema, jsonProp.preset, true);
-                property.key = key;
-                this.insertProperty(property);
+                const property = new Property(this, key, jsonProp.path, jsonProp.schema, true);
+                this.addProperty(property);
             }
         });
     }

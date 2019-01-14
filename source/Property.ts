@@ -5,37 +5,23 @@
  * License: MIT
  */
 
-import { Dictionary, TypeOf } from "@ff/core/types";
+import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ValueType, canConvert } from "./convert";
 import PropertySet, { ILinkable } from "./PropertySet";
 import PropertyLink from "./PropertyLink";
-import PropertyObject from "./PropertyObject";
+import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTypes";
 
 /////////////////////////////////////////////////////////////////////////////////
 
+export { schemas, types, IPropertySchema, IPropertyTemplate };
+
 export type PropertyType = ValueType;
-
-export type PresetOrSchema<T> = T | IPropertySchema<T> | TypeOf<T>;
-
-export interface IPropertySchema<T = any>
-{
-    preset: T;
-    min?: number;
-    max?: number;
-    step?: number; // increment/decrement step
-    speed?: number; // steps per pixel
-    precision?: number;
-    bar?: boolean;
-    percent?: boolean;
-    options?: string[];
-    labels?: string[];
-    objectType?: TypeOf<T>;
-    multi?: boolean;
-    event?: boolean;
-    semantic?: string;
-}
+export type PropertyFromTemplate<T> = T extends IPropertyTemplate<infer U> ? Property<U> : never;
+export type TemplateFromProperty<T> = T extends Property<infer U> ? IPropertyTemplate<U> : never;
+export type PropertiesFromTemplates<T> = { [P in keyof T]: PropertyFromTemplate<T[P]> };
+export type TemplatesFromProperties<T> = { [P in keyof T]: TemplateFromProperty<T[P]> };
 
 export interface IPropertyChangeEvent extends ITypedEvent<"change">
 {
@@ -53,61 +39,47 @@ export interface IPropertyDisposeEvent extends ITypedEvent<"dispose">
  */
 export default class Property<T = any> extends Publisher
 {
-    props: PropertySet;
-
-    key: string;
-
     value: T;
     changed: boolean;
 
+    readonly props: PropertySet;
+    readonly key: string;
     readonly path: string;
-    readonly preset: T;
-    readonly elementCount: number;
     readonly type: PropertyType;
     readonly schema: Readonly<IPropertySchema<T>>;
     readonly user: boolean;
+    readonly elementCount: number;
 
     readonly inLinks: PropertyLink[];
     readonly outLinks: PropertyLink[];
 
     /**
      * Creates a new linkable property.
-     * @param {string} path The path name of this property.
-     * @param {PresetOrSchema<T>} presetOrSchema For primitive values (number, boolean, string),
-     * this can be a preset value or a schema including a preset value. For objects, this should be
-     * the constructor of a class derived from PropertyObject, defining the type of objects that
-     * can be assigned to this property.
-     * @param {T} preset Optional, if given, replaces the preset value given in the schema.
-     * @param {boolean} user Marks the property as user-defined if set to true.
+     * @param props The property set which owns the property.
+     * @param key The key under which the property can be accessed in the property set.
+     * @param path Name and group(s) the property is displayed under.
+     * @param schema Property schema definition.
+     * @param user Marks the property as user-defined if set to true.
      */
-    constructor(path: string, presetOrSchema: PresetOrSchema<T>, preset?: T, user?: boolean)
+    constructor(props: PropertySet, key: string, path: string, schema: IPropertySchema<T>, user?: boolean)
     {
         super();
         this.addEvents("value", "change", "dispose");
 
-        let schema: IPropertySchema;
-
-        const objectType = presetOrSchema as TypeOf<T>;
-        if (objectType.prototype instanceof PropertyObject) {
-            schema = { objectType, preset: null };
-        }
-        else {
-            const isSchema = typeof presetOrSchema === "object" && presetOrSchema !== null && !Array.isArray(presetOrSchema);
-            schema = isSchema ? presetOrSchema as IPropertySchema<T> : { preset: presetOrSchema as T };
+        if (!schema || schema.preset === undefined) {
+            throw new Error("missing schema/preset");
         }
 
-        preset = preset !== undefined ? preset : schema.preset;
+        const preset = schema.preset;
         const isArray = Array.isArray(preset);
 
-        this.props = null;
-        this.key = null;
-
+        this.props = props;
+        this.key = key;
         this.path = path;
-        this.preset = preset;
-        this.elementCount = isArray ? (preset as any).length : 1;
         this.type = typeof (isArray ? preset[0] : preset) as PropertyType;
         this.schema = schema;
         this.user = user || false;
+        this.elementCount = isArray ? (preset as any).length : 1;
 
         this.inLinks = [];
         this.outLinks = [];
@@ -176,6 +148,24 @@ export default class Property<T = any> extends Publisher
         return Array.isArray(value) ? value.slice() as any : value;
     }
 
+    /**
+     * Returns the property value, validated against the property schema.
+     * @param result Optional array to write the validated values into.
+     */
+    getValidatedValue(result?: T)
+    {
+        const value = this.value as any;
+
+        if (this.isArray()) {
+            result = result || [] as any as T;
+            for (let i = 0, n = value.length; i < n; ++i) {
+                result[i] = this.validateValue(value[i]);
+            }
+            return result;
+        }
+
+        return this.validateValue(value);
+    }
 
     linkTo(destination: Property, sourceIndex?: number, destinationIndex?: number)
     {
@@ -286,15 +276,15 @@ export default class Property<T = any> extends Publisher
         const validSrcIndex = sourceIndex >= 0;
         const validDstIndex = destinationIndex >= 0;
 
-        if (source.elementCount === 1 && validSrcIndex) {
+        if (!source.isArray() && validSrcIndex) {
             throw new Error("non-array source property; can't link to element");
         }
-        if (this.elementCount === 1 && validDstIndex) {
+        if (!this.isArray() && validDstIndex) {
             throw new Error("non-array destination property; can't link to element");
         }
 
-        const srcIsArray = source.elementCount > 1 && !validSrcIndex;
-        const dstIsArray = this.elementCount > 1 && !validDstIndex;
+        const srcIsArray = source.isArray() && !validSrcIndex;
+        const dstIsArray = this.isArray() && !validDstIndex;
 
         if (srcIsArray !== dstIsArray) {
             return false;
@@ -372,17 +362,6 @@ export default class Property<T = any> extends Publisher
         }
     }
 
-    getOptionIndex()
-    {
-        const options = this.schema.options;
-        if (this.type === "number" && options && options.length > 0) {
-            const i = Math.trunc(this.value as any);
-            return i < 0 ? 0 : (i >= options.length ? 0 : i);
-        }
-
-        return -1;
-    }
-
     isInput(): boolean
     {
         return this.props === this.props.linkable.ins;
@@ -395,7 +374,7 @@ export default class Property<T = any> extends Publisher
 
     isArray(): boolean
     {
-        return Array.isArray(this.preset);
+        return Array.isArray(this.schema.preset);
     }
 
     isMulti(): boolean
@@ -406,7 +385,7 @@ export default class Property<T = any> extends Publisher
     isDefault()
     {
         const value = this.schema.multi ? this.value[0] : this.value;
-        const preset = this.preset;
+        const preset = this.schema.preset;
         const valueLength = Array.isArray(value) ? value.length : -1;
         const presetLength = Array.isArray(preset) ? preset.length : -1;
 
@@ -487,8 +466,7 @@ export default class Property<T = any> extends Publisher
     {
         let json: any = this.user ? {
             path: this.path,
-            schema: this.cloneSchemaWithoutPreset(),
-            preset: this.preset
+            schema: Object.assign({}, this.schema)
         } : null;
 
         if (!this.hasMainInLinks() && !this.isDefault() && this.type !== "object") {
@@ -541,16 +519,34 @@ export default class Property<T = any> extends Publisher
         return `${this.path} [${typeName}]`
     }
 
-    protected clonePreset(): T
+    /**
+     * Validates the given value against the property schema.
+     * @param value
+     */
+    protected validateValue(value: any)
     {
-        const preset = this.preset;
-        return Array.isArray(preset) ? preset.slice() as any : preset;
+        const schema = this.schema;
+
+        if (schema.enum) {
+            const i = Math.trunc(value);
+            return schema.enum[i] ? i : 0;
+        }
+        if (schema.options) {
+            const i = Math.trunc(value);
+            return i < 0 ? 0 : (i >= schema.options.length ? 0 : i);
+        }
+        if (this.type === "number") {
+            value = schema.min ? Math.max(schema.min, value) : value;
+            value = schema.max ? Math.min(schema.max, value) : value;
+            return value;
+        }
+
+        return value;
     }
 
-    protected cloneSchemaWithoutPreset()
+    protected clonePreset(): T
     {
-        const clone = Object.assign({}, this.schema) as IPropertySchema;
-        delete clone.preset;
-        return clone;
+        const preset = this.schema.preset;
+        return Array.isArray(preset) ? preset.slice() as any : preset;
     }
 }

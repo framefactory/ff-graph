@@ -21,14 +21,16 @@ export { INodeEvent, IComponentEvent };
 
 export type SelectionActions = Actions<CSelection>;
 
+const outs = {
+    selNodeCount: types.Integer("Selection.Nodes"),
+    selComponentCount: types.Integer("Selection.Components")
+};
+
 export default class CSelection extends CController<CSelection>
 {
     static readonly type: string = "CSelection";
 
-    outs = this.outs.append({
-        selNodeCount: types.Integer("Selection.Nodes"),
-        selComponentCount: types.Integer("Selection.Components")
-    });
+    outs = this.addOutputs(outs);
 
     multiSelect = false;
     exclusiveSelect = true;
