@@ -5,9 +5,8 @@
  * License: MIT
  */
 
-import Component from "../Component";
+import Component, { IUpdateContext } from "../Component";
 import Graph from "../Graph";
-import { IUpdateContext, IRenderContext } from "../System";
 
 import CHierarchy from "./CHierarchy";
 
@@ -31,25 +30,13 @@ export default class CGraph extends Component
 
     update(context: IUpdateContext): boolean
     {
-        return this.graph.update(context);
+        // TODO: Evaluate interface ins/outs
+        return false;
     }
 
     tick(context: IUpdateContext): boolean
     {
-        // keep changed flag set to ensure graph is always updated
-        this.changed = true;
-
         return this.graph.tick(context);
-    }
-
-    preRender(context: IRenderContext)
-    {
-        this.graph.preRender(context);
-    }
-
-    postRender(context: IRenderContext)
-    {
-        this.graph.postRender(context);
     }
 
     inflate(json: any)

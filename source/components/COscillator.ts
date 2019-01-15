@@ -8,7 +8,7 @@
 import { EEasingCurve, getEasingFunction } from "@ff/core/easing";
 
 import { types } from "../propertyTypes";
-import Pulse from "../Pulse";
+import { IPulseContext } from "./CPulse";
 import Component from "../Component";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ export default class COscillator extends Component
     protected isBackward = false;
     protected isAlternate = false;
 
-    update(pulse: Pulse)
+    update(pulse: IPulseContext)
     {
         const { ins, outs } = this;
 
@@ -98,7 +98,7 @@ export default class COscillator extends Component
         return false;
     }
 
-    tick(pulse: Pulse)
+    tick(pulse: IPulseContext)
     {
         const { ins, outs } = this;
 

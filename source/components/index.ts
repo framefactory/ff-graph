@@ -5,12 +5,11 @@
  * License: MIT
  */
 
-import Registry from "../Registry";
-
 import CController from "./CController";
 import CGraph from "./CGraph";
 import CHierarchy from "./CHierarchy";
 import COscillator from "./COscillator";
+import CPulse from "./CPulse";
 import CSelection from "./CSelection";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -20,15 +19,14 @@ export {
     CGraph,
     CHierarchy,
     COscillator,
+    CPulse,
     CSelection
 };
 
-export function registerComponents(registry: Registry)
-{
-    registry.registerComponentType([
-        CGraph,
-        CHierarchy,
-        COscillator,
-        CSelection
-    ]);
-}
+export const componentTypes = [
+    CGraph,
+    CHierarchy,
+    COscillator,
+    CPulse,
+    CSelection
+];

@@ -134,7 +134,8 @@ export default class CHierarchy extends Component
     /**
      * Returns a component from the parent node of the node of this component.
      * @param componentOrType
-     * @param recursive If true, extends search to entire chain of ancestors.
+     * @param recursive If true, extends search to entire chain of ancestors,
+     * including parent graphs.
      */
     getParent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
     {
@@ -151,6 +152,13 @@ export default class CHierarchy extends Component
 
         if (recursive) {
             parent = parent._parent;
+
+            // if at root, continue search at parent graph
+            if (!parent) {
+                const parentGraphComponent = this.graph.parent;
+                parent = parentGraphComponent ? parentGraphComponent.hierarchy : null;
+            }
+
             while(parent) {
                 component = parent.node.components.get(componentOrType);
                 if (component) {
@@ -200,7 +208,10 @@ export default class CHierarchy extends Component
     addChild(component: CHierarchy)
     {
         if (component._parent) {
-            throw new Error("component should not have a parent");
+            throw new Error("can't add as child: component already has a parent");
+        }
+        if (component === this.graph.root) {
+            throw new Error("can't add as child: component is root of graph");
         }
 
         component._parent = this;

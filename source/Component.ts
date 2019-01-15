@@ -9,16 +9,21 @@ import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
-import Property, { IPropertyTemplate, PropertiesFromTemplates } from "./Property";
+import { types, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
 import PropertySet, { ILinkable } from "./PropertySet";
-import Node, { IComponentEvent } from "./Node";
-import System, { IUpdateContext, IRenderContext } from "./System";
+import ComponentTracker from "./ComponentTracker";
+import ComponentReference from "./ComponentReference";
+import Node from "./Node";
+import System from "./System";
 import CHierarchy from "./components/CHierarchy";
-import CTransform from "../../ff-scene/source/components/CTransform";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IUpdateContext, IRenderContext };
+export { types, ITypedEvent };
+
+export interface IUpdateContext
+{
+}
 
 /**
  * Emitted by [[Component]] after the instance's state has changed.
@@ -50,89 +55,10 @@ export function getComponentTypeString<T extends Component>(componentOrType: Com
     return typeof componentOrType === "string" ? componentOrType : componentOrType.type;
 }
 
-/**
- * Tracks components of a specific type in the same node.
- * Maintains a reference to the component if found and executes
- * callbacks if the component of the tracked type is added or removed.
- */
-export class ComponentTracker<T extends Component = Component>
-{
-    /** The component being tracked. */
-    component: T;
-    /** Called after a component has been assigned to the tracker. */
-    didAdd: (component: T) => void;
-    /** Called before a component is removed from the tracker. */
-    willRemove: (component: T) => void;
-
-    private _node: Node;
-    private _type: ComponentOrType<T>;
-
-    constructor(node: Node, componentOrType: ComponentOrType<T>,
-                didAdd?: (component: T) => void, willRemove?: (component: T) => void) {
-
-        this.didAdd = didAdd;
-        this.willRemove = willRemove;
-
-        this._node = node;
-        this._type = componentOrType;
-
-        node.components.on(this._type, this.onComponent, this);
-        this.component = node.components.get(componentOrType);
-
-        if (this.component && didAdd) {
-            didAdd(this.component);
-        }
-    }
-
-    dispose()
-    {
-        this._node.components.off(this._type, this.onComponent, this);
-    }
-
-    protected onComponent(event: IComponentEvent<T>)
-    {
-        if (event.add) {
-            this.component = event.component;
-            this.didAdd && this.didAdd(event.component);
-        }
-        else if (event.remove) {
-            this.willRemove && this.willRemove(event.component);
-            this.component = null;
-        }
-    }
-}
-
-/**
- * Maintains a weak reference to a component.
- * The reference is set to null after the linked component is removed.
- */
-export class ComponentLink<T extends Component = Component>
-{
-    private _id: string;
-    private readonly _type: string;
-    private readonly _system: System;
-
-    constructor(owner: Component, componentOrType?: ComponentOrType<T>) {
-        this._type = componentOrType ? getComponentTypeString(componentOrType) : null;
-        this._id = componentOrType instanceof Component ? componentOrType.id : undefined;
-        this._system = owner.system;
-    }
-
-    get component(): T | null {
-        return this._id ? this._system.components.getById(this._id) as T || null : null;
-    }
-    set component(component: T) {
-        if (component && this._type && !(component instanceof this._system.registry.getComponentType(this._type))) {
-            throw new Error(`can't assign component of type '${(component as Component).type || "unknown"}' to link of type '${this._type}'`);
-        }
-        this._id = component ? component.id : undefined;
-    }
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Base class for components in an node-component system.
+ * Base class for components in a node-component system.
  *
  * ### Events
  * - *"change"* - emits [[IComponentChangeEvent]] after the instance's state has changed.
@@ -188,7 +114,8 @@ export default class Component extends Publisher implements ILinkable
     /**
      * Protected constructor. Use the static [[Component.create]] method to create component instances.
      * @param node Node to attach the new component to.
-     * @param id Unique id for the component. Should be omitted except for de-serialization, will be created automatically.
+     * @param id Unique id for the component. A unique id is usually created automatically,
+     * do not specify except while de-serializing the component.
      */
     constructor(node: Node, id?: string)
     {
@@ -228,18 +155,30 @@ export default class Component extends Publisher implements ILinkable
         return this.node.components;
     }
 
+    /**
+     * Returns the sibling hierarchy component if available.
+     */
     get hierarchy() {
         return this.node.components.get<CHierarchy>("CHierarchy");
     }
 
+    /**
+     * True if the component is a node singleton, i.e. can only be added once per node.
+     */
     get isNodeSingleton() {
         return (this.constructor as typeof Component).isNodeSingleton;
     }
 
+    /**
+     * True if the component is a graph singleton, i.e. can only be added once per graph.
+     */
     get isGraphSingleton() {
         return (this.constructor as typeof Component).isGraphSingleton;
     }
 
+    /**
+     * True if the component is a system singleton, i.e. can only be added once per system.
+     */
     get isSystemSingleton() {
         return (this.constructor as typeof Component).isSystemSingleton;
     }
@@ -293,40 +232,20 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
-     * Called just before the component is rendered.
-     * This function can be called multiple times during each cycle,
-     * once for each render target.
-     * @param context Information about the render configuration.
-     */
-    preRender(context: IRenderContext)
-    {
-        throw new Error("this should never be called");
-    }
-
-    /**
-     * Called just after the component has been rendered.
-     * This function can be called multiple times during each cycle,
-     * once for each render target.
-     * @param context Information about the render configuration.
-     */
-    postRender(context: IRenderContext)
-    {
-        throw new Error("this should never be called");
-    }
-
-    /**
      * Called after rendering is completed.
      * Override to perform update operations which need to happen
      * only after all rendering is done.
      * @param context Information about the current update cycle.
      */
-    lateUpdate(context: IUpdateContext)
+    finalize(context: IUpdateContext)
     {
         throw new Error("this should never be called");
     }
 
     /**
      * Removes the component from its node and deletes it.
+     * Override to perform cleanup tasks (remove event listeners, etc.).
+     * Must call super implementation if overridden!
      */
     dispose()
     {
@@ -343,6 +262,10 @@ export default class Component extends Publisher implements ILinkable
         this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
     }
 
+    /**
+     * Returns true if this component has or inherits from the given type.
+     * @param componentOrType
+     */
     is(componentOrType: ComponentOrType): boolean
     {
         const type = getComponentTypeString(componentOrType);
@@ -358,12 +281,18 @@ export default class Component extends Publisher implements ILinkable
         return false;
     }
 
+    /**
+     * Removes links from all input and output properties.
+     */
     unlinkAllProperties()
     {
         this.ins.unlinkAllProperties();
         this.outs.unlinkAllProperties();
     }
 
+    /**
+     * Sets the changed flags of this component and of all input properties to false;
+     */
     resetChanged()
     {
         this.changed = false;
@@ -383,7 +312,7 @@ export default class Component extends Publisher implements ILinkable
     trackComponent<T extends Component>(componentOrType: ComponentOrType<T>,
         didAdd?: (component: T) => void, willRemove?: (component: T) => void): ComponentTracker<T>
     {
-        const tracker = new ComponentTracker(this.node, componentOrType, didAdd, willRemove);
+        const tracker = new ComponentTracker(this.node.components, componentOrType, didAdd, willRemove);
         this._trackers.push(tracker);
         return tracker;
     }
@@ -391,12 +320,23 @@ export default class Component extends Publisher implements ILinkable
     /**
      * Returns a weak reference to a component.
      * The reference is set to null after the linked component is removed.
+     * @param componentOrType The type of component this reference accepts, or the component to link.
      */
-    linkComponent<T extends Component>(component: T): ComponentLink<T>
+    referenceComponent<T extends Component>(componentOrType: ComponentOrType<T>): ComponentReference<T>
     {
-        return new ComponentLink<T>(this, component);
+        return new ComponentReference<T>(this.system, componentOrType);
     }
 
+    /**
+     * Propagates and emits an event as follows, until event.stopPropagation is set to true.
+     * 1. this component
+     * 2. sibling components of this
+     * 3. parent hierarchy component if available
+     * 4. siblings of parent hierarchy component
+     * 5. repeat 3/4 until at root
+     * 6. emits event on system
+     * @param event
+     */
     propagateUp(event: IPropagatingEvent<string>)
     {
         let target = this as Component;
@@ -423,9 +363,10 @@ export default class Component extends Publisher implements ILinkable
             const hierarchy = target.components.get<CHierarchy>("CHierarchy");
             target = hierarchy ? hierarchy.parent : null;
 
-            if (!target) {
-                target = hierarchy.graph.parent;
-            }
+            // TODO: Should event propagate to parent graph?
+            // if (!target) {
+            //     target = hierarchy.graph.parent;
+            // }
         }
 
         if (!event.stopPropagation) {
@@ -433,6 +374,12 @@ export default class Component extends Publisher implements ILinkable
         }
     }
 
+    /**
+     * Propagates and emits an event as follows, until event.stopPropagation is set to true.
+     * 1. all children of the sibling hierarchy of this
+     * 2. for each child, repeat 1 until reaching leaf components with no children
+     * @param event
+     */
     propagateDown(event: IPropagatingEvent<string>)
     {
         const hierarchy = this.components.get<CHierarchy>("CHierarchy");
@@ -451,22 +398,8 @@ export default class Component extends Publisher implements ILinkable
                 if (event.stopPropagation) {
                     return;
                 }
-
-                // TODO: Should we allow events to travel across graph boundaries?
             }
         }
-    }
-
-    protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
-        (templates: U, index?: number) : PropertySet & T["ins"] & PropertiesFromTemplates<U>
-    {
-        return this.ins.createPropertiesFromTemplates(templates, index) as any;
-    }
-
-    protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
-    (templates: U, index?: number) : PropertySet & T["outs"] & PropertiesFromTemplates<U>
-    {
-        return this.outs.createPropertiesFromTemplates(templates, index) as any;
     }
 
     deflate()
@@ -519,10 +452,30 @@ export default class Component extends Publisher implements ILinkable
     {
         return `${this.type}${this.name ? " (" + this.name + ")" : ""}`;
     }
+
+    /**
+     * Adds input properties to the component, specified by the provided property templates.
+     * @param templates A plain object with property templates.
+     * @param index Optional index at which to insert the new properties.
+     */
+    protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
+    (templates: U, index?: number) : PropertySet & T["ins"] & PropertiesFromTemplates<U>
+    {
+        return this.ins.createPropertiesFromTemplates(templates, index) as any;
+    }
+
+    /**
+     * Adds output properties to the component, specified by the provided property templates.
+     * @param templates A plain object with property templates.
+     * @param index Optional index at which to insert the new properties.
+     */
+    protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
+    (templates: U, index?: number) : PropertySet & T["outs"] & PropertiesFromTemplates<U>
+    {
+        return this.outs.createPropertiesFromTemplates(templates, index) as any;
+    }
 }
 
 Component.prototype.update = null;
 Component.prototype.tick = null;
-Component.prototype.preRender = null;
-Component.prototype.postRender = null;
-Component.prototype.lateUpdate = null;
+Component.prototype.finalize = null;

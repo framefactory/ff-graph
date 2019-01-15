@@ -7,7 +7,6 @@
 
 import { types } from "./propertyTypes";
 import Component from "./Component";
-import { IUpdateContext, IRenderContext } from "./System";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +35,7 @@ export default class Derived extends Base
     {
     }
 
-    update(context: IUpdateContext): boolean
+    update(): boolean
     {
         const { position, rotation } = this.ins;
 
@@ -51,16 +50,12 @@ export default class Derived extends Base
         return true;
     }
 
-    tick(context: IUpdateContext): boolean
+    tick(): boolean
     {
         return false;
     }
 
-    preRender(context: IRenderContext)
-    {
-    }
-
-    postRender(context: IRenderContext)
+    finalize()
     {
     }
 

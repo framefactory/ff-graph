@@ -18,6 +18,7 @@ export type Actions<T extends CController<any>> = ReturnType<T["createActions"]>
 export default class CController<T extends CController<any>> extends Component
 {
     static readonly type: string = "CController";
+    static readonly isSystemSingleton: boolean = true;
 
     readonly actions: Actions<CController<T>>;
 
