@@ -32,7 +32,7 @@ export default class CGraph extends Component
 
     create()
     {
-        this._innerGraph = new Graph(this.system);
+        this._innerGraph = new Graph(this.system, this);
     }
 
     update(context: IUpdateContext): boolean
@@ -56,5 +56,6 @@ export default class CGraph extends Component
     {
         const json = super.deflate();
         json.graph = this._innerGraph.deflate();
+        return json;
     }
 }

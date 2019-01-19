@@ -35,7 +35,7 @@ export default class Graph extends Publisher
     private _sorter = new LinkableSorter();
     private _sortRequested = false;
 
-    constructor(system: System, parent?: CGraph)
+    constructor(system: System, parent: CGraph)
     {
         super({ knownEvents: false });
         this.system = system;

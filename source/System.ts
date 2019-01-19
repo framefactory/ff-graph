@@ -33,7 +33,7 @@ export default class System extends Publisher
         this.registry = registry || new Registry();
         this.nodes = new NodeSet();
         this.components = new ComponentSet();
-        this.graph = new Graph(this);
+        this.graph = new Graph(this, null);
     }
 
     /**
