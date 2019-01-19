@@ -5,15 +5,12 @@
  * License: MIT
  */
 
-import { Dictionary, TypeOf } from "@ff/core/types";
+import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import { TemplateDict } from "./propertyTypes";
-import Property, { PropertiesFromTemplates } from "./Property";
+import Property, { IPropertyTemplate, PropertiesFromTemplates } from "./Property";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-export type Props<T, U = {}, V = {}> = PropertySet & PropertiesFromTemplates<TypeOf<T>> & PropertiesFromTemplates<U> & PropertiesFromTemplates<V>;
 
 /**
  * To make use of linkable properties and property sets, classes must implement this interface.
@@ -26,18 +23,19 @@ export interface ILinkable
     changed: boolean;
 
     /** Set of input properties. */
-    readonly ins: PropertySet;
+    readonly ins: PropertyGroup;
     /** Set of output properties. */
-    readonly outs: PropertySet;
+    readonly outs: PropertyGroup;
 }
 
 /**
  * Emitted by [[Properties]] after changes in the properties configuration.
  * @event
  */
-export interface IPropertySetChangeEvent extends ITypedEvent<"change">
+export interface IPropertyGroupPropertyEvent extends ITypedEvent<"property">
 {
-    what: "add" | "remove" | "update";
+    add: boolean;
+    remove: boolean;
     property: Property;
 }
 
@@ -49,7 +47,7 @@ export interface IPropertySetChangeEvent extends ITypedEvent<"change">
  * ### Events
  * - *"change"* - emits [[IPropertiesChangeEvent]] after properties have been added, removed, or renamed.
  */
-export default class PropertySet extends Publisher
+export default class PropertyGroup extends Publisher
 {
     linkable: ILinkable;
     properties: Property[];
@@ -68,12 +66,12 @@ export default class PropertySet extends Publisher
         this.unlinkAllProperties();
     }
 
-    isInputSet()
+    isInputGroup()
     {
         return this === this.linkable.ins;
     }
 
-    isOutputSet()
+    isOutputGroup()
     {
         return this === this.linkable.outs;
     }
@@ -85,36 +83,38 @@ export default class PropertySet extends Publisher
      */
     createPropertiesFromTemplates<U>(templates: U, index?: number): this & PropertiesFromTemplates<U>
     {
-        Object.keys(templates).forEach(key => {
-            const template = templates[key];
-            const property = new Property(this, key, template.path, template.schema);
-            this.addProperty(property, index);
+        Object.keys(templates).forEach((key, i) => {
+            const ii = index === undefined ? undefined : index + i;
+            this.createPropertyFromTemplate(templates[key], key, ii);
         });
 
         return this as this & PropertiesFromTemplates<U>;
     }
 
+    createPropertyFromTemplate(template: IPropertyTemplate, key?: string, index?: number)
+    {
+        const property = new Property(template.path, template.schema);
+        this.addProperty(property, key, index);
+    }
+
     /**
      * Adds the given property to the set.
      * @param property The property to be added.
+     * @param key An optional key under which the property is accessible in the group.
      * @param index Optional index at which to insert the property.
      */
-    addProperty(property: Property, index?: number)
+    addProperty(property: Property, key?: string, index?: number)
     {
-        if (property.props !== this) {
-            throw new Error("property doesn't belong to this set");
+        if (property.group) {
+            property.removeFromGroup();
         }
 
-        const key = property.key;
-        if (!key) {
-            throw new Error("can't add property without key");
+        if (key && this[key]) {
+            throw new Error(`key '${key}' already exists in group`);
         }
 
-        if (this[key]) {
-            throw new Error(`key already exists in properties: '${key}'`);
-        }
-
-        this[key] = property;
+        property["_group"] = this;
+        property["_key"] = key;
 
         if (index === undefined) {
             this.properties.push(property);
@@ -123,7 +123,13 @@ export default class PropertySet extends Publisher
             this.properties.splice(index, 0, property);
         }
 
-        this.emit<IPropertySetChangeEvent>({ type: "change", what: "add", property });
+        if (key) {
+            this[key] = property;
+        }
+
+        this.emit<IPropertyGroupPropertyEvent>({
+            type: "property", add: true, remove: false, property
+        });
     }
 
     /**
@@ -132,17 +138,24 @@ export default class PropertySet extends Publisher
      */
     removeProperty(property: Property)
     {
-        if (this[property.key] !== property) {
-            throw new Error(`property not found in set: ${property.key}`);
+        if (property.group === this) {
+            if (this[property.key] !== property) {
+                throw new Error(`property not found in group: ${property.key}`);
+            }
+
+            this.properties.slice(this.properties.indexOf(property), 1);
+
+            if (property.key) {
+                delete this[property.key];
+            }
+
+            property["_group"] = null;
+            property["_key"] = "";
+
+            this.emit<IPropertyGroupPropertyEvent>({
+                type: "property", add: false, remove: true, property
+            });
         }
-
-        delete this[property.key];
-
-        const props = this.properties;
-        const index = props.indexOf(property);
-        props.slice(index, 1);
-
-        this.emit<IPropertySetChangeEvent>({ type: "change", what: "remove", property });
     }
 
     /**
@@ -236,8 +249,8 @@ export default class PropertySet extends Publisher
         Object.keys(json).forEach(key => {
             const jsonProp = json[key];
             if (jsonProp.schema) {
-                const property = new Property(this, key, jsonProp.path, jsonProp.schema, true);
-                this.addProperty(property);
+                const property = new Property(jsonProp.path, jsonProp.schema, true);
+                this.addProperty(property, key);
             }
         });
     }

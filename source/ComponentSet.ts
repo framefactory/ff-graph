@@ -8,7 +8,7 @@
 import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import { ILinkable } from "./PropertySet";
+import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 
 ////////////////////////////////////////////////////////////////////////////////

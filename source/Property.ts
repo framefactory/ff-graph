@@ -5,11 +5,12 @@
  * License: MIT
  */
 
+import isSubclass from "@ff/core/isSubclass";
 import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ValueType, canConvert } from "./convert";
-import PropertySet, { ILinkable } from "./PropertySet";
+import PropertyGroup, { ILinkable } from "./PropertyGroup";
 import PropertyLink from "./PropertyLink";
 import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTypes";
 
@@ -17,16 +18,20 @@ import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTy
 
 export { schemas, types, IPropertySchema, IPropertyTemplate };
 
-export type PropertyType = ValueType;
 export type PropertyFromTemplate<T> = T extends IPropertyTemplate<infer U> ? Property<U> : never;
-export type TemplateFromProperty<T> = T extends Property<infer U> ? IPropertyTemplate<U> : never;
 export type PropertiesFromTemplates<T> = { [P in keyof T]: PropertyFromTemplate<T[P]> };
-export type TemplatesFromProperties<T> = { [P in keyof T]: TemplateFromProperty<T[P]> };
 
 export interface IPropertyChangeEvent extends ITypedEvent<"change">
 {
     what: "path" | "options";
     property: Property;
+}
+
+export interface IPropertyLinkEvent extends ITypedEvent<"link">
+{
+    link: PropertyLink;
+    add: boolean;
+    remove: boolean;
 }
 
 export interface IPropertyDisposeEvent extends ITypedEvent<"dispose">
@@ -42,9 +47,7 @@ export default class Property<T = any> extends Publisher
     value: T;
     changed: boolean;
 
-    readonly props: PropertySet;
-    readonly key: string;
-    readonly type: PropertyType;
+    readonly type: ValueType;
     readonly schema: Readonly<IPropertySchema<T>>;
     readonly user: boolean;
     readonly elementCount: number;
@@ -52,17 +55,17 @@ export default class Property<T = any> extends Publisher
     readonly inLinks: PropertyLink[];
     readonly outLinks: PropertyLink[];
 
+    private _group: PropertyGroup;
+    private _key: string;
     private _path: string;
 
     /**
      * Creates a new linkable property.
-     * @param props The property set which owns the property.
-     * @param key The key under which the property can be accessed in the property set.
      * @param path Name and group(s) the property is displayed under.
      * @param schema Property schema definition.
      * @param user Marks the property as user-defined if set to true.
      */
-    constructor(props: PropertySet, key: string, path: string, schema: IPropertySchema<T>, user?: boolean)
+    constructor(path: string, schema: IPropertySchema<T>, user?: boolean)
     {
         super();
         this.addEvents("value", "change", "dispose");
@@ -74,9 +77,7 @@ export default class Property<T = any> extends Publisher
         const preset = schema.preset;
         const isArray = Array.isArray(preset);
 
-        this.props = props;
-        this.key = key;
-        this.type = typeof (isArray ? preset[0] : preset) as PropertyType;
+        this.type = typeof (isArray ? preset[0] : preset) as ValueType;
         this.schema = schema;
         this.user = user || false;
         this.elementCount = isArray ? (preset as any).length : 1;
@@ -84,6 +85,8 @@ export default class Property<T = any> extends Publisher
         this.inLinks = [];
         this.outLinks = [];
 
+        this._group = null;
+        this._key = "";
         this._path = path;
 
         this.value = null;
@@ -91,18 +94,51 @@ export default class Property<T = any> extends Publisher
         this.changed = !schema.event;
     }
 
+    get group() {
+        return this._group;
+    }
+    get key() {
+        return this._key;
+    }
+
     get path() {
         return this._path;
     }
-
     set path(path: string) {
         this._path = path;
         this.emit<IPropertyChangeEvent>({ type: "change", what: "path", property: this });
     }
 
+    /**
+     * Adds the property to the given group.
+     * @param group The property group this property should be added to.
+     * @param key An optional key under which the property is accessible in the property group.
+     * @param index An optional index position where the property should be inserted in the group.
+     */
+    addToGroup(group: PropertyGroup, key?: string, index?: number)
+    {
+        group.addProperty(this, key, index);
+    }
+
+    /**
+     * Removes the property from the group it was previously added to.
+     * Does nothing if the property is not member of a group.
+     */
+    removeFromGroup()
+    {
+        if (this.group) {
+            this.group.removeProperty(this);
+        }
+    }
+
+    /**
+     * Removes the property from its group, removes all links.
+     * Emits a [[IPropertyDisposeEvent]] event.
+     */
     dispose()
     {
         this.unlink();
+        this.removeFromGroup();
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
@@ -113,8 +149,8 @@ export default class Property<T = any> extends Publisher
         if (!silent) {
             this.changed = true;
 
-            if (this.props && this.props === this.props.linkable.ins) {
-                this.props.linkable.changed = true;
+            if (this.isInput()) {
+                this._group.linkable.changed = true;
             }
         }
 
@@ -140,8 +176,8 @@ export default class Property<T = any> extends Publisher
         if (!silent) {
             this.changed = true;
 
-            if (this.props === this.props.linkable.ins) {
-                this.props.linkable.changed = true;
+            if (this.isInput()) {
+                this._group.linkable.changed = true;
             }
         }
 
@@ -190,8 +226,8 @@ export default class Property<T = any> extends Publisher
         }
 
         const link = new PropertyLink(source, this, sourceIndex, destinationIndex);
-        this.addInLink(link);
         source.addOutLink(link);
+        this.addInLink(link);
     }
 
     unlinkTo(destination: Property, sourceIndex?: number, destinationIndex?: number): boolean
@@ -211,19 +247,29 @@ export default class Property<T = any> extends Publisher
             return false;
         }
 
-        this.removeInLink(link);
         source.removeOutLink(link);
+        this.removeInLink(link);
 
         return true;
     }
 
     unlink()
     {
-        this.inLinks.forEach(link => link.source.removeOutLink(link));
-        this.inLinks.length = 0;
+        const inLinks = this.inLinks.slice();
+        inLinks.forEach(link => {
+            link.source.removeOutLink(link);
+            this.removeInLink(link)
+        });
 
-        this.outLinks.forEach(link => link.destination.removeInLink(link));
-        this.outLinks.length = 0;
+        const outLinks = this.outLinks.slice();
+        outLinks.forEach(link => {
+            this.removeOutLink(link);
+            link.destination.removeInLink(link);
+        });
+
+        if (this.inLinks.length !== 0 || this.outLinks.length !== 0) {
+            throw new Error("fatal: leftover links");
+        }
     }
 
     addInLink(link: PropertyLink)
@@ -233,6 +279,10 @@ export default class Property<T = any> extends Publisher
         }
 
         this.inLinks.push(link);
+
+        this.emit<IPropertyLinkEvent>({
+            type: "link", add: true, remove: false, link
+        });
     }
 
     addOutLink(link: PropertyLink)
@@ -260,6 +310,10 @@ export default class Property<T = any> extends Publisher
         if (this.inLinks.length === 0 && this.type === "object") {
             this.reset();
         }
+
+        this.emit<IPropertyLinkEvent>({
+            type: "link", add: false, remove: true, link
+        });
     }
 
     removeOutLink(link: PropertyLink)
@@ -284,18 +338,18 @@ export default class Property<T = any> extends Publisher
             return false;
         }
 
-        const validSrcIndex = sourceIndex >= 0;
-        const validDstIndex = destinationIndex >= 0;
+        const hasSrcIndex = sourceIndex >= 0;
+        const hasDstIndex = destinationIndex >= 0;
 
-        if (!source.isArray() && validSrcIndex) {
+        if (!source.isArray() && hasSrcIndex) {
             throw new Error("non-array source property; can't link to element");
         }
-        if (!this.isArray() && validDstIndex) {
+        if (!this.isArray() && hasDstIndex) {
             throw new Error("non-array destination property; can't link to element");
         }
 
-        const srcIsArray = source.isArray() && !validSrcIndex;
-        const dstIsArray = this.isArray() && !validDstIndex;
+        const srcIsArray = source.isArray() && !hasSrcIndex;
+        const dstIsArray = this.isArray() && !hasDstIndex;
 
         if (srcIsArray !== dstIsArray) {
             return false;
@@ -305,7 +359,7 @@ export default class Property<T = any> extends Publisher
         }
 
         if (source.type === "object" && this.type === "object") {
-            if (source.schema.objectType !== this.schema.objectType) {
+            if (!isSubclass(source.schema.objectType, this.schema.objectType)) {
                 return false;
             }
         }
@@ -375,12 +429,12 @@ export default class Property<T = any> extends Publisher
 
     isInput(): boolean
     {
-        return this.props === this.props.linkable.ins;
+        return this._group && this._group === this._group.linkable.ins;
     }
 
     isOutput(): boolean
     {
-        return this.props === this.props.linkable.outs;
+        return this._group && this._group === this._group.linkable.outs;
     }
 
     isArray(): boolean
@@ -489,7 +543,7 @@ export default class Property<T = any> extends Publisher
             json = json || {};
             json.links = this.outLinks.map(link => {
                 const jsonLink: any = {
-                    id: link.destination.props.linkable.id,
+                    id: link.destination._group.linkable.id,
                     key: link.destination.key
                 };
                 if (link.sourceIndex >= 0) {

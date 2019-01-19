@@ -15,8 +15,6 @@ export interface IPropertyTemplate<T = any>
     schema: IPropertySchema<T>;
 }
 
-export type TemplateDict = Dictionary<IPropertyTemplate>;
-
 export interface IPropertySchema<T = any>
 {
     preset: T;

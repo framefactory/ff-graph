@@ -10,7 +10,7 @@ import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
 import { types, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
-import PropertySet, { ILinkable } from "./PropertySet";
+import PropertyGroup, { ILinkable } from "./PropertyGroup";
 import ComponentTracker from "./ComponentTracker";
 import ComponentReference from "./ComponentReference";
 import Node from "./Node";
@@ -102,8 +102,8 @@ export default class Component extends Publisher implements ILinkable
     readonly id: string;
     readonly node: Node;
 
-    ins: PropertySet = new PropertySet(this);
-    outs: PropertySet = new PropertySet(this);
+    ins: PropertyGroup = new PropertyGroup(this);
+    outs: PropertyGroup = new PropertyGroup(this);
 
     changed: boolean = true;
     updated: boolean = false;
@@ -459,7 +459,7 @@ export default class Component extends Publisher implements ILinkable
      * @param index Optional index at which to insert the new properties.
      */
     protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
-    (templates: U, index?: number) : PropertySet & T["ins"] & PropertiesFromTemplates<U>
+    (templates: U, index?: number) : PropertyGroup & T["ins"] & PropertiesFromTemplates<U>
     {
         return this.ins.createPropertiesFromTemplates(templates, index) as any;
     }
@@ -470,7 +470,7 @@ export default class Component extends Publisher implements ILinkable
      * @param index Optional index at which to insert the new properties.
      */
     protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
-    (templates: U, index?: number) : PropertySet & T["outs"] & PropertiesFromTemplates<U>
+    (templates: U, index?: number) : PropertyGroup & T["outs"] & PropertiesFromTemplates<U>
     {
         return this.outs.createPropertiesFromTemplates(templates, index) as any;
     }

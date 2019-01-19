@@ -9,7 +9,7 @@ import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import { ILinkable } from "./PropertySet";
+import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
 import Graph from "./Graph";
