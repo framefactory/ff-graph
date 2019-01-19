@@ -5,10 +5,12 @@
  * License: MIT
  */
 
+import { Dictionary } from "@ff/core/types";
 import { ITypedEvent } from "@ff/core/Publisher";
 
 import Component, { ComponentOrType } from "../Component";
 import Node from "../Node";
+import { ILinkable } from "../PropertyGroup";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -258,6 +260,29 @@ export default class CHierarchy extends Component
 
         this.graph.emit<IHierarchyEvent>(event);
         this.system.emit<IHierarchyEvent>(event);
+    }
+
+    deflate()
+    {
+        const json = super.deflate();
+
+        if (this._children) {
+            json.children = this._children.map(child => child.id);
+        }
+
+        return json;
+    }
+
+    inflateLinks(json: any, linkableDict: Dictionary<ILinkable>)
+    {
+        super.inflateLinks(json, linkableDict);
+
+        if (json.children) {
+            json.children.forEach(childId => {
+                const child = linkableDict[childId] as CHierarchy;
+                this.addChild(child);
+            })
+        }
     }
 
     /**

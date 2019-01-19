@@ -6,7 +6,6 @@
  */
 
 import Component, { IUpdateContext, ITypedEvent } from "../Component";
-import Node from "../Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -35,9 +34,9 @@ export default class CPulse extends Component
     private _animHandler: number;
     private _pulseEvent: IPulseEvent;
 
-    constructor(node: Node, id?: string)
+    constructor(id?: string)
     {
-        super(node, id);
+        super(id);
         this.addEvent("pulse");
 
         this.onAnimationFrame = this.onAnimationFrame.bind(this);

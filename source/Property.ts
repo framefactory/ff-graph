@@ -68,7 +68,7 @@ export default class Property<T = any> extends Publisher
     constructor(path: string, schema: IPropertySchema<T>, user?: boolean)
     {
         super();
-        this.addEvents("value", "change", "dispose");
+        this.addEvents("value", "link", "change", "dispose");
 
         if (!schema || schema.preset === undefined) {
             throw new Error("missing schema/preset");
@@ -115,19 +115,19 @@ export default class Property<T = any> extends Publisher
      * @param key An optional key under which the property is accessible in the property group.
      * @param index An optional index position where the property should be inserted in the group.
      */
-    addToGroup(group: PropertyGroup, key?: string, index?: number)
+    attach(group: PropertyGroup, key?: string, index?: number)
     {
-        group.addProperty(this, key, index);
+        group._addProperty(this, key, index);
     }
 
     /**
      * Removes the property from the group it was previously added to.
      * Does nothing if the property is not member of a group.
      */
-    removeFromGroup()
+    detach()
     {
-        if (this.group) {
-            this.group.removeProperty(this);
+        if (this._group) {
+            this._group._removeProperty(this);
         }
     }
 
@@ -138,7 +138,8 @@ export default class Property<T = any> extends Publisher
     dispose()
     {
         this.unlink();
-        this.removeFromGroup();
+        this.detach();
+
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
@@ -230,9 +231,9 @@ export default class Property<T = any> extends Publisher
         this.addInLink(link);
     }
 
-    unlinkTo(destination: Property, sourceIndex?: number, destinationIndex?: number): boolean
+    unlinkTo(destination: Property, sourceIndex?: number, destinationIndex?: number)
     {
-        return destination.unlinkFrom(this, sourceIndex, destinationIndex);
+        destination.unlinkFrom(this, sourceIndex, destinationIndex);
     }
 
     unlinkFrom(source: Property, sourceIndex?: number, destinationIndex?: number): boolean
@@ -279,6 +280,7 @@ export default class Property<T = any> extends Publisher
         }
 
         this.inLinks.push(link);
+        this.requestSort();
 
         this.emit<IPropertyLinkEvent>({
             type: "link", add: true, remove: false, link
@@ -292,6 +294,7 @@ export default class Property<T = any> extends Publisher
         }
 
         this.outLinks.push(link);
+        this.requestSort();
 
         // push value through added link
         link.push();
@@ -305,8 +308,9 @@ export default class Property<T = any> extends Publisher
         }
 
         this.inLinks.splice(index, 1);
+        this.requestSort();
 
-        // if last link is removed and if object, reset to default (usually null) values
+                // if last link is removed and if object, reset to default (usually null) values
         if (this.inLinks.length === 0 && this.type === "object") {
             this.reset();
         }
@@ -324,6 +328,7 @@ export default class Property<T = any> extends Publisher
         }
 
         this.outLinks.splice(index, 1);
+        this.requestSort();
     }
 
     canLinkTo(destination: Property, sourceIndex?: number, destinationIndex?: number): boolean
@@ -406,6 +411,13 @@ export default class Property<T = any> extends Publisher
         }
 
         this.changed = true;
+    }
+
+    requestSort()
+    {
+        if (this._group && this._group.linkable) {
+            this._group.linkable.requestSort();
+        }
     }
 
     setOptions(options: string[])
@@ -534,7 +546,7 @@ export default class Property<T = any> extends Publisher
             schema: Object.assign({}, this.schema)
         } : null;
 
-        if (!this.hasMainInLinks() && !this.isDefault() && this.type !== "object") {
+        if (this.isInput() && !this.hasMainInLinks() && !this.isDefault() && this.type !== "object") {
             json = json || {};
             json.value = this.value;
         }
@@ -547,10 +559,10 @@ export default class Property<T = any> extends Publisher
                     key: link.destination.key
                 };
                 if (link.sourceIndex >= 0) {
-                    jsonLink.si = link.sourceIndex;
+                    jsonLink.srcIndex = link.sourceIndex;
                 }
                 if (link.destinationIndex >= 0) {
-                    jsonLink.di = link.destinationIndex;
+                    jsonLink.dstIndex = link.destinationIndex;
                 }
                 return jsonLink;
             });
@@ -569,7 +581,7 @@ export default class Property<T = any> extends Publisher
             json.links.forEach(link => {
                 const target = linkableDict[link.id];
                 const property = target.ins[link.key];
-                property.linkFrom(this, link.si, link.di);
+                property.linkFrom(this, link.srcIndex, link.dstIndex);
             });
         }
     }

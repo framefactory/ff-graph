@@ -38,9 +38,9 @@ export default class CSelection extends CController<CSelection>
     readonly selectedNodes = new NodeSet();
     readonly selectedComponents = new ComponentSet();
 
-    constructor(node: Node, id?: string)
+    constructor(id?: string)
     {
-        super(node, id);
+        super(id);
         this.addEvents("select-node", "select-component", "update");
 
         this.selectedNodes.on<INodeEvent>("node", e => this.onSelectNode(e.node, e.add));

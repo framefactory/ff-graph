@@ -26,6 +26,9 @@ export interface ILinkable
     readonly ins: PropertyGroup;
     /** Set of output properties. */
     readonly outs: PropertyGroup;
+
+    /** Called after property links have been added or removed. */
+    requestSort: () => void;
 }
 
 /**
@@ -55,7 +58,7 @@ export default class PropertyGroup extends Publisher
     constructor(linkable: ILinkable)
     {
         super();
-        this.addEvents("change");
+        this.addEvent("property");
 
         this.linkable = linkable;
         this.properties = [];
@@ -94,68 +97,7 @@ export default class PropertyGroup extends Publisher
     createPropertyFromTemplate(template: IPropertyTemplate, key?: string, index?: number)
     {
         const property = new Property(template.path, template.schema);
-        this.addProperty(property, key, index);
-    }
-
-    /**
-     * Adds the given property to the set.
-     * @param property The property to be added.
-     * @param key An optional key under which the property is accessible in the group.
-     * @param index Optional index at which to insert the property.
-     */
-    addProperty(property: Property, key?: string, index?: number)
-    {
-        if (property.group) {
-            property.removeFromGroup();
-        }
-
-        if (key && this[key]) {
-            throw new Error(`key '${key}' already exists in group`);
-        }
-
-        property["_group"] = this;
-        property["_key"] = key;
-
-        if (index === undefined) {
-            this.properties.push(property);
-        }
-        else {
-            this.properties.splice(index, 0, property);
-        }
-
-        if (key) {
-            this[key] = property;
-        }
-
-        this.emit<IPropertyGroupPropertyEvent>({
-            type: "property", add: true, remove: false, property
-        });
-    }
-
-    /**
-     * Removes the given property from the set.
-     * @param {Property} property The property to be removed.
-     */
-    removeProperty(property: Property)
-    {
-        if (property.group === this) {
-            if (this[property.key] !== property) {
-                throw new Error(`property not found in group: ${property.key}`);
-            }
-
-            this.properties.slice(this.properties.indexOf(property), 1);
-
-            if (property.key) {
-                delete this[property.key];
-            }
-
-            property["_group"] = null;
-            property["_key"] = "";
-
-            this.emit<IPropertyGroupPropertyEvent>({
-                type: "property", add: false, remove: true, property
-            });
-        }
+        this._addProperty(property, key, index);
     }
 
     /**
@@ -250,7 +192,7 @@ export default class PropertyGroup extends Publisher
             const jsonProp = json[key];
             if (jsonProp.schema) {
                 const property = new Property(jsonProp.path, jsonProp.schema, true);
-                this.addProperty(property, key);
+                property.attach(this, key);
             }
         });
     }
@@ -260,5 +202,61 @@ export default class PropertyGroup extends Publisher
         Object.keys(json).forEach(key => {
             this[key].inflate(json[key], linkableDict);
         });
+    }
+
+    _addProperty(property: Property, key?: string, index?: number)
+    {
+        if (property.group) {
+            property.detach();
+        }
+
+        if (key && this[key]) {
+            throw new Error(`key '${key}' already exists in group`);
+        }
+
+        (property as any)._group = this;
+        (property as any)._key = key;
+
+        if (index === undefined) {
+            this.properties.push(property);
+        }
+        else {
+            this.properties.splice(index, 0, property);
+        }
+
+        if (key) {
+            this[key] = property;
+        }
+
+        this.emit<IPropertyGroupPropertyEvent>({
+            type: "property", add: true, remove: false, property
+        });
+    }
+
+    /**
+     * Removes the given property from the set.
+     * @param {Property} property The property to be removed.
+     */
+    _removeProperty(property: Property)
+    {
+        if (property.group === this) {
+
+            if (this[property.key] !== property) {
+                throw new Error(`property not found in group: ${property.key}`);
+            }
+
+            this.properties.slice(this.properties.indexOf(property), 1);
+
+            if (property.key) {
+                delete this[property.key];
+            }
+
+            (property as any)._group = null;
+            (property as any)._key = "";
+
+            this.emit<IPropertyGroupPropertyEvent>({
+                type: "property", add: false, remove: true, property
+            });
+        }
     }
 }

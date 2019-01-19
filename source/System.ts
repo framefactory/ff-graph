@@ -36,11 +36,18 @@ export default class System extends Publisher
         this.graph = new Graph(this);
     }
 
+    /**
+     * Serializes the content of the system, ready to be stringified.
+     */
     deflate()
     {
         return this.graph.deflate();
     }
 
+    /**
+     * Deserializes the given JSON object.
+     * @param json
+     */
     inflate(json)
     {
         this.graph.inflate(json);

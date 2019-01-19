@@ -16,16 +16,23 @@ export default class CGraph extends Component
 {
     static readonly type: string = "CGraph";
 
-    readonly graph = new Graph(this.system);
+    protected _innerGraph: Graph = null;
+    protected _innerRoot: CHierarchy = null;
 
-    protected _root: CHierarchy;
-
-    set root(root: CHierarchy) {
-        this._root = root;
+    get innerGraph() {
+        return this._innerGraph;
     }
 
-    get root() {
-        return this._root;
+    get innerRoot() {
+        return this._innerRoot;
+    }
+    set innerRoot(root: CHierarchy) {
+        this._innerRoot = root;
+    }
+
+    create()
+    {
+        this._innerGraph = new Graph(this.system);
     }
 
     update(context: IUpdateContext): boolean
@@ -36,18 +43,18 @@ export default class CGraph extends Component
 
     tick(context: IUpdateContext): boolean
     {
-        return this.graph.tick(context);
+        return this._innerGraph.tick(context);
     }
 
     inflate(json: any)
     {
         super.inflate(json);
-        this.graph.inflate(json.graph);
+        this._innerGraph.inflate(json.graph);
     }
 
     deflate()
     {
         const json = super.deflate();
-        json.graph = this.graph.deflate();
+        json.graph = this._innerGraph.deflate();
     }
 }

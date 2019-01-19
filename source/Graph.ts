@@ -46,7 +46,7 @@ export default class Graph extends Publisher
         this._root = root;
 
         if (this.parent) {
-            this.parent.root = root;
+            this.parent.innerRoot = root;
         }
     }
 
@@ -65,7 +65,7 @@ export default class Graph extends Publisher
     {
         if (this._sortRequested) {
             this._sortRequested = false;
-            this.components.sort(this._sorter);
+            this.sort();
         }
 
         // call update on components in topological sort order
@@ -104,9 +104,14 @@ export default class Graph extends Publisher
      * Requests a topological sort of the list of components based on how they are interlinked.
      * The sort is executed before the next update.
      */
-    sort()
+    requestSort()
     {
         this._sortRequested = true;
+    }
+
+    sort()
+    {
+        this.components.sort(this._sorter);
     }
 
     createNode(name?: string, id?: string): Node;
@@ -116,13 +121,15 @@ export default class Graph extends Publisher
         let node, name;
 
         if (typeof nodeTypeOrName === "function") {
-            node = Node.create(nodeTypeOrName, this, id);
+            node = new nodeTypeOrName(id);
             name = nameOrId;
         }
         else {
-            node = Node.create(this, nameOrId);
+            node = new Node(nameOrId);
             name = nodeTypeOrName;
         }
+
+        node.attach(this);
 
         if (name) {
             node.name = name;
@@ -149,7 +156,7 @@ export default class Graph extends Publisher
 
             json.nodes.forEach(jsonNode => {
                 const node = this.createNode(jsonNode.name, jsonNode.id);
-                node.inflate(json, linkableDict);
+                node.inflate(jsonNode, linkableDict);
             });
             json.nodes.forEach(jsonNode => {
                 const node = this.nodes.getById(jsonNode.id);

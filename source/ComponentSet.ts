@@ -284,4 +284,9 @@ export default class ComponentSet extends Publisher
 
         super.off(type, callback, context);
     }
+
+    toString()
+    {
+        return this._list.map(component => component.type).join("\n");
+    }
 }

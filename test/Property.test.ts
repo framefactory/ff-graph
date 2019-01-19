@@ -6,7 +6,7 @@
  */
 
 import { assert } from "chai";
-import System from "../source/System";
+import System from "@ff/graph/System";
 import TestComponent from "./TestComponent";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -14,6 +14,8 @@ import TestComponent from "./TestComponent";
 export default function() {
     suite("Property", function() {
         const system = new System();
+        system.registry.registerComponentType(TestComponent);
+
         const node = system.graph.createNode("Test");
         const comp0 = node.createComponent(TestComponent, "one");
         const comp1 = node.createComponent(TestComponent, "two");
@@ -37,9 +39,9 @@ export default function() {
             assert.strictEqual(ins.bool1.value, true);
             assert.strictEqual(ins.str0.value, "");
             assert.strictEqual(ins.str1.value, "Hello");
-            assert.strictEqual(ins.enum0.value, 0);
-            assert.strictEqual(ins.enum1.value, 2);
-            assert.strictEqual(ins.enum2.value, 1);
+            assert.strictEqual(ins.option0.value, 0);
+            assert.strictEqual(ins.option1.value, 2);
+            assert.strictEqual(ins.option2.value, 1);
             assert.strictEqual(ins.obj0.value, null);
         });
 
@@ -47,29 +49,29 @@ export default function() {
             const ins = comp0.ins;
             assert.strictEqual(ins.num0.type, "number");
             assert.strictEqual(ins.num1.type, "number");
-            assert.strictEqual(ins.num1.elements, 1);
+            assert.strictEqual(ins.num1.elementCount, 1);
             assert.deepStrictEqual(ins.vec2.type, "number");
-            assert.strictEqual(ins.vec2.elements, 2);
+            assert.strictEqual(ins.vec2.elementCount, 2);
             assert.deepStrictEqual(ins.vec3.type, "number");
-            assert.strictEqual(ins.vec3.elements, 3);
+            assert.strictEqual(ins.vec3.elementCount, 3);
             assert.deepStrictEqual(ins.vec4.type, "number");
-            assert.strictEqual(ins.vec4.elements, 4);
+            assert.strictEqual(ins.vec4.elementCount, 4);
             assert.strictEqual(ins.bool0.type, "boolean");
-            assert.strictEqual(ins.bool0.elements, 1);
+            assert.strictEqual(ins.bool0.elementCount, 1);
             assert.strictEqual(ins.bool1.type, "boolean");
             assert.strictEqual(ins.str0.type, "string");
             assert.strictEqual(ins.str1.type, "string");
-            assert.strictEqual(ins.str1.elements, 1);
-            assert.strictEqual(ins.enum0.type, "number", "enum0");
-            assert.strictEqual(ins.enum1.type, "number", "enum1");
-            assert.strictEqual(ins.enum2.type, "number", "enum2");
+            assert.strictEqual(ins.str1.elementCount, 1);
+            assert.strictEqual(ins.option0.type, "number", "enum0");
+            assert.strictEqual(ins.option1.type, "number", "enum1");
+            assert.strictEqual(ins.option2.type, "number", "enum2");
             assert.strictEqual(ins.obj0.type, "object");
         });
 
         test("construction/enum", function() {
             const ins = comp0.ins;
-            assert.deepStrictEqual(ins.enum0.schema.options, [ "one", "two", "three" ]);
-            assert.deepStrictEqual(ins.enum2.schema.options, [ "seven", "eight", "nine" ]);
+            assert.deepStrictEqual(ins.option0.schema.options, [ "one", "two", "three" ]);
+            assert.deepStrictEqual(ins.option2.schema.options, [ "seven", "eight", "nine" ]);
         });
 
         test("linking/simple", function() {
@@ -81,7 +83,7 @@ export default function() {
             assert.isTrue(comp0.outs.vec3.canLinkTo(comp1.ins.vec3));
             comp0.outs.vec3.linkTo(comp1.ins.vec3);
             comp0.outs.vec3.value = [ 21, 22, 23 ];
-            comp0.outs.vec3.setChanged();
+            comp0.outs.vec3.set();
             assert.deepStrictEqual(comp1.ins.vec3.value, [ 21, 22, 23 ]);
 
             assert.isTrue(comp0.outs.str1.canLinkTo(comp1.ins.str0));
@@ -116,14 +118,18 @@ export default function() {
             comp0.outs.num0.linkTo(comp1.ins.vec4, undefined, 2);
             assert.deepStrictEqual(comp1.ins.vec4.value, [ 1, 2, 13, 4 ]);
             comp0.outs.num0.value = 789;
-            comp0.outs.num0.setChanged();
+            comp0.outs.num0.set();
             assert.deepStrictEqual(comp1.ins.vec4.value, [ 1, 2, 789, 4 ]);
         });
 
         test("linking/sort", function() {
             const system = new System();
-            const entity = system.graph.createNode("Test");
-            const comps = new Array(10).fill(null).map(el => new TestComponent(entity));
+            const node = system.graph.createNode("Test");
+            const comps = new Array(10).fill(null).map(el => {
+                const component = new TestComponent();
+                component.attach(node);
+                return component;
+            });
             const indices = [ 5, 7, 1, 0, 6, 9, 4, 8, 2, 3 ];
             for (let i = 1; i < indices.length; ++i) {
                 const c0 = comps[indices[i - 1]];

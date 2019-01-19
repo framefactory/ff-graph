@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import { TypeOf, PropOf, enumToArray, Dictionary } from "@ff/core/types";
+import { TypeOf, PropOf, enumToArray, Dictionary, Constructor } from "@ff/core/types";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -69,6 +69,12 @@ export const makeOptionType = function(options: string[], path: string, props: S
     return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<number>;
 };
 
+export const makeObjectType = function<T>(type: TypeOf<T>, path: string, props: SchemaProps<T>) {
+    props = parseProps(props);
+    const schema = { preset: null, objectType: type };
+    return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<T>;
+};
+
 export const schemas: Dictionary<IPropertySchema> = {
     Number: { preset: 0 },
     Integer: { preset: 0, step: 1, speed: 0.34, precision: 0 },
@@ -85,6 +91,7 @@ export const schemas: Dictionary<IPropertySchema> = {
     ColorRGBA: { preset: [1, 1, 1, 1], semantic: "color", labels: labels.rgba, min: 0, max: 1, bar: true },
     Boolean: { preset: false },
     String: { preset: "" },
+    Object: { preset: null, objectType: Object },
     Event: { preset: 0, event: true }
 };
 
@@ -107,5 +114,6 @@ export const types = {
     String: (path: string, props?: SchemaProps<string>) => makeType<string>(schemas.String, path, props),
     Enum: <T>(path: string, enumeration: T, props?: SchemaProps<PropOf<T>>) => makeEnumType(enumeration, path, props),
     Option: (path: string, options: string[], props?: SchemaProps<number>) => makeOptionType(options, path, props),
+    Object: <T>(path: string, type: TypeOf<T>, props?: SchemaProps<T>) => makeObjectType(type, path, props),
     Event: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Event, path, props)
 };

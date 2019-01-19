@@ -8,7 +8,7 @@
 import { Dictionary, TypeOf } from "@ff/core/types";
 
 import Component, { ComponentType } from "./Component";
-import Node from "./Node";
+import Node, { NodeType } from "./Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,27 +19,47 @@ import Node from "./Node";
  */
 export default class Registry
 {
-    types: Dictionary<TypeOf<Component>>;
+    protected nodeTypes: Dictionary<TypeOf<Node>>;
+    protected componentTypes: Dictionary<TypeOf<Component>>;
 
     constructor()
     {
-        this.types = {};
+        this.componentTypes = {};
     }
 
-    createComponent<T extends Component>(type: string, node: Node, instanceId?: string): T
+    getNodeType<T extends Node>(type: string): TypeOf<T>
     {
-        const componentType = this.getComponentType(type) as ComponentType<T>;
-        return Component.create(componentType, node, instanceId);
+        const nodeType = this.nodeTypes[type] as TypeOf<T>;
+        if (!nodeType) {
+            throw new Error(`node type not found for type id: '${type}'`);
+        }
+
+        return nodeType;
     }
 
     getComponentType<T extends Component>(type: string): TypeOf<T>
     {
-        const componentType = this.types[type] as TypeOf<T>;
+        const componentType = this.componentTypes[type] as TypeOf<T>;
         if (!componentType) {
             throw new Error(`component type not found for type id: '${type}'`);
         }
 
         return componentType;
+    }
+
+    registerNodeType(nodeType: NodeType | NodeType[])
+    {
+        if (Array.isArray(nodeType)) {
+            nodeType.forEach(nodeType => this.registerNodeType(nodeType));
+        }
+        else {
+            if (this.nodeTypes[nodeType.type]) {
+                console.warn(nodeType);
+                throw new Error(`node type already registered: '${nodeType.type}'`);
+            }
+
+            this.nodeTypes[nodeType.type] = nodeType;
+        }
     }
 
     registerComponentType(componentType: ComponentType | ComponentType[])
@@ -48,12 +68,12 @@ export default class Registry
             componentType.forEach(componentType => this.registerComponentType(componentType));
         }
         else {
-            if (this.types[componentType.type]) {
+            if (this.componentTypes[componentType.type]) {
                 console.warn(componentType);
                 throw new Error(`component type already registered: '${componentType.type}'`);
             }
 
-            this.types[componentType.type] = componentType;
+            this.componentTypes[componentType.type] = componentType;
         }
     }
 }

@@ -79,28 +79,8 @@ export default class Component extends Publisher implements ILinkable
     static readonly isGraphSingleton: boolean = false;
     static readonly isSystemSingleton: boolean = false;
 
-    /**
-     * Creates a new component and attaches it to the given node.
-     * @param type Type of the component to create.
-     * @param node Node to attach the component new to.
-     * @param id Unique id for the component. Can be omitted, will be created automatically.
-     */
-    static create<T extends Component = Component>(type: ComponentType<T>, node: Node, id?: string): T
-    {
-        if (!type || !type.type) {
-            throw new Error("invalid component type");
-        }
-
-        const Ctor = type as TypeOf<T>;
-        const component = new Ctor(node, id);
-
-        component.create();
-        node._addComponent(component);
-        return component;
-    }
 
     readonly id: string;
-    readonly node: Node;
 
     ins: PropertyGroup = new PropertyGroup(this);
     outs: PropertyGroup = new PropertyGroup(this);
@@ -108,21 +88,20 @@ export default class Component extends Publisher implements ILinkable
     changed: boolean = true;
     updated: boolean = false;
 
+    private _node: Node = null;
     private _name: string = "";
     private _trackers: ComponentTracker[] = [];
+    private _firstAttached = false;
 
     /**
      * Protected constructor. Use the static [[Component.create]] method to create component instances.
-     * @param node Node to attach the new component to.
      * @param id Unique id for the component. A unique id is usually created automatically,
      * do not specify except while de-serializing the component.
      */
-    constructor(node: Node, id?: string)
+    constructor(id?: string)
     {
         super({ knownEvents: false });
-
         this.id = id || uniqueId();
-        this.node = node;
     }
 
     /**
@@ -137,14 +116,21 @@ export default class Component extends Publisher implements ILinkable
      * Returns the system this component and its node belong to.
      */
     get system(): System {
-        return this.node.system;
+        return this._node.system;
     }
 
     /**
      * Returns the graph this component and its node belong to.
      */
     get graph() {
-        return this.node.graph;
+        return this._node.graph;
+    }
+
+    /**
+     * Returns the node this component belongs to.
+     */
+    get node() {
+        return this._node;
     }
 
     /**
@@ -152,14 +138,14 @@ export default class Component extends Publisher implements ILinkable
      * Sibling components are components belonging to the same node.
      */
     get components() {
-        return this.node.components;
+        return this._node.components;
     }
 
     /**
      * Returns the sibling hierarchy component if available.
      */
     get hierarchy() {
-        return this.node.components.get<CHierarchy>("CHierarchy");
+        return this._node.components.get<CHierarchy>("CHierarchy");
     }
 
     /**
@@ -200,6 +186,33 @@ export default class Component extends Publisher implements ILinkable
     {
         this._name = value;
         this.emit<IComponentChangeEvent>({ type: "change", component: this, what: "name" });
+    }
+
+    /**
+     * Adds the component to the given node.
+     * @param node Node to attach the new component to.
+     */
+    attach(node: Node)
+    {
+        if (this._node) {
+            this.detach();
+        }
+
+        this._node = node;
+        node._addComponent(this);
+
+        if (!this._firstAttached) {
+            this._firstAttached = true;
+            this.create();
+        }
+    }
+
+    detach()
+    {
+        if (this._node) {
+            this._node._removeComponent(this);
+            this._node = null;
+        }
     }
 
     /**
@@ -256,10 +269,15 @@ export default class Component extends Publisher implements ILinkable
         this._trackers.forEach(tracker => tracker.dispose());
 
         // remove component from node
-        this.node._removeComponent(this);
+        this.detach();
 
         // emit dispose event
         this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
+    }
+
+    requestSort()
+    {
+        this.graph.requestSort();
     }
 
     /**
@@ -312,7 +330,7 @@ export default class Component extends Publisher implements ILinkable
     trackComponent<T extends Component>(componentOrType: ComponentOrType<T>,
         didAdd?: (component: T) => void, willRemove?: (component: T) => void): ComponentTracker<T>
     {
-        const tracker = new ComponentTracker(this.node.components, componentOrType, didAdd, willRemove);
+        const tracker = new ComponentTracker(this._node.components, componentOrType, didAdd, willRemove);
         this._trackers.push(tracker);
         return tracker;
     }
@@ -437,10 +455,10 @@ export default class Component extends Publisher implements ILinkable
     inflateLinks(json: any, linkableDict: Dictionary<ILinkable>)
     {
         if (json.ins) {
-            this.ins.inflateLinks(json, linkableDict);
+            this.ins.inflateLinks(json.ins, linkableDict);
         }
         if (json.outs) {
-            this.outs.inflateLinks(json, linkableDict);
+            this.outs.inflateLinks(json.outs, linkableDict);
         }
     }
 

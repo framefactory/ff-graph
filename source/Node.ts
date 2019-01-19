@@ -137,52 +137,22 @@ export default class Node extends Publisher
 {
     static readonly type: string = "Node";
 
-    static create(graph: Graph, id?: string): Node;
-    static create<T extends Node = Node>(type: NodeType<T>, graph: Graph, id?: string): T;
-    static create(nodeTypeOrGraph, graphOrId, id?)
-    {
-        let graph, node;
-
-        if (nodeTypeOrGraph instanceof Graph) {
-            graph = nodeTypeOrGraph;
-            node = new Node(graph, graphOrId);
-        }
-        else {
-            graph = graphOrId;
-            node = new nodeTypeOrGraph(graph, id);
-        }
-
-        node.create();
-        graph._addNode(node);
-        return node;
-    }
 
     readonly id: string;
-    readonly graph: Graph;
-    readonly system: System;
     readonly components = new ComponentSet();
 
+    private _graph: Graph = null;
     private _name: string = "";
 
     /**
      * Protected constructor. Please use the static [[Node.create]] method to create node instances.
-     * @param graph Graph to attach the new node to.
-     * @param id Unique id for the node. Should be omitted except for de-serialization, will be created automatically.
+     * @param id Unique id for the node. A unique id is usually created automatically,
+     * do not specify except while de-serializing the component.
      */
-    constructor(graph: Graph, id?: string)
+    constructor(id?: string)
     {
         super({ knownEvents: false });
-
-        this.id = id || uniqueId(8);
-
-        if (!graph) {
-            throw new RangeError("missing graph");
-        }
-
-        this.graph = graph;
-        this.system = graph.system;
-
-        this._name = "";
+        this.id = id || uniqueId();
     }
 
     /**
@@ -193,6 +163,23 @@ export default class Node extends Publisher
         return (this.constructor as typeof Node).type;
     }
 
+    /**
+     * Returns the system this node and its graph belong to.
+     */
+    get system() {
+        return this._graph.system;
+    }
+
+    /**
+     * Returns the graph this node is part of.
+     */
+    get graph() {
+        return this._graph;
+    }
+
+    /**
+     * Returns this node's hierarchy component if available.
+     */
     get hierarchy() {
         return this.components.get<CHierarchy>("CHierarchy");
     }
@@ -215,6 +202,24 @@ export default class Node extends Publisher
         this.emit<INodeChangeEvent>({ type: "change", what: "name", node: this });
     }
 
+    attach(graph: Graph)
+    {
+        if (this._graph) {
+            this.detach();
+        }
+
+        this._graph = graph;
+        graph._addNode(this);
+    }
+
+    detach()
+    {
+        if (this._graph) {
+            this._graph._removeNode(this);
+            this._graph = null;
+        }
+    }
+
     create()
     {
     }
@@ -230,7 +235,7 @@ export default class Node extends Publisher
         componentList.forEach(component => component.dispose());
 
         // remove node from system and graph
-        this.graph._removeNode(this);
+        this.detach();
 
         // emit dispose event
         this.emit<INodeDisposeEvent>({ type: "dispose", node: this });
@@ -244,9 +249,10 @@ export default class Node extends Publisher
      */
     createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string, id?: string): T
     {
-        const component = this.system.registry.createComponent<T>(
-            getComponentTypeString(componentOrType), this, id
-        );
+        const type = this.system.registry.getComponentType(getComponentTypeString(componentOrType));
+        const component = new type(id) as T;
+
+        component.attach(this);
 
         if (name) {
             component.name = name;
@@ -400,9 +406,6 @@ export default class Node extends Publisher
 
     _addComponent(component: Component)
     {
-        if (component.node !== this) {
-            throw new Error("component belongs to a different node");
-        }
         if (component.isNodeSingleton && this.components.has(component)) {
             throw new Error(`only one component of type '${component.type}' allowed per node`);
         }
@@ -416,4 +419,5 @@ export default class Node extends Publisher
         this.components._remove(component);
         this.graph._removeComponent(component);
     }
+
 }
