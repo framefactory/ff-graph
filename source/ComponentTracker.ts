@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType } from "./Component";
+import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +18,7 @@ import ComponentSet, { IComponentEvent } from "./ComponentSet";
 export default class ComponentTracker<T extends Component = Component>
 {
     /** The type of component to track. */
-    readonly type: ComponentOrType<T>;
+    readonly type: string;
     /** Access to the component of the tracked type after it has been added. */
     component: T;
     /** Called after a component of the tracked type has been added to the node. */
@@ -31,7 +31,7 @@ export default class ComponentTracker<T extends Component = Component>
     constructor(set: ComponentSet, componentOrType: ComponentOrType<T>,
                 didAdd?: (component: T) => void, willRemove?: (component: T) => void) {
 
-        this.type = componentOrType;
+        this.type = getComponentTypeString(componentOrType);
         this.didAdd = didAdd;
         this.willRemove = willRemove;
 
@@ -48,6 +48,10 @@ export default class ComponentTracker<T extends Component = Component>
     dispose()
     {
         this._set.off(this.type, this.onComponent, this);
+        this.component = null;
+        this.didAdd = null;
+        this.willRemove = null;
+
     }
 
     protected onComponent(event: IComponentEvent<T>)

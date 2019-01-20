@@ -5,6 +5,7 @@
  * License: MIT
  */
 
+import { ITypedEvent } from "@ff/core/Publisher";
 import Commander from "@ff/core/Commander";
 import { types } from "../propertyTypes";
 
@@ -12,12 +13,20 @@ import Component from "../Component";
 import ComponentSet, { IComponentEvent } from "../ComponentSet";
 import Node from "../Node";
 import NodeSet, { INodeEvent } from "../NodeSet";
+import Graph from "../Graph";
 
+import CGraph from "./CGraph";
 import CController, { Actions } from "./CController";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { INodeEvent, IComponentEvent };
+
+export interface IActiveGraphEvent extends ITypedEvent<"active-graph">
+{
+    previous: Graph;
+    next: Graph;
+}
 
 export type SelectionActions = Actions<CSelection>;
 
@@ -38,18 +47,60 @@ export default class CSelection extends CController<CSelection>
     readonly selectedNodes = new NodeSet();
     readonly selectedComponents = new ComponentSet();
 
+    private _activeGraph: Graph = null;
+
     constructor(id?: string)
     {
         super(id);
-        this.addEvents("select-node", "select-component", "update");
+        this.addEvents("select-node", "select-component", "active-graph", "update");
 
         this.selectedNodes.on<INodeEvent>("node", e => this.onSelectNode(e.node, e.add));
         this.selectedComponents.on<IComponentEvent>("component", e => this.onSelectComponent(e.component, e.add));
     }
 
+    get activeGraph() {
+        return this._activeGraph;
+    }
+    set activeGraph(graph: Graph) {
+        if (graph !== this.activeGraph) {
+            this.clearSelection();
+            const previous = this._activeGraph;
+            this._activeGraph = graph;
+            this.onActiveGraph(graph);
+            this.emit<IActiveGraphEvent>({ type: "active-graph", previous, next: graph });
+        }
+    }
+
+    hasParentGraph()
+    {
+        return this._activeGraph && this._activeGraph.parent;
+    }
+
+    activateParentGraph()
+    {
+        if (this._activeGraph && this._activeGraph.parent.graph) {
+            this.activeGraph = this._activeGraph.parent.graph;
+        }
+    }
+
+    hasChildGraph()
+    {
+        return this.selectedComponents.has(CGraph);
+    }
+
+    activateChildGraph()
+    {
+        const graphComponent = this.selectedComponents.get(CGraph);
+        if (graphComponent) {
+            this.activeGraph = graphComponent.innerGraph;
+        }
+    }
+
     create()
     {
         super.create();
+
+        this._activeGraph = this.system.graph;
 
         this.system.nodes.on("node", this.onSystemNode, this);
         this.system.components.on("component", this.onSystemComponent, this);
@@ -80,8 +131,9 @@ export default class CSelection extends CController<CSelection>
 
     selectNode(node?: Node, toggle: boolean = false)
     {
-        const selectedNodes = this.selectedNodes;
+        this.activeGraph = node.graph;
 
+        const selectedNodes = this.selectedNodes;
         const multiSelect = this.multiSelect && toggle;
 
         if (node && selectedNodes.contains(node)) {
@@ -106,8 +158,9 @@ export default class CSelection extends CController<CSelection>
 
     selectComponent(component?: Component, toggle: boolean = false)
     {
-        const selectedComponents = this.selectedComponents;
+        this.activeGraph = component.graph;
 
+        const selectedComponents = this.selectedComponents;
         const multiSelect = this.multiSelect && toggle;
 
         if (component && selectedComponents.contains(component)) {
@@ -143,6 +196,10 @@ export default class CSelection extends CController<CSelection>
     }
 
     protected onSelectComponent(component: Component, selected: boolean)
+    {
+    }
+
+    protected onActiveGraph(graph: Graph)
     {
     }
 
