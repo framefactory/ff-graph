@@ -199,12 +199,14 @@ export default class Component extends Publisher implements ILinkable
         }
 
         this._node = node;
-        node._addComponent(this);
 
         if (!this._firstAttached) {
             this._firstAttached = true;
             this.create();
         }
+
+        // note: adding the component informs subscribers, this must happen after create()
+        node._addComponent(this);
     }
 
     detach()
