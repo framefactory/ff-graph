@@ -5,89 +5,14 @@
  * License: MIT
  */
 
-import { Dictionary, TypeOf } from "@ff/core/types";
 import uniqueId from "@ff/core/uniqueId";
+import { Dictionary, TypeOf } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrType, getComponentTypeString } from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
 import Graph from "./Graph";
-import System from "./System";
-
-import CHierarchy from "./components/CHierarchy";
-
-////////////////////////////////////////////////////////////////////////////////
-
-const _EMPTY_ARRAY = [];
-
-const _getChildNode = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, recursive: boolean): T | null => {
-
-    const children = node.hierarchy.children;
-    for (let i = 0, n = children.length; i < n; ++i) {
-        const childNode = children[i].node;
-
-        if (childNode.is(nodeOrType)) {
-            return childNode as T;
-        }
-    }
-
-    if (recursive) {
-        for (let i = 0, n = children.length; i < n; ++i) {
-            const descendant = _getChildNode(children[i].node, nodeOrType, true);
-            if (descendant) {
-                return descendant as T;
-            }
-        }
-    }
-
-    return null;
-};
-
-const _getChildNodes = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, recursive: boolean): T[] => {
-
-    const children = node.hierarchy.children;
-    let result = [];
-
-    for (let i = 0, n = children.length; i < n; ++i) {
-        const childNode = children[i].node;
-
-        if (childNode.is(nodeOrType)) {
-            result.push(childNode);
-        }
-    }
-
-    if (recursive) {
-        for (let i = 0, n = children.length; i < n; ++i) {
-            result = result.concat(_getChildNodes(children[i].node, nodeOrType, true));
-        }
-    }
-
-    return result;
-};
-
-const _findChildNode = (node: Node, name: string, recursive: boolean): Node | null => {
-
-    const children = node.hierarchy.children;
-    for (let i = 0, n = children.length; i < n; ++i) {
-        const childNode = children[i].node;
-
-        if (childNode.name === name) {
-            return childNode;
-        }
-    }
-
-    if (recursive) {
-        for (let i = 0, n = children.length; i < n; ++i) {
-            const descendant = _findChildNode(children[i].node, name, true);
-            if (descendant) {
-                return descendant;
-            }
-        }
-    }
-
-    return null;
-};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -124,35 +49,41 @@ export function getNodeTypeString<T extends Node>(nodeOrType: NodeOrType<T> | st
 }
 
 /**
- * Node in an node/component system.
+ * Node in an graph/node/component system.
  *
  * ### Events
- * - *"change"* - emits [[INodeChangeEvent]] after the instance's state has changed.
+ * - *"change"* - emits [[INodeChangeEvent]] after the node's state has changed.
+ * - *"dispose"* - emits [[INodeDisposeEvent]] if the node is about to be disposed.
  *
  * ### See also
  * - [[Component]]
+ * - [[Graph]]
  * - [[System]]
  */
 export default class Node extends Publisher
 {
     static readonly type: string = "Node";
 
-
+    /** The node's globally unique id. */
     readonly id: string;
+    /** Collection of all components in this node. */
     readonly components = new ComponentSet();
 
     private _graph: Graph = null;
     private _name: string = "";
 
     /**
-     * Protected constructor. Please use the static [[Node.create]] method to create node instances.
+     * Protected constructor. Please use [[Graph.createNode]] / [[Graph.createPlainNode]] to create node instances.
      * @param id Unique id for the node. A unique id is usually created automatically,
      * do not specify except while de-serializing the component.
+     *
+     * Note that during execution of the constructor, the node is not yet attached to a graph/system.
+     * Do not try to get access to other nodes, components, the parent graph, or the system here.
      */
-    constructor(id?: string)
+    constructor(id: string)
     {
         super({ knownEvents: false });
-        this.id = id || uniqueId();
+        this.id = id;
     }
 
     /**
@@ -178,13 +109,6 @@ export default class Node extends Publisher
     }
 
     /**
-     * Returns this node's hierarchy component if available.
-     */
-    get hierarchy() {
-        return this.components.get<CHierarchy>("CHierarchy");
-    }
-
-    /**
      * Returns the name of this node.
      * @returns {string}
      */
@@ -202,6 +126,10 @@ export default class Node extends Publisher
         this.emit<INodeChangeEvent>({ type: "change", what: "name", node: this });
     }
 
+    /**
+     * Adds this node to the given graph and the system.
+     * @param graph
+     */
     attach(graph: Graph)
     {
         if (this._graph) {
@@ -212,6 +140,9 @@ export default class Node extends Publisher
         graph._addNode(this);
     }
 
+    /**
+     * Removes this node from its graph and system.
+     */
     detach()
     {
         if (this._graph) {
@@ -220,7 +151,11 @@ export default class Node extends Publisher
         }
     }
 
-    create()
+    /**
+     * Override to create an initial set of components for the node.
+     * Note that this function is not called if a node is restored from serialization data.
+     */
+    createComponents()
     {
     }
 
@@ -243,14 +178,14 @@ export default class Node extends Publisher
 
     /**
      * Creates a new component of the given type. Adds it to this node.
-     * @param componentOrType Type of the component to create.
+     * @param componentOrType Component constructor, type name, or instance.
      * @param name Optional name for the component.
-     * @param id Optional unique identifier for the component.
+     * @param id Optional unique identifier for the component (must omit unless serializing).
      */
     createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string, id?: string): T
     {
         const type = this.system.registry.getComponentType(getComponentTypeString(componentOrType));
-        const component = new type(id) as T;
+        const component = new type(id || uniqueId(12, this.system.components.getDictionary())) as T;
 
         component.attach(this);
 
@@ -261,137 +196,32 @@ export default class Node extends Publisher
         return component;
     }
 
-    getRoot(): Node
-    {
-        let node = this as Node;
-        let hierarchy = this.hierarchy;
-
-        while(hierarchy) {
-            node = hierarchy.node;
-            hierarchy = hierarchy.parent;
-        }
-
-        return node;
-    }
-
+    /**
+     * Tests whether the node is of or descends from the given type.
+     * @param nodeOrType Node constructor, type name, or instance.
+     */
     is(nodeOrType: NodeOrType): boolean
     {
         const type = getNodeTypeString(nodeOrType);
 
-        let prototype = Object.getPrototypeOf(this);
+        let prototype = this;
 
         do {
+            prototype = Object.getPrototypeOf(prototype);
+
             if (prototype.type === type) {
                 return true;
             }
+
         } while(prototype.type !== Node.type);
 
         return false;
     }
 
-    getParent<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
-    {
-        let hierarchy = this.hierarchy;
-        let parent = hierarchy ? hierarchy.parent : null;
-
-        if (!parent) {
-            return null;
-        }
-
-        if (parent.node.is(nodeOrType)) {
-            return parent.node as T;
-        }
-
-        if (recursive) {
-            parent = parent.parent;
-            while(parent) {
-                if (parent.node.is(nodeOrType)) {
-                    return parent.node as T;
-                }
-            }
-        }
-
-        return null;
-    }
-
     /**
-     * Returns the child node with the given name.
-     * @param name
-     * @param recursive If true, extends search to entire subtree (breadth-first).
+     * Returns a text representation of the node.
+     * @param verbose
      */
-    findChild(name: string, recursive: boolean): Node | null
-    {
-        return this.hierarchy ? _findChildNode(this, name, recursive) : null;
-    }
-
-    /**
-     * Returns the child node of the given type.
-     * @param nodeOrType
-     * @param recursive If true, extends search to entire subtree (breadth-first).
-     */
-    getChild<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
-    {
-        return this.hierarchy ? _getChildNode(this, nodeOrType, recursive) : null;
-    }
-
-    /**
-     * Returns all child nodes of the given type.
-     * @param nodeOrType
-     * @param recursive If true, extends search to entire subtree (breadth-first).
-     */
-    getChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): Readonly<T[]>
-    {
-        return this.hierarchy ? _getChildNodes(this, nodeOrType, recursive) : _EMPTY_ARRAY;
-    }
-
-    /**
-     * Returns true if there is a child node of the given type.
-     * @param nodeOrType
-     * @param recursive If true, extends search to entire subtree (breadth-first).
-     */
-    hasChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): boolean
-    {
-        return this.hierarchy ? !!_getChildNode(this, nodeOrType, recursive) : false;
-    }
-
-    deflate()
-    {
-        const json: any = {
-            id: this.id
-        };
-
-        if (this.name) {
-            json.name = this.name;
-        }
-
-        if (this.components.length > 0) {
-            json.components = this.components.getArray().map(component => component.deflate());
-        }
-
-        return json;
-    }
-
-    inflate(json, linkableDict: Dictionary<ILinkable>)
-    {
-        if (json.components) {
-            json.components.forEach(jsonComp => {
-                const component = this.createComponent(jsonComp.type, jsonComp.name, jsonComp.id);
-                component.inflate(jsonComp);
-                linkableDict[jsonComp.id] = component;
-            });
-        }
-    }
-
-    inflateLinks(json, linkableDict: Dictionary<ILinkable>)
-    {
-        if (json.components) {
-            json.components.forEach(jsonComp => {
-                const component = this.components.getById(jsonComp.id);
-                component.inflateLinks(jsonComp, linkableDict);
-            });
-        }
-    }
-
     toString(verbose: boolean = false)
     {
         const components = this.components.getArray();
@@ -404,6 +234,83 @@ export default class Node extends Publisher
         return text;
     }
 
+    /**
+     * Serializes the node and its components.
+     * Return node serialization data, or null if the node should be excluded from serialization.
+     */
+    deflate()
+    {
+        const json: any = {};
+        const jsonComponents = [];
+
+        const components = this.components.getArray();
+        for (let i = 0, n = components.length; i < n; ++i) {
+            const component = components[i];
+
+            const jsonComp = this.deflateComponent(component);
+
+            jsonComp.type = component.type;
+            jsonComp.id = component.id;
+
+            if (component.name) {
+                jsonComp.name = component.name;
+            }
+
+            jsonComponents.push(jsonComp);
+        }
+
+        if (jsonComponents.length > 0) {
+            json.components = jsonComponents;
+        }
+
+        return json;
+    }
+
+    /**
+     * Deserializes the node and its components.
+     * @param json serialized node data.
+     * @param linkableDict dictionary mapping component ids to components.
+     */
+    inflate(json, linkableDict: Dictionary<ILinkable>)
+    {
+        if (json.components) {
+            json.forEach(jsonComp => {
+                const component = this.createComponent(jsonComp.type, jsonComp.name, jsonComp.id);
+                component.inflate(jsonComp);
+            });
+        }
+    }
+
+    /**
+     * Deserializes the links of all components.
+     * @param json serialized component data.
+     */
+    inflateReferences(json)
+    {
+        if (json.components) {
+            json.components.forEach(jsonComp => {
+                const component = this.components.getById(jsonComp.id);
+                component.inflateReferences(jsonComp);
+            });
+        }
+    }
+
+    /**
+     * Override to control how components are serialized.
+     * Return serialization data or null if the component should be excluded from serialization.
+     * @param component The component to be serialized.
+     */
+    protected deflateComponent(component: Component)
+    {
+        return component.deflate();
+    }
+
+    /**
+     * Adds a component to the node, the node's graph and the system. Called by [[Component.attach]],
+     * do not call directly.
+     * @param component
+     * @private
+     */
     _addComponent(component: Component)
     {
         if (component.isNodeSingleton && this.components.has(component)) {
@@ -414,6 +321,12 @@ export default class Node extends Publisher
         this.components._add(component);
     }
 
+    /**
+     * Removes a component from the node, the node's graph and the system. Called by [[Component.detach]],
+     * do not call directly.
+     * @param component
+     * @private
+     */
     _removeComponent(component: Component)
     {
         this.components._remove(component);

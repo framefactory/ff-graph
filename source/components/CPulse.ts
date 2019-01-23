@@ -34,7 +34,7 @@ export default class CPulse extends Component
     private _animHandler: number;
     private _pulseEvent: IPulseEvent;
 
-    constructor(id?: string)
+    constructor(id: string)
     {
         super(id);
         this.addEvent("pulse");

@@ -144,6 +144,11 @@ export default class NodeSet extends Publisher
         return nodes ? nodes.length : 0;
     }
 
+    getDictionary(): Readonly<Dictionary<Node>>
+    {
+        return this._dict;
+    }
+
     /**
      * Returns an array of nodes in this set of a specific type if given.
      * @param nodeOrType If given only returns nodes of the given type.

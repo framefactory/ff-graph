@@ -46,6 +46,15 @@ export default class CGraph extends Component
         return this._innerGraph.tick(context);
     }
 
+    dispose()
+    {
+        this._innerGraph.clear();
+        this._innerGraph = null;
+        this._innerRoot = null;
+
+        super.dispose();
+    }
+
     inflate(json: any)
     {
         super.inflate(json);
@@ -59,3 +68,4 @@ export default class CGraph extends Component
         return json;
     }
 }
+

@@ -49,7 +49,7 @@ export default class CSelection extends CController<CSelection>
 
     private _activeGraph: Graph = null;
 
-    constructor(id?: string)
+    constructor(id: string)
     {
         super(id);
         this.addEvents("select-node", "select-component", "active-graph", "update");

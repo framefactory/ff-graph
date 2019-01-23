@@ -24,6 +24,7 @@ export default class Registry
 
     constructor()
     {
+        this.nodeTypes = {};
         this.componentTypes = {};
     }
 

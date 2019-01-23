@@ -61,7 +61,8 @@ export function getComponentTypeString<T extends Component>(componentOrType: Com
  * Base class for components in a node-component system.
  *
  * ### Events
- * - *"change"* - emits [[IComponentChangeEvent]] after the instance's state has changed.
+ * - *"change"* - emits [[IComponentChangeEvent]] after the component's state has changed.
+ * - *"dispose"* - emits [[IComponentDisposeEvent]] if the component is about to be disposed.
  *
  * ### See also
  * - [[ComponentTracker]]
@@ -69,6 +70,7 @@ export function getComponentTypeString<T extends Component>(componentOrType: Com
  * - [[ComponentType]]
  * - [[ComponentOrType]]
  * - [[Node]]
+ * - [[Graph]]
  * - [[System]]
  */
 export default class Component extends Publisher implements ILinkable
@@ -79,7 +81,7 @@ export default class Component extends Publisher implements ILinkable
     static readonly isGraphSingleton: boolean = false;
     static readonly isSystemSingleton: boolean = false;
 
-
+    /** The component's globally unique id. */
     readonly id: string;
 
     ins: PropertyGroup = new PropertyGroup(this);
@@ -94,14 +96,18 @@ export default class Component extends Publisher implements ILinkable
     private _firstAttached = false;
 
     /**
-     * Protected constructor. Use the static [[Component.create]] method to create component instances.
+     * Protected constructor. Use [[Node.createComponent]] to create component instances.
      * @param id Unique id for the component. A unique id is usually created automatically,
      * do not specify except while de-serializing the component.
+     *
+     * Note that during execution of the constructor, the component is not yet attached
+     * to a node/graph/system. Do not try to get access to other components,
+     * the parent node, graph, or the system here.
      */
-    constructor(id?: string)
+    constructor(id: string)
     {
         super({ knownEvents: false });
-        this.id = id || uniqueId();
+        this.id = id;
     }
 
     /**
@@ -209,16 +215,8 @@ export default class Component extends Publisher implements ILinkable
         node._addComponent(this);
     }
 
-    detach()
-    {
-        if (this._node) {
-            this._node._removeComponent(this);
-            this._node = null;
-        }
-    }
-
     /**
-     * Called after construction of the component.
+     * Called after the component has been constructed and attached to a node.
      * Override to perform initialization tasks where you need access to other components.
      */
     create()
@@ -258,6 +256,17 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
+     * Removes the component from its node.
+     */
+    detach()
+    {
+        if (this._node) {
+            this._node._removeComponent(this);
+            this._node = null;
+        }
+    }
+
+    /**
      * Removes the component from its node and deletes it.
      * Override to perform cleanup tasks (remove event listeners, etc.).
      * Must call super implementation if overridden!
@@ -289,13 +298,16 @@ export default class Component extends Publisher implements ILinkable
     is(componentOrType: ComponentOrType): boolean
     {
         const type = getComponentTypeString(componentOrType);
+
         let prototype = this;
 
         do {
             prototype = Object.getPrototypeOf(prototype);
+
             if (prototype.type === type) {
                 return true;
             }
+
         } while (prototype.type !== Component.type);
 
         return false;
@@ -422,16 +434,19 @@ export default class Component extends Publisher implements ILinkable
         }
     }
 
+    /**
+     * Returns a text representation of the component.
+     * @returns {string}
+     */
+    toString()
+    {
+        return `${this.type}${this.name ? " (" + this.name + ")" : ""}`;
+    }
+
     deflate()
     {
-        const json: any = {
-            type: this.type,
-            id: this.id
-        };
+        let json: any = {};
 
-        if (this.name) {
-            json.name = this.name;
-        }
         const jsonIns = this.ins.deflate();
         if (jsonIns) {
             json.ins = jsonIns;
@@ -454,23 +469,16 @@ export default class Component extends Publisher implements ILinkable
         }
     }
 
-    inflateLinks(json: any, linkableDict: Dictionary<ILinkable>)
+    inflateReferences(json: any)
     {
+        const dict = this.system.components.getDictionary();
+
         if (json.ins) {
-            this.ins.inflateLinks(json.ins, linkableDict);
+            this.ins.inflateLinks(json.ins, dict);
         }
         if (json.outs) {
-            this.outs.inflateLinks(json.outs, linkableDict);
+            this.outs.inflateLinks(json.outs, dict);
         }
-    }
-
-    /**
-     * Returns a text representation of the component.
-     * @returns {string}
-     */
-    toString()
-    {
-        return `${this.type}${this.name ? " (" + this.name + ")" : ""}`;
     }
 
     /**

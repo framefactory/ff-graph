@@ -546,7 +546,7 @@ export default class Property<T = any> extends Publisher
             schema: Object.assign({}, this.schema)
         } : null;
 
-        if (this.isInput() && !this.hasMainInLinks() && !this.isDefault() && this.type !== "object") {
+        if (!this.isOutput() && !this.hasMainInLinks() && !this.isDefault() && this.type !== "object") {
             json = json || {};
             json.value = this.value;
         }

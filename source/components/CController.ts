@@ -8,11 +8,11 @@
 import { ReturnType } from "@ff/core/types";
 import Commander from "@ff/core/Commander";
 
-import Component from "../Component";
+import Component, { types } from "../Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { Commander };
+export { Commander, types  };
 export type Actions<T extends CController<any>> = ReturnType<T["createActions"]>;
 
 export default class CController<T extends CController<any>> extends Component

@@ -154,6 +154,11 @@ export default class ComponentSet extends Publisher
         return components ? components.length : 0;
     }
 
+    getDictionary(): Readonly<Dictionary<Component>>
+    {
+        return this._dict;
+    }
+
     /**
      * Returns an array of components in this set of a specific type if given.
      * @param componentOrType If given only returns components of the given type.

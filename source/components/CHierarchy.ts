@@ -266,20 +266,22 @@ export default class CHierarchy extends Component
     {
         const json = super.deflate();
 
-        if (this._children) {
+        if (this._children.length > 0) {
             json.children = this._children.map(child => child.id);
         }
 
         return json;
     }
 
-    inflateLinks(json: any, linkableDict: Dictionary<ILinkable>)
+    inflateReferences(json: any)
     {
-        super.inflateLinks(json, linkableDict);
+        super.inflateReferences(json);
+
+        const dict = this.system.components.getDictionary();
 
         if (json.children) {
             json.children.forEach(childId => {
-                const child = linkableDict[childId] as CHierarchy;
+                const child = dict[childId] as CHierarchy;
                 this.addChild(child);
             })
         }
