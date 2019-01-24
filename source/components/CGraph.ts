@@ -46,6 +46,11 @@ export default class CGraph extends Component
         return this._innerGraph.tick(context);
     }
 
+    finalize(context: IUpdateContext)
+    {
+        return this._innerGraph.finalize(context);
+    }
+
     dispose()
     {
         this._innerGraph.clear();

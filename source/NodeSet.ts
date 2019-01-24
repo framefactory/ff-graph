@@ -8,7 +8,7 @@
 import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import Node, { NodeOrType, getNodeTypeString } from "./Node";
+import Node, { NodeOrType, nodeTypeName } from "./Node";
 
 import CHierarchy from "./components/CHierarchy";
 
@@ -25,9 +25,8 @@ export interface INodeEvent<T extends Node = Node> extends ITypedEvent<string>
 
 export default class NodeSet extends Publisher
 {
-    protected _typeDict: Dictionary<Node[]> = {};
-    protected _dict: Dictionary<Node> = {};
-    protected _list: Node[] = [];
+    protected _typeLists: Dictionary<Node[]> = { [Node.type]: [] };
+    protected _idDict: Dictionary<Node> = {};
 
     constructor()
     {
@@ -41,29 +40,27 @@ export default class NodeSet extends Publisher
      */
     _add(node: Node)
     {
-        if (this._dict[node.id]) {
-            throw new Error("node already registered");
+        if (this._idDict[node.id] !== undefined) {
+            throw new Error("node already in set");
         }
 
-        // add node
-        this._dict[node.id] = node;
-        this._list.push(node);
+        // add node to id dictionary
+        this._idDict[node.id] = node;
 
-        let prototype = Object.getPrototypeOf(node);
-
-        const event = { type: "node", add: true, remove: false, node };
-        this.emit<INodeEvent>(event);
+        let prototype = node;
+        const event = { type: "", add: true, remove: false, node };
 
         // add all types in prototype chain
-        while (prototype.type !== Node.type) {
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+
             const type = prototype.type;
-            (this._typeDict[type] || (this._typeDict[type] = [])).push(node);
+            (this._typeLists[type] || (this._typeLists[type] = [])).push(node);
 
             event.type = type;
             this.emit<INodeEvent>(event);
 
-            prototype = Object.getPrototypeOf(prototype);
-        }
+        } while (prototype.type !== Node.type);
     }
 
     /**
@@ -73,32 +70,28 @@ export default class NodeSet extends Publisher
      */
     _remove(node: Node)
     {
-        const index = this._list.indexOf(node);
-        if (index < 0) {
-            throw new Error("node not found");
+        if (this._idDict[node.id] !== node) {
+            throw new Error("node not in set");
         }
 
-        // remove node
-        delete this._dict[node.id];
-        this._list.splice(index, 1);
+        // remove node from id dictionary
+        delete this._idDict[node.id];
 
         let prototype = node;
-
-        const event = { type: "node", add: false, remove: true, node };
-        this.emit<INodeEvent>(event);
+        const event = { type: "", add: false, remove: true, node };
 
         // remove all types in prototype chain
-        while (prototype.type !== Node.type) {
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+
             const type = prototype.type;
-            const nodes = this._typeDict[type];
-            const index = nodes.indexOf(node);
-            nodes.splice(index, 1);
+            const nodes = this._typeLists[type];
+            nodes.splice(nodes.indexOf(node), 1);
 
             event.type = type;
             this.emit<INodeEvent>(event);
 
-            prototype = Object.getPrototypeOf(prototype);
-        }
+        } while (prototype.type !== Node.type);
     }
 
     /**
@@ -112,7 +105,7 @@ export default class NodeSet extends Publisher
     }
 
     get length() {
-        return this._list.length;
+        return this._typeLists[Node.type].length;
     }
 
     /**
@@ -121,7 +114,7 @@ export default class NodeSet extends Publisher
      */
     has(nodeOrType: NodeOrType): boolean
     {
-        const nodes = this._typeDict[getNodeTypeString(nodeOrType)];
+        const nodes = this._typeLists[nodeTypeName(nodeOrType)];
         return nodes && nodes.length > 0;
     }
 
@@ -131,7 +124,7 @@ export default class NodeSet extends Publisher
      */
     contains(node: Node): boolean
     {
-        return !!this._dict[node.id];
+        return !!this._idDict[node.id];
     }
 
     /**
@@ -140,13 +133,13 @@ export default class NodeSet extends Publisher
      */
     count(nodeOrType?: NodeOrType): number
     {
-        const nodes = nodeOrType ? this._typeDict[getNodeTypeString(nodeOrType)] : this._list;
+        const nodes = this._typeLists[nodeTypeName(nodeOrType)];
         return nodes ? nodes.length : 0;
     }
 
     getDictionary(): Readonly<Dictionary<Node>>
     {
-        return this._dict;
+        return this._idDict;
     }
 
     /**
@@ -155,11 +148,7 @@ export default class NodeSet extends Publisher
      */
     getArray<T extends Node>(nodeOrType?: NodeOrType<T>): Readonly<T[]>
     {
-        if (nodeOrType) {
-            return (this._typeDict[getNodeTypeString(nodeOrType)] || _EMPTY_ARRAY) as T[];
-        }
-
-        return this._list as T[];
+        return (this._typeLists[nodeTypeName(nodeOrType)] || _EMPTY_ARRAY) as T[];
     }
 
     cloneArray<T extends Node>(nodeOrType?: NodeOrType<T>): Readonly<T[]>
@@ -171,14 +160,10 @@ export default class NodeSet extends Publisher
      * Returns the first found node in this set of the given type.
      * @param nodeOrType Type of node to return.
      */
-    get<T extends Node = Node>(nodeOrType?: NodeOrType<T>): T | null
+    get<T extends Node = Node>(nodeOrType?: NodeOrType<T>): T | undefined
     {
-        if (nodeOrType) {
-            const nodes = this._typeDict[getNodeTypeString(nodeOrType)];
-            return nodes ? nodes[0] as T : null;
-        }
-
-        return this._list[0] as T || null;
+        const nodes = this._typeLists[nodeTypeName(nodeOrType)];
+        return nodes ? nodes[0] as T : undefined;
     }
 
     /**
@@ -188,11 +173,11 @@ export default class NodeSet extends Publisher
      */
     safeGet<T extends Node = Node>(nodeOrType: NodeOrType<T>): T
     {
-        const type = getNodeTypeString(nodeOrType);
-        const nodes = this._typeDict[type];
+        const type = nodeTypeName(nodeOrType);
+        const nodes = this._typeLists[type];
         const node = nodes ? nodes[0] as T : undefined;
         if (!node) {
-            throw new Error(`missing node: '${type}'`);
+            throw new Error(`no nodes of type '${type}' in set`);
         }
 
         return node;
@@ -204,7 +189,7 @@ export default class NodeSet extends Publisher
      */
     getById(id: string): Node | null
     {
-        return this._dict[id] || null;
+        return this._idDict[id] || null;
     }
 
     /**
@@ -213,7 +198,7 @@ export default class NodeSet extends Publisher
      * @param name Name of the node to find.
      * @param nodeOrType Optional type restriction.
      */
-    findByName<T extends Node>(name: string, nodeOrType?: NodeOrType<T>): Node | null
+    findByName<T extends Node = Node>(name: string, nodeOrType?: NodeOrType<T>): T | null
     {
         const nodes = this.getArray(nodeOrType);
 
@@ -230,9 +215,9 @@ export default class NodeSet extends Publisher
      * Returns all nodes not containing a hierarchy component with a parent.
      * Performs a linear search; don't use in time-critical code.
      */
-    findRoots(): Node[]
+    findRoots<T extends Node = Node>(nodeOrType?: NodeOrType<T>): T[]
     {
-        const nodes = this._list;
+        const nodes = this._typeLists[nodeTypeName(nodeOrType)];
         const result = [];
 
         for (let i = 0, n = nodes.length; i < n; ++i) {
@@ -247,55 +232,43 @@ export default class NodeSet extends Publisher
 
     /**
      * Adds a listener for a node add/remove event.
-     * @param type Name of the event, type name of the node, or node constructor.
+     * @param nodeOrType Type name of the node, or node constructor.
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    on<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
-    on(type: NodeOrType, callback: (event: INodeEvent) => void, context?: any);
-    on(type: string | string[], callback: (event: any) => void, context?: any);
-    on(type, callback, context?)
+    on<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: any)
     {
-        if (typeof type !== "string" && !Array.isArray(type)) {
-            type = type.type;
-        }
-
-        super.on(type, callback, context);
+        super.on(nodeTypeName(nodeOrType), callback, context);
     }
 
     /**
      * Adds a one-time listener for a node add/remove event.
-     * @param type Name of the event, type name of the node, or node constructor.
+     * @param nodeOrType Type name of the node, or node constructor.
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    once<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
-    once(type: NodeOrType, callback: (event: INodeEvent) => void, context?: any);
-    once(type: string | string[], callback: (event: any) => void, context?: any)
-    once(type, callback, context?)
+    once<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: any)
     {
-        if (typeof type !== "string" && !Array.isArray(type)) {
-            type = type.type;
-        }
-
-        super.once(type, callback, context);
+        super.once(nodeTypeName(nodeOrType), callback, context);
     }
 
     /**
      * Removes a listener for a node add/remove event.
-     * @param type Name of the event, type name of the node, or node constructor.
+     * @param nodeOrType Type name of the node, or node constructor.
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    off<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback?: (event: T) => void, context?: any);
-    off(type: NodeOrType, callback: (event: INodeEvent) => void, context?: any);
-    off(type: string | string[], callback?: (event: any) => void, context?: any)
-    off(type, callback, context?)
+    off<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: any)
     {
-        if (typeof type !== "string" && !Array.isArray(type)) {
-            type = type.type;
+        super.off(nodeTypeName(nodeOrType), callback, context);
+    }
+
+    toString(verbose: boolean = false)
+    {
+        if (verbose) {
+            return this.getArray().map(node => node.displayName).join("\n");
         }
 
-        super.off(type, callback, context);
+        return `nodes: ${this.length}, types: ${Object.keys(this._typeLists).length}`;
     }
 }

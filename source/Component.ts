@@ -6,7 +6,6 @@
  */
 
 import { Dictionary, TypeOf } from "@ff/core/types";
-import uniqueId from "@ff/core/uniqueId";
 import Publisher, { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
 import { types, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
@@ -51,8 +50,8 @@ export type ComponentType<T extends Component = Component> = TypeOf<T> & { type:
 export type ComponentOrType<T extends Component = Component> = T | ComponentType<T> | string;
 
 /** Returns the type string of the given [[ComponentOrType]]. */
-export function getComponentTypeString<T extends Component>(componentOrType: ComponentOrType<T> | string): string {
-    return typeof componentOrType === "string" ? componentOrType : componentOrType.type;
+export function componentTypeName<T extends Component>(componentOrType: ComponentOrType<T>): string {
+    return componentOrType ? (typeof componentOrType === "string" ? componentOrType : componentOrType.type) : Component.type;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,6 +75,9 @@ export function getComponentTypeString<T extends Component>(componentOrType: Com
 export default class Component extends Publisher implements ILinkable
 {
     static readonly type: string = "Component";
+
+    static readonly text: string = "";
+    static readonly icon: string = "";
 
     static readonly isNodeSingleton: boolean = true;
     static readonly isGraphSingleton: boolean = false;
@@ -116,6 +118,14 @@ export default class Component extends Publisher implements ILinkable
      */
     get type() {
         return (this.constructor as typeof Component).type;
+    }
+
+    get text() {
+        return (this.constructor as typeof Component).text;
+    }
+
+    get icon() {
+        return (this.constructor as typeof Component).icon;
     }
 
     /**
@@ -181,6 +191,10 @@ export default class Component extends Publisher implements ILinkable
      */
     get name() {
         return this._name;
+    }
+
+    get displayName() {
+        return this._name || this.text || this.type;
     }
 
     /**
@@ -297,7 +311,7 @@ export default class Component extends Publisher implements ILinkable
      */
     is(componentOrType: ComponentOrType): boolean
     {
-        const type = getComponentTypeString(componentOrType);
+        const type = componentTypeName(componentOrType);
 
         let prototype = this;
 

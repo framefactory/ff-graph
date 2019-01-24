@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType, getComponentTypeString } from "./Component";
+import Component, { ComponentOrType, componentTypeName } from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@ export default class ComponentTracker<T extends Component = Component>
     constructor(set: ComponentSet, componentOrType: ComponentOrType<T>,
                 didAdd?: (component: T) => void, willRemove?: (component: T) => void) {
 
-        this.type = getComponentTypeString(componentOrType);
+        this.type = componentTypeName(componentOrType);
         this.didAdd = didAdd;
         this.willRemove = willRemove;
 

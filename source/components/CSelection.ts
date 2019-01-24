@@ -54,8 +54,8 @@ export default class CSelection extends CController<CSelection>
         super(id);
         this.addEvents("select-node", "select-component", "active-graph", "update");
 
-        this.selectedNodes.on<INodeEvent>("node", e => this.onSelectNode(e.node, e.add));
-        this.selectedComponents.on<IComponentEvent>("component", e => this.onSelectComponent(e.component, e.add));
+        this.selectedNodes.on(Node, e => this.onSelectNode(e.node, e.add));
+        this.selectedComponents.on(Component, e => this.onSelectComponent(e.component, e.add));
     }
 
     get activeGraph() {
@@ -102,14 +102,14 @@ export default class CSelection extends CController<CSelection>
 
         this._activeGraph = this.system.graph;
 
-        this.system.nodes.on("node", this.onSystemNode, this);
-        this.system.components.on("component", this.onSystemComponent, this);
+        this.system.nodes.on(Node, this.onSystemNode, this);
+        this.system.components.on(Component, this.onSystemComponent, this);
     }
 
     dispose()
     {
-        this.system.nodes.off("node", this.onSystemNode, this);
-        this.system.components.off("component", this.onSystemComponent, this);
+        this.system.nodes.off(Node, this.onSystemNode, this);
+        this.system.components.off(Component, this.onSystemComponent, this);
 
         super.dispose();
     }

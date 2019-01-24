@@ -11,7 +11,7 @@ import Publisher from "@ff/core/Publisher";
 import LinkableSorter from "./LinkableSorter";
 import Component, { IUpdateContext } from "./Component";
 import ComponentSet, { IComponentEvent } from "./ComponentSet";
-import Node, { getNodeTypeString, NodeOrType } from "./Node";
+import Node, { nodeTypeName, NodeOrType } from "./Node";
 import NodeSet, { INodeEvent } from "./NodeSet";
 import System from "./System";
 
@@ -155,9 +155,9 @@ export default class Graph extends Publisher
      * @param name Optional name for the node.
      * @param id Optional unique identifier for the node (must omit unless serializing).
      */
-    createNode<T extends Node>(nodeOrType: NodeOrType<T>, name?: string, id?: string): T
+    createCustomNode<T extends Node>(nodeOrType: NodeOrType<T>, name?: string, id?: string): T
     {
-        const type = this.system.registry.getNodeType(getNodeTypeString(nodeOrType));
+        const type = this.system.registry.getNodeType(nodeTypeName(nodeOrType));
         const node = new type(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
 
         node.attach(this);
@@ -179,7 +179,7 @@ export default class Graph extends Publisher
      * @param name Optional name for the node.
      * @param id Optional unique identifier for the node (must omit unless serializing).
      */
-    createPlainNode(name?: string, id?: string): Node
+    createNode(name?: string, id?: string): Node
     {
         const node = new Node(id || uniqueId(12, this.system.nodes.getDictionary()));
 
@@ -250,7 +250,7 @@ export default class Graph extends Publisher
     {
         if (json.nodes) {
             json.nodes.forEach(jsonNode => {
-                const node = this.createNode(jsonNode.type, jsonNode.name, jsonNode.id);
+                const node = this.createCustomNode(jsonNode.type, jsonNode.name, jsonNode.id);
                 node.inflate(jsonNode);
             });
         }

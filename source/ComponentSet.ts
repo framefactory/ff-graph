@@ -9,7 +9,7 @@ import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
 import { ILinkable } from "./PropertyGroup";
-import Component, { ComponentOrType, getComponentTypeString } from "./Component";
+import Component, { ComponentOrType, componentTypeName } from "./Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,9 +29,8 @@ export interface IComponentEvent<T extends Component = Component> extends ITyped
 
 export default class ComponentSet extends Publisher
 {
-    protected _typeDict: Dictionary<Component[]> = {};
-    protected _dict: Dictionary<Component> = {};
-    protected _list: Component[] = [];
+    protected _typeLists: Dictionary<Component[]> = { [Component.type]: [] };
+    protected _idDict: Dictionary<Component> = {};
 
     constructor()
     {
@@ -45,29 +44,27 @@ export default class ComponentSet extends Publisher
      */
     _add(component: Component)
     {
-        if (this._dict[component.id]) {
-            throw new Error("component already registered");
+        if (this._idDict[component.id] !== undefined) {
+            throw new Error("component already in set");
         }
 
-        // add component
-        this._list.push(component);
-        this._dict[component.id] = component;
+        // add component to id dictionary
+        this._idDict[component.id] = component;
 
-        let prototype = Object.getPrototypeOf(component);
-
-        const event = { type: "component", add: true, remove: false, component };
-        this.emit<IComponentEvent>(event);
+        let prototype = component;
+        const event = { type: "", add: true, remove: false, component };
 
         // add all types in prototype chain
-        while (prototype.type !== Component.type) {
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+
             const type = prototype.type;
-            (this._typeDict[type] || (this._typeDict[type] = [])).push(component);
+            (this._typeLists[type] || (this._typeLists[type] = [])).push(component);
 
             event.type = type;
             this.emit<IComponentEvent>(event);
 
-            prototype = Object.getPrototypeOf(prototype);
-        }
+        } while (prototype.type !== Component.type);
     }
 
     /**
@@ -77,32 +74,28 @@ export default class ComponentSet extends Publisher
      */
     _remove(component: Component)
     {
-        let index = this._list.indexOf(component);
-        if (index < 0) {
-            throw new Error("component not found");
+        if (this._idDict[component.id] !== component) {
+            throw new Error("component not in set");
         }
 
         // remove component
-        delete this._dict[component.id];
-        this._list.splice(index, 1);
+        delete this._idDict[component.id];
 
-        let prototype = Object.getPrototypeOf(component);
-
-        const event = { type: "component", add: false, remove: true, component };
-        this.emit<IComponentEvent>(event);
+        let prototype = component;
+        const event = { type: "", add: false, remove: true, component };
 
         // remove all types in prototype chain
-        while (prototype.type !== Component.type) {
+        do {
+            prototype = Object.getPrototypeOf(prototype);
+
             const type = prototype.type;
-            const components = this._typeDict[type];
-            index = components.indexOf(component);
-            components.splice(index, 1);
+            const components = this._typeLists[type];
+            components.splice(components.indexOf(component), 1);
 
             event.type = type;
             this.emit<IComponentEvent>(event);
 
-            prototype = Object.getPrototypeOf(prototype);
-        }
+        } while (prototype.type !== Component.type);
     }
 
     /**
@@ -116,13 +109,13 @@ export default class ComponentSet extends Publisher
     }
 
     get length() {
-        return this._list.length;
+        return this._typeLists[Component.type].length;
     }
 
     sort(sorter: ILinkableSorter)
     {
         console.log("ComponentSet.sort");
-        this._list = sorter.sort(this._list) as Component[];
+        this._typeLists[Component.type] = sorter.sort(this._typeLists[Component.type]) as Component[];
     }
 
     /**
@@ -131,7 +124,7 @@ export default class ComponentSet extends Publisher
      */
     has(componentOrType: ComponentOrType): boolean
     {
-        const components = this._typeDict[getComponentTypeString(componentOrType)];
+        const components = this._typeLists[componentTypeName(componentOrType)];
         return components && components.length > 0;
     }
 
@@ -141,7 +134,7 @@ export default class ComponentSet extends Publisher
      */
     contains(component: Component): boolean
     {
-        return !!this._dict[component.id];
+        return !!this._idDict[component.id];
     }
 
     /**
@@ -150,13 +143,13 @@ export default class ComponentSet extends Publisher
      */
     count(componentOrType?: ComponentOrType): number
     {
-        const components = componentOrType ? this._typeDict[getComponentTypeString(componentOrType)] : this._list;
+        const components = this._typeLists[componentTypeName(componentOrType)];
         return components ? components.length : 0;
     }
 
     getDictionary(): Readonly<Dictionary<Component>>
     {
-        return this._dict;
+        return this._idDict;
     }
 
     /**
@@ -165,11 +158,7 @@ export default class ComponentSet extends Publisher
      */
     getArray<T extends Component>(componentOrType?: ComponentOrType<T> | T): Readonly<T[]>
     {
-        if (componentOrType) {
-            return (this._typeDict[getComponentTypeString(componentOrType)] || _EMPTY_ARRAY) as T[];
-        }
-
-        return this._list as T[];
+        return (this._typeLists[componentTypeName(componentOrType)] || _EMPTY_ARRAY) as T[];
     }
 
     cloneArray<T extends Component>(componentOrType?: ComponentOrType<T> | T): Readonly<T[]>
@@ -181,14 +170,10 @@ export default class ComponentSet extends Publisher
      * Returns the first found component in this set of the given type.
      * @param componentOrType Type of component to return.
      */
-    get<T extends Component = Component>(componentOrType?: ComponentOrType<T> | T): T | null
+    get<T extends Component = Component>(componentOrType?: ComponentOrType<T> | T): T | undefined
     {
-        if (componentOrType) {
-            const components = this._typeDict[getComponentTypeString(componentOrType)];
-            return components ? components[0] as T : null;
-        }
-
-        return this._list[0] as T || null;
+        const components = this._typeLists[componentTypeName(componentOrType)];
+        return components ? components[0] as T : undefined;
     }
 
     /**
@@ -198,11 +183,11 @@ export default class ComponentSet extends Publisher
      */
     safeGet<T extends Component = Component>(componentOrType: ComponentOrType<T> | T): T
     {
-        const type = getComponentTypeString(componentOrType);
-        const components = this._typeDict[type];
+        const type = componentTypeName(componentOrType);
+        const components = this._typeLists[type];
         const component = components ? components[0] as T : undefined;
         if (!component) {
-            throw new Error(`missing component: '${type}'`);
+            throw new Error(`no components of type '${type}' in set`);
         }
 
         return component;
@@ -214,7 +199,7 @@ export default class ComponentSet extends Publisher
      */
     getById(id: string): Component | null
     {
-        return this._dict[id] || null;
+        return this._idDict[id] || null;
     }
 
     /**
@@ -223,7 +208,7 @@ export default class ComponentSet extends Publisher
      * @param name Name of the component to find.
      * @param componentOrType Optional type restriction.
      */
-    findByName<T extends Component>(name: string, componentOrType?: ComponentOrType<T>): T | null
+    findByName<T extends Component = Component>(name: string, componentOrType?: ComponentOrType<T>): T | null
     {
         const components = this.getArray(componentOrType);
 
@@ -238,60 +223,43 @@ export default class ComponentSet extends Publisher
 
     /**
      * Adds a listener for a component add/remove event.
-     * @param type Name of the event, type name of the component, or component constructor.
+     * @param componentOrType Type name of the component, or component constructor.
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    on<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
-    on(type: ComponentOrType, callback: (event: IComponentEvent) => void, context?: any);
-    on(type: string | string[], callback: (event: any) => void, context?: any);
-    on(type, callback, context?)
+    on<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: any)
     {
-        if (typeof type !== "string" && !Array.isArray(type)) {
-            type = type.type;
-        }
-
-        super.on(type, callback, context);
+        super.on(componentTypeName(componentOrType), callback, context);
     }
 
     /**
      * Adds a one-time listener for a component add/remove event.
-     * @param type Name of the event, type name of the component, or component constructor.
+     * @param componentOrType Type name of the component, or component constructor.
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    once<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
-    once(type: ComponentOrType, callback: (event: IComponentEvent) => void, context?: any);
-    once(type: string | string[], callback: (event: any) => void, context?: any);
-    once(type, callback, context?)
+    once<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: any)
     {
-        if (typeof type !== "string" && !Array.isArray(type)) {
-            type = type.type;
-        }
-
-        super.once(type, callback, context);
+        super.once(componentTypeName(componentOrType), callback, context);
     }
 
     /**
      * Removes a listener for a component add/remove event.
-     * @param type Name of the event, type name of the component, or component constructor.
+     * @param componentOrType Type name of the component, or component constructor.
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    off<T extends ITypedEvent<string>>(type: T["type"] | T["type"][], callback: (event: T) => void, context?: any);
-    off(type: ComponentOrType, callback: (event: IComponentEvent) => void, context?: any);
-    off(type: string | string[], callback: (event: any) => void, context?: any);
-    off(type, callback, context?)
+    off<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: any)
     {
-        if (typeof type !== "string" && !Array.isArray(type)) {
-            type = type.type;
-        }
-
-        super.off(type, callback, context);
+        super.off(componentTypeName(componentOrType), callback, context);
     }
 
-    toString()
+    toString(verbose: boolean = false)
     {
-        return this._list.map(component => component.type).join("\n");
+        if (verbose) {
+            return this.getArray().map(component => component.displayName).join("\n");
+        }
+
+        return `components: ${this.length}, types: ${Object.keys(this._typeLists).length}`;
     }
 }

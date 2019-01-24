@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType, getComponentTypeString } from "./Component";
+import Component, { ComponentOrType, componentTypeName } from "./Component";
 import System from "./System";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ export default class ComponentReference<T extends Component = Component>
     private readonly _system: System;
 
     constructor(system: System, componentOrType?: ComponentOrType<T>) {
-        this._type = componentOrType ? getComponentTypeString(componentOrType) : null;
+        this._type = componentOrType ? componentTypeName(componentOrType) : null;
         this._id = componentOrType instanceof Component ? componentOrType.id : undefined;
         this._system = system;
     }
