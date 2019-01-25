@@ -129,6 +129,18 @@ export default class CSelection extends CController<CSelection>
         };
     }
 
+    nodeContainsSelectedComponent(node: Node)
+    {
+        const components = node.components.getArray();
+        for (let i = 0, n = components.length; i < n; ++i) {
+            if (this.selectedComponents.contains(components[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     selectNode(node?: Node, toggle: boolean = false)
     {
         this.activeGraph = node.graph;

@@ -166,7 +166,6 @@ export default class Graph extends Publisher
             node.name = name;
         }
 
-        //
         if (!id) {
             node.createComponents();
         }
@@ -329,7 +328,7 @@ export default class Graph extends Publisher
     _removeComponent(component: Component)
     {
         this.components._remove(component);
-        this.system._addComponent(component);
+        this.system._removeComponent(component);
 
         if (component.finalize) {
             this._finalizeList.splice(this._finalizeList.indexOf(component), 1);
