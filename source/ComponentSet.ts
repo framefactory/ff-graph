@@ -8,17 +8,12 @@
 import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrType, componentTypeName } from "./Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const _EMPTY_ARRAY = [];
 
-export interface ILinkableSorter
-{
-    sort(linkables: ILinkable[]): ILinkable[];
-}
 
 export interface IComponentEvent<T extends Component = Component> extends ITypedEvent<string>
 {
@@ -110,12 +105,6 @@ export default class ComponentSet extends Publisher
 
     get length() {
         return this._typeLists[Component.type].length;
-    }
-
-    sort(sorter: ILinkableSorter)
-    {
-        console.log("ComponentSet.sort");
-        this._typeLists[Component.type] = sorter.sort(this._typeLists[Component.type]) as Component[];
     }
 
     /**
@@ -227,7 +216,7 @@ export default class ComponentSet extends Publisher
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    on<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: any)
+    on<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: object)
     {
         super.on(componentTypeName(componentOrType), callback, context);
     }
@@ -238,7 +227,7 @@ export default class ComponentSet extends Publisher
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    once<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: any)
+    once<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: object)
     {
         super.once(componentTypeName(componentOrType), callback, context);
     }
@@ -249,7 +238,7 @@ export default class ComponentSet extends Publisher
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    off<T extends Component>(componentOrType: ComponentOrType<T>, callback: (event: IComponentEvent<T>) => void, context?: any)
+    off<T extends Component>(componentOrType: ComponentOrType<T>, callback?: (event: IComponentEvent<T>) => void, context?: object)
     {
         super.off(componentTypeName(componentOrType), callback, context);
     }
