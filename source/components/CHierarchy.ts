@@ -8,7 +8,7 @@
 import { Dictionary } from "@ff/core/types";
 import { ITypedEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrType } from "../Component";
+import Component, { ComponentOrClass } from "../Component";
 import Node from "../Node";
 import { ILinkable } from "../PropertyGroup";
 
@@ -17,7 +17,7 @@ import { ILinkable } from "../PropertyGroup";
 export { Node };
 
 const _getChildComponent = <T extends Component>(
-    hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T | null => {
+    hierarchy: CHierarchy, componentOrType: ComponentOrClass<T>, recursive: boolean): T | null => {
 
     let component;
 
@@ -43,7 +43,7 @@ const _getChildComponent = <T extends Component>(
 };
 
 const _getChildComponents = <T extends Component>(
-    hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T[] => {
+    hierarchy: CHierarchy, componentOrType: ComponentOrClass<T>, recursive: boolean): T[] => {
 
     let components = [];
 
@@ -123,7 +123,7 @@ export default class CHierarchy extends Component
      * Returns a component at the root of the hierarchy.
      * @returns A component of the given type that is a sibling of the root hierarchy component.
      */
-    getRoot<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    getRoot<T extends Component>(componentOrType: ComponentOrClass<T>): T | null
     {
         let root: CHierarchy = this;
         while(root._parent) {
@@ -139,7 +139,7 @@ export default class CHierarchy extends Component
      * @param recursive If true, extends search to entire chain of ancestors,
      * including parent graphs.
      */
-    getParent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
+    getParent<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): T | null
     {
         let parent = this._parent;
 
@@ -177,7 +177,7 @@ export default class CHierarchy extends Component
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChild<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
+    getChild<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): T | null
     {
         return _getChildComponent(this, componentOrType, recursive);
     }
@@ -187,7 +187,7 @@ export default class CHierarchy extends Component
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChildren<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): Readonly<T[]>
+    getChildren<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): Readonly<T[]>
     {
         return _getChildComponents(this, componentOrType, recursive);
     }
@@ -197,7 +197,7 @@ export default class CHierarchy extends Component
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    hasChildren<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): boolean
+    hasChildren<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): boolean
     {
         return !!_getChildComponent(this, componentOrType, recursive);
     }

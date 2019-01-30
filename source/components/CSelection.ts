@@ -7,12 +7,12 @@
 
 import { ITypedEvent } from "@ff/core/Publisher";
 import Commander from "@ff/core/Commander";
+import ObjectRegistry from "@ff/core/ObjectRegistry";
+
 import { types } from "../propertyTypes";
 
-import Component from "../Component";
-import ComponentSet, { IComponentEvent } from "../ComponentSet";
-import Node from "../Node";
-import NodeSet, { INodeEvent } from "../NodeSet";
+import Component, { IComponentEvent } from "../Component";
+import Node, { INodeEvent } from "../Node";
 import Graph from "../Graph";
 
 import CGraph from "./CGraph";
@@ -44,8 +44,8 @@ export default class CSelection extends CController<CSelection>
     multiSelect = false;
     exclusiveSelect = true;
 
-    readonly selectedNodes = new NodeSet();
-    readonly selectedComponents = new ComponentSet();
+    readonly selectedNodes = new ObjectRegistry(Node);
+    readonly selectedComponents = new ObjectRegistry(Component);
 
     private _activeGraph: Graph = null;
 
@@ -54,8 +54,8 @@ export default class CSelection extends CController<CSelection>
         super(id);
         this.addEvents("select-node", "select-component", "active-graph", "update");
 
-        this.selectedNodes.on(Node, e => this.onSelectNode(e.node, e.add));
-        this.selectedComponents.on(Component, e => this.onSelectComponent(e.component, e.add));
+        this.selectedNodes.on(Node, e => this.onSelectNode(e.object, e.add));
+        this.selectedComponents.on(Component, e => this.onSelectComponent(e.object, e.add));
     }
 
     get activeGraph() {
@@ -150,18 +150,18 @@ export default class CSelection extends CController<CSelection>
 
         if (node && selectedNodes.contains(node)) {
             if (multiSelect) {
-                selectedNodes._remove(node);
+                selectedNodes.remove(node);
             }
         }
         else {
             if (this.exclusiveSelect) {
-                this.selectedComponents._clear();
+                this.selectedComponents.clear();
             }
             if (!multiSelect) {
-                selectedNodes._clear();
+                selectedNodes.clear();
             }
             if (node) {
-                selectedNodes._add(node);
+                selectedNodes.add(node);
             }
         }
 
@@ -177,18 +177,18 @@ export default class CSelection extends CController<CSelection>
 
         if (component && selectedComponents.contains(component)) {
             if (multiSelect) {
-                selectedComponents._remove(component);
+                selectedComponents.remove(component);
             }
         }
         else {
             if (this.exclusiveSelect) {
-                this.selectedNodes._clear();
+                this.selectedNodes.clear();
             }
             if (!multiSelect) {
-                selectedComponents._clear();
+                selectedComponents.clear();
             }
             if (component) {
-                selectedComponents._add(component);
+                selectedComponents.add(component);
             }
         }
 
@@ -197,8 +197,8 @@ export default class CSelection extends CController<CSelection>
 
     clearSelection()
     {
-        this.selectedNodes._clear();
-        this.selectedComponents._clear();
+        this.selectedNodes.clear();
+        this.selectedComponents.clear();
 
         this.updateStats();
     }
@@ -217,15 +217,15 @@ export default class CSelection extends CController<CSelection>
 
     protected onSystemNode(event: INodeEvent)
     {
-        if (event.remove && this.selectedNodes.contains(event.node)) {
-            this.selectedNodes._remove(event.node);
+        if (event.remove && this.selectedNodes.contains(event.object)) {
+            this.selectedNodes.remove(event.object);
         }
     }
 
     protected onSystemComponent(event: IComponentEvent)
     {
-        if (event.remove && this.selectedComponents.contains(event.component)) {
-            this.selectedComponents._remove(event.component);
+        if (event.remove && this.selectedComponents.contains(event.object)) {
+            this.selectedComponents.remove(event.object);
         }
     }
 

@@ -10,17 +10,14 @@ import Publisher from "@ff/core/Publisher";
 
 import LinkableSorter from "./LinkableSorter";
 import Component, { IUpdateContext } from "./Component";
-import ComponentSet, { IComponentEvent } from "./ComponentSet";
-import Node, { nodeTypeName, NodeOrType } from "./Node";
-import NodeSet, { INodeEvent } from "./NodeSet";
+import Node, { NodeOrClass } from "./Node";
 import System from "./System";
 
 import CHierarchy from "./components/CHierarchy";
 import CGraph from "./components/CGraph";
+import ObjectRegistry from "@ff/core/ObjectRegistry";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-export { IComponentEvent, INodeEvent };
 
 /**
  * Graph in a graph/node/component system. A graph contains a collection of nodes.
@@ -39,9 +36,9 @@ export default class Graph extends Publisher
     readonly parent: CGraph;
 
     /** Collection of all nodes in this graph. */
-    readonly nodes = new NodeSet();
+    readonly nodes = new ObjectRegistry<Node>(Node);
     /** Collection of all components in this graph. */
-    readonly components = new ComponentSet();
+    readonly components = new ObjectRegistry<Component>(Component);
 
     private _root: CHierarchy;
     private _sorter = new LinkableSorter();
@@ -149,20 +146,20 @@ export default class Graph extends Publisher
     {
         this._sortedList = this._sorter.sort(this.components.getArray()) as Component[];
 
-        const name = this.parent ? this.parent.name || this.parent.type : "System";
+        const name = this.parent ? this.parent.name || this.parent.className : "System";
         console.log("Graph.sort - %s: sorted %s components", name, this._sortedList.length);
     }
 
     /**
      * Creates a new node of the given type. Adds it to the graph.
-     * @param nodeOrType Type of the node to create.
+     * @param nodeOrClass Type of the node to create.
      * @param name Optional name for the node.
      * @param id Optional unique identifier for the node (must omit unless serializing).
      */
-    createCustomNode<T extends Node>(nodeOrType: NodeOrType<T>, name?: string, id?: string): T
+    createCustomNode<T extends Node>(nodeOrClass: NodeOrClass<T>, name?: string, id?: string): T
     {
-        const type = this.system.registry.getNodeType(nodeTypeName(nodeOrType));
-        const node = new type(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
+        const classType = this.system.registry.getClass(nodeOrClass);
+        const node = new classType(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
 
         node.attach(this);
 
@@ -193,6 +190,34 @@ export default class Graph extends Publisher
         }
 
         return node;
+    }
+
+    findNodeByName<T extends Node = Node>(name: string, nodeOrClass?: NodeOrClass<T>): T | undefined
+    {
+        const nodes = this.nodes.getArray(nodeOrClass);
+
+        for (let i = 0, n = nodes.length; i < n; ++i) {
+            if (nodes[i].name === name) {
+                return nodes[i];
+            }
+        }
+
+        return undefined;
+    }
+
+    findRootNodes<T extends Node = Node>(nodeOrType?: NodeOrClass<T>): T[]
+    {
+        const nodes = this.nodes.getArray(nodeOrType);
+        const result = [];
+
+        for (let i = 0, n = nodes.length; i < n; ++i) {
+            const hierarchy = nodes[i].components.get<CHierarchy>("CHierarchy");
+            if (!hierarchy || !hierarchy.parent) {
+                result.push(nodes[i]);
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -228,7 +253,7 @@ export default class Graph extends Publisher
 
             const jsonNode = this.deflateNode(node);
 
-            jsonNode.type = node.type;
+            jsonNode.type = node.className;
             jsonNode.id = node.id;
 
             if (node.name) {
@@ -291,7 +316,7 @@ export default class Graph extends Publisher
     _addNode(node: Node)
     {
         this.system._addNode(node);
-        this.nodes._add(node);
+        this.nodes.add(node);
     }
 
     /**
@@ -301,7 +326,7 @@ export default class Graph extends Publisher
      */
     _removeNode(node: Node)
     {
-        this.nodes._remove(node);
+        this.nodes.remove(node);
         this.system._removeNode(node);
     }
 
@@ -313,11 +338,11 @@ export default class Graph extends Publisher
     _addComponent(component: Component)
     {
         if (component.isGraphSingleton && this.components.has(component)) {
-            throw new Error(`only one component of type '${component.type}' allowed per graph`);
+            throw new Error(`only one component of class '${component.className}' allowed per graph`);
         }
 
         this.system._addComponent(component);
-        this.components._add(component);
+        this.components.add(component);
 
         if (component.finalize) {
             this._finalizeList.push(component);
@@ -333,7 +358,7 @@ export default class Graph extends Publisher
      */
     _removeComponent(component: Component)
     {
-        this.components._remove(component);
+        this.components.remove(component);
         this.system._removeComponent(component);
 
         if (component.finalize) {

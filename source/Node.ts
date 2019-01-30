@@ -6,17 +6,21 @@
  */
 
 import uniqueId from "@ff/core/uniqueId";
-import { Dictionary, TypeOf } from "@ff/core/types";
+import { Dictionary, ClassOf } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
+import ObjectRegistry, { IObjectEvent } from "@ff/core/ObjectRegistry";
 
 import { ILinkable } from "./PropertyGroup";
-import Component, { ComponentOrType, componentTypeName } from "./Component";
-import ComponentSet, { IComponentEvent } from "./ComponentSet";
+import Component, { ComponentOrClass, IComponentEvent } from "./Component";
 import Graph from "./Graph";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IComponentEvent };
+export { IComponentEvent }
+
+export interface INodeEvent<T extends Node = Node> extends IObjectEvent<T>
+{
+}
 
 /**
  * Emitted by [[Node]] after the instance's state has changed.
@@ -37,16 +41,8 @@ export interface INodeDisposeEvent<T extends Node = Node> extends ITypedEvent<"d
     node: T;
 }
 
-/** The constructor function of a [[Node]]. */
-export type NodeType<T extends Node = Node> = TypeOf<T> & { type: string };
-
 /** A [[Node]] instance, [[Node]] constructor function or a node's type string. */
-export type NodeOrType<T extends Node = Node> = T | NodeType<T> | string;
-
-/** Returns the type string of the given [[NodeOrType]]. */
-export function nodeTypeName<T extends Node>(nodeOrType: NodeOrType<T>): string {
-    return nodeOrType ? (typeof nodeOrType === "string" ? nodeOrType : nodeOrType.type) : Node.type;
-}
+export type NodeOrClass<T extends Node = Node> = T | ClassOf<T> | string;
 
 /**
  * Node in an graph/node/component system.
@@ -67,11 +63,17 @@ export default class Node extends Publisher
     static readonly text: string = "";
     static readonly icon: string = "";
 
+    static getClassName<T extends Node>(scope?: NodeOrClass<T>)
+    {
+        return typeof scope === "function" ? scope.name : (typeof scope === "object"
+            ? scope.constructor.name : (scope || Node.name));
+    }
+
     /** The node's globally unique id. */
     readonly id: string;
 
     /** Collection of all components in this node. */
-    readonly components = new ComponentSet();
+    readonly components = new ObjectRegistry<Component>(Component);
 
     private _graph: Graph = null;
     private _name: string = "";
@@ -91,10 +93,10 @@ export default class Node extends Publisher
     }
 
     /**
-     * Returns the type identifier of this component.
+     * Returns the class name of this node.
      */
-    get type() {
-        return (this.constructor as typeof Node).type;
+    get className() {
+        return this.constructor.name;
     }
 
     get text() {
@@ -113,7 +115,7 @@ export default class Node extends Publisher
     }
 
     get displayName() {
-        return this._name || this.text || this.type;
+        return this._name || this.text || this.className;
     }
 
     /**
@@ -203,10 +205,10 @@ export default class Node extends Publisher
      * @param name Optional name for the component.
      * @param id Optional unique identifier for the component (must omit unless serializing).
      */
-    createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string, id?: string): T
+    createComponent<T extends Component>(componentOrType: ComponentOrClass<T>, name?: string, id?: string): T
     {
-        const type = this.system.registry.getComponentType(componentTypeName(componentOrType));
-        const component = new type(id || uniqueId(12, this.system.components.getDictionary())) as T;
+        const classType = this.system.registry.getClass(componentOrType);
+        const component = new classType(id || uniqueId(12, this.system.components.getDictionary())) as T;
 
         component.attach(this);
 
@@ -219,22 +221,22 @@ export default class Node extends Publisher
 
     /**
      * Tests whether the node is of or descends from the given type.
-     * @param nodeOrType Node constructor, type name, or instance.
+     * @param scope Node constructor, type name, or instance.
      */
-    is(nodeOrType: NodeOrType): boolean
+    is(scope: NodeOrClass): boolean
     {
-        const type = nodeTypeName(nodeOrType);
+        const className = Node.getClassName(scope);
 
         let prototype = this;
 
         do {
             prototype = Object.getPrototypeOf(prototype);
 
-            if (prototype.type === type) {
+            if (prototype.constructor.name === className) {
                 return true;
             }
 
-        } while(prototype.type !== Node.type);
+        } while(prototype.constructor.name !== Node.type);
 
         return false;
     }
@@ -270,7 +272,7 @@ export default class Node extends Publisher
 
             const jsonComp = this.deflateComponent(component);
 
-            jsonComp.type = component.type;
+            jsonComp.type = component.className;
             jsonComp.id = component.id;
 
             if (component.name) {
@@ -335,11 +337,11 @@ export default class Node extends Publisher
     _addComponent(component: Component)
     {
         if (component.isNodeSingleton && this.components.has(component)) {
-            throw new Error(`only one component of type '${component.type}' allowed per node`);
+            throw new Error(`only one component of class '${component.className}' allowed per node`);
         }
 
         this.graph._addComponent(component);
-        this.components._add(component);
+        this.components.add(component);
     }
 
     /**
@@ -350,7 +352,7 @@ export default class Node extends Publisher
      */
     _removeComponent(component: Component)
     {
-        this.components._remove(component);
+        this.components.remove(component);
         this.graph._removeComponent(component);
     }
 

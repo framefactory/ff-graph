@@ -5,14 +5,14 @@
  * License: MIT
  */
 
-import Node, { NodeOrType } from "../Node";
+import Node, { NodeOrClass } from "../Node";
 import CHierarchy from "../components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const _EMPTY_ARRAY = [];
 
-const _getChildNode = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, recursive: boolean): T | null => {
+const _getChildNode = <T extends Node>(node: Node, nodeOrType: NodeOrClass<T>, recursive: boolean): T | null => {
 
     const children = node.components.get(CHierarchy).children;
     for (let i = 0, n = children.length; i < n; ++i) {
@@ -35,7 +35,7 @@ const _getChildNode = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, re
     return null;
 };
 
-const _getChildNodes = <T extends Node>(node: Node, nodeOrType: NodeOrType<T>, recursive: boolean): T[] => {
+const _getChildNodes = <T extends Node>(node: Node, nodeOrType: NodeOrClass<T>, recursive: boolean): T[] => {
 
     const children = node.components.get(CHierarchy).children;
     let result = [];
@@ -120,7 +120,7 @@ export default class NHierarchy extends Node
         return node;
     }
 
-    getParent<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
+    getParent<T extends Node>(nodeOrType: NodeOrClass<T>, recursive: boolean): T | null
     {
         let hierarchy = this.hierarchy;
         let parent = hierarchy ? hierarchy.parent : null;
@@ -160,7 +160,7 @@ export default class NHierarchy extends Node
      * @param nodeOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChild<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | null
+    getChild<T extends Node>(nodeOrType: NodeOrClass<T>, recursive: boolean): T | null
     {
         return this.hierarchy ? _getChildNode(this, nodeOrType, recursive) : null;
     }
@@ -170,7 +170,7 @@ export default class NHierarchy extends Node
      * @param nodeOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): Readonly<T[]>
+    getChildren<T extends Node>(nodeOrType: NodeOrClass<T>, recursive: boolean): Readonly<T[]>
     {
         return this.hierarchy ? _getChildNodes(this, nodeOrType, recursive) : _EMPTY_ARRAY;
     }
@@ -180,7 +180,7 @@ export default class NHierarchy extends Node
      * @param nodeOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    hasChildren<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): boolean
+    hasChildren<T extends Node>(nodeOrType: NodeOrClass<T>, recursive: boolean): boolean
     {
         return this.hierarchy ? !!_getChildNode(this, nodeOrType, recursive) : false;
     }

@@ -6,13 +6,12 @@
  */
 
 import Publisher from "@ff/core/Publisher";
+import ObjectRegistry from "@ff/core/ObjectRegistry";
+import ClassRegistry from "@ff/core/ClassRegistry";
 
-import Component from "./Component";
-import ComponentSet, { IComponentEvent } from "./ComponentSet";
-import Node from "./Node";
-import NodeSet, { INodeEvent } from "./NodeSet";
+import Component, { ComponentOrClass, IComponentEvent } from "./Component";
+import Node, { INodeEvent, NodeOrClass } from "./Node";
 import Graph from "./Graph";
-import Registry from "./Registry";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,20 +19,80 @@ export { IComponentEvent, INodeEvent };
 
 export default class System extends Publisher
 {
-    readonly registry: Registry;
-    readonly nodes: NodeSet;
-    readonly components: ComponentSet;
+    readonly registry: ClassRegistry;
     readonly graph: Graph;
 
+    readonly nodes = new ObjectRegistry<Node>(Node);
+    readonly components = new ObjectRegistry<Component>(Component);
 
-    constructor(registry?: Registry)
+
+    constructor(registry?: ClassRegistry)
     {
         super({ knownEvents: false });
 
-        this.registry = registry || new Registry();
-        this.nodes = new NodeSet();
-        this.components = new ComponentSet();
+        this.registry = registry || new ClassRegistry();
         this.graph = new Graph(this, null);
+    }
+
+    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
+        return this.components.get(componentOrClass, throws);
+    }
+
+    getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.components.getArray(componentOrClass);
+    }
+
+    hasComponents(componentOrClass: ComponentOrClass) {
+        return this.components.has(componentOrClass);
+    }
+
+    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
+        return this.graph.components.get(componentOrClass, throws);
+    }
+
+    getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.graph.components.getArray(componentOrClass);
+    }
+
+    hasMainComponents(componentOrClass: ComponentOrClass) {
+        return this.graph.components.has(componentOrClass);
+    }
+
+    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
+        return this.nodes.get(nodeOrClass, throws);
+    }
+
+    getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.nodes.getArray(nodeOrClass);
+    }
+
+    hasNodes(nodeOrClass: NodeOrClass) {
+        return this.nodes.has(nodeOrClass);
+    }
+
+    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
+        return this.graph.nodes.get(nodeOrClass, throws);
+    }
+
+    getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.graph.nodes.getArray(nodeOrClass);
+    }
+
+    hasMainNodes(nodeOrClass: NodeOrClass) {
+        return this.graph.nodes.has(nodeOrClass);
+    }
+
+    findNodeByName<T extends Node = Node>(name: string, nodeOrClass?: NodeOrClass<T>): T | undefined
+    {
+        const nodes = this.nodes.getArray(nodeOrClass);
+
+        for (let i = 0, n = nodes.length; i < n; ++i) {
+            if (nodes[i].name === name) {
+                return nodes[i];
+            }
+        }
+
+        return undefined;
     }
 
     /**
@@ -69,25 +128,25 @@ export default class System extends Publisher
 
     _addNode(node: Node)
     {
-        this.nodes._add(node);
+        this.nodes.add(node);
     }
 
     _removeNode(node: Node)
     {
-        this.nodes._remove(node);
+        this.nodes.remove(node);
     }
 
     _addComponent(component: Component)
     {
         if (component.isSystemSingleton && this.components.has(component)) {
-            throw new Error(`only one component of type '${component.type}' allowed per system`);
+            throw new Error(`only one component of class '${component.className}' allowed per system`);
         }
 
-        this.components._add(component);
+        this.components.add(component);
     }
 
     _removeComponent(component: Component)
     {
-        this.components._remove(component);
+        this.components.remove(component);
     }
 }
