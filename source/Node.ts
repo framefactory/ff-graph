@@ -142,6 +142,98 @@ export default class Node extends Publisher
         return this._graph.system;
     }
 
+    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
+        return this.components.get(componentOrClass, throws);
+    }
+
+    getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.components.getArray(componentOrClass);
+    }
+
+    hasComponents(componentOrClass: ComponentOrClass) {
+        return this.components.has(componentOrClass);
+    }
+
+    getGraphComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
+        return this.graph.components.get(componentOrClass, throws);
+    }
+
+    getGraphComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.graph.components.getArray(componentOrClass);
+    }
+
+    hasGraphComponents(componentOrClass: ComponentOrClass) {
+        return this.graph.components.has(componentOrClass);
+    }
+
+    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
+        return this._graph.system.graph.components.get(componentOrClass, throws);
+    }
+
+    getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this._graph.system.graph.components.getArray(componentOrClass);
+    }
+
+    hasMainComponents(componentOrClass: ComponentOrClass) {
+        return this._graph.system.graph.components.has(componentOrClass);
+    }
+
+    getSystemComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
+        return this._graph.system.components.get(componentOrClass, throws);
+    }
+
+    getSystemComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this._graph.system.components.getArray(componentOrClass);
+    }
+
+    hasSystemComponents(componentOrClass: ComponentOrClass) {
+        return this._graph.system.components.has(componentOrClass);
+    }
+
+    getComponentById(id: string): Component | null {
+        return this._graph.system.components.getById(id);
+    }
+
+    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
+        return this._graph.nodes.get(nodeOrClass, throws);
+    }
+
+    getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this._graph.nodes.getArray(nodeOrClass);
+    }
+
+    hasNodes(nodeOrClass: NodeOrClass) {
+        return this._graph.nodes.has(nodeOrClass);
+    }
+
+    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
+        return this._graph.system.graph.nodes.get(nodeOrClass, throws);
+    }
+
+    getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this._graph.system.graph.nodes.getArray(nodeOrClass);
+    }
+
+    hasMainNodes(nodeOrClass: NodeOrClass) {
+        return this._graph.system.graph.nodes.has(nodeOrClass);
+    }
+
+    getSystemNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
+        return this._graph.system.nodes.get(nodeOrClass, throws);
+    }
+
+    getSystemNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this._graph.system.nodes.getArray(nodeOrClass);
+    }
+
+    hasSystemNodes(nodeOrClass: NodeOrClass) {
+        return this._graph.system.nodes.has(nodeOrClass);
+    }
+
+    getNodeById(id: string): Node | null {
+        return this._graph.system.nodes.getById(id);
+    }
+
     /**
      * Adds this node to the given graph and the system.
      * @param graph
