@@ -174,6 +174,13 @@ export default class Node extends Publisher
     {
     }
 
+    clear()
+    {
+        // dispose components
+        const componentList = this.components.getArray().slice();
+        componentList.forEach(component => component.dispose());
+    }
+
     /**
      * Must be called to delete/destroy the node. This unregisters the node
      * and all its components from the system.

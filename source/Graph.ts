@@ -45,7 +45,8 @@ export default class Graph extends Publisher
 
     private _root: CHierarchy;
     private _sorter = new LinkableSorter();
-    private _sortRequested = false;
+    private _sortRequested = true;
+    private _sortedList: Component[] = null;
     private _finalizeList: Component[] = [];
 
     /**
@@ -91,7 +92,7 @@ export default class Graph extends Publisher
         }
 
         // call update on components in topological sort order
-        const components = this.components.getArray();
+        const components = this._sortedList;
         let updated = false;
 
         for (let i = 0, n = components.length; i < n; ++i) {
@@ -146,7 +147,10 @@ export default class Graph extends Publisher
 
     sort()
     {
-        this.components.sort(this._sorter);
+        this._sortedList = this._sorter.sort(this.components.getArray()) as Component[];
+
+        const name = this.parent ? this.parent.name || this.parent.type : "System";
+        console.log("Graph.sort - %s: sorted %s components", name, this._sortedList.length);
     }
 
     /**
@@ -318,6 +322,8 @@ export default class Graph extends Publisher
         if (component.finalize) {
             this._finalizeList.push(component);
         }
+
+        this._sortRequested = true;
     }
 
     /**
@@ -333,5 +339,7 @@ export default class Graph extends Publisher
         if (component.finalize) {
             this._finalizeList.splice(this._finalizeList.indexOf(component), 1);
         }
+
+        this._sortRequested = true;
     }
 }

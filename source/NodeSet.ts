@@ -245,7 +245,7 @@ export default class NodeSet extends Publisher
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    on<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: any)
+    on<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: object)
     {
         super.on(nodeTypeName(nodeOrType), callback, context);
     }
@@ -256,7 +256,7 @@ export default class NodeSet extends Publisher
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    once<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: any)
+    once<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: object)
     {
         super.once(nodeTypeName(nodeOrType), callback, context);
     }
@@ -267,7 +267,7 @@ export default class NodeSet extends Publisher
      * @param callback Callback function, invoked when the event is emitted.
      * @param context Optional: this context for the callback invocation.
      */
-    off<T extends Node>(nodeOrType: NodeOrType<T>, callback: (event: INodeEvent<T>) => void, context?: any)
+    off<T extends Node>(nodeOrType: NodeOrType<T>, callback?: (event: INodeEvent<T>) => void, context?: object)
     {
         super.off(nodeTypeName(nodeOrType), callback, context);
     }
