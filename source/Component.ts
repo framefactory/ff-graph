@@ -12,7 +12,7 @@ import { types, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
 import PropertyGroup, { ILinkable } from "./PropertyGroup";
 import ComponentTracker from "./ComponentTracker";
 import ComponentReference from "./ComponentReference";
-import Node from "./Node";
+import Node, { NodeOrType } from "./Node";
 import System from "./System";
 import CHierarchy from "./components/CHierarchy";
 
@@ -113,58 +113,6 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
-     * Returns the type identifier of this component.
-     * @returns {string}
-     */
-    get type() {
-        return (this.constructor as typeof Component).type;
-    }
-
-    get text() {
-        return (this.constructor as typeof Component).text;
-    }
-
-    get icon() {
-        return (this.constructor as typeof Component).icon;
-    }
-
-    /**
-     * Returns the system this component and its node belong to.
-     */
-    get system(): System {
-        return this._node.system;
-    }
-
-    /**
-     * Returns the graph this component and its node belong to.
-     */
-    get graph() {
-        return this._node.graph;
-    }
-
-    /**
-     * Returns the node this component belongs to.
-     */
-    get node() {
-        return this._node;
-    }
-
-    /**
-     * Returns the set of sibling components of this component.
-     * Sibling components are components belonging to the same node.
-     */
-    get components() {
-        return this._node.components;
-    }
-
-    /**
-     * Returns the sibling hierarchy component if available.
-     */
-    get hierarchy() {
-        return this._node.components.get<CHierarchy>("CHierarchy");
-    }
-
-    /**
      * True if the component is a node singleton, i.e. can only be added once per node.
      */
     get isNodeSingleton() {
@@ -183,6 +131,22 @@ export default class Component extends Publisher implements ILinkable
      */
     get isSystemSingleton() {
         return (this.constructor as typeof Component).isSystemSingleton;
+    }
+
+    /**
+     * Returns the type identifier of this component.
+     * @returns {string}
+     */
+    get type() {
+        return (this.constructor as typeof Component).type;
+    }
+
+    get text() {
+        return (this.constructor as typeof Component).text;
+    }
+
+    get icon() {
+        return (this.constructor as typeof Component).icon;
     }
 
     /**
@@ -206,6 +170,106 @@ export default class Component extends Publisher implements ILinkable
     {
         this._name = value;
         this.emit<IComponentChangeEvent>({ type: "change", component: this, what: "name" });
+    }
+
+    /**
+     * Returns the node this component belongs to.
+     */
+    get node() {
+        return this._node;
+    }
+
+    /**
+     * Returns the graph this component and its node belong to.
+     */
+    get graph() {
+        return this._node.graph;
+    }
+
+    /**
+     * Returns the system this component and its node belong to.
+     */
+    get system(): System {
+        return this._node.system;
+    }
+
+    /**
+     * Returns the set of sibling components of this component.
+     * Sibling components are components belonging to the same node.
+     */
+    get components() {
+        return this._node.components;
+    }
+
+    /**
+     * Returns the sibling hierarchy component if available.
+     */
+    get hierarchy() {
+        return this._node.components.get<CHierarchy>("CHierarchy");
+    }
+
+    getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, throws: boolean = false) {
+        return this._node.components.get(componentOrType, throws);
+    }
+
+    getComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.components.getArray(componentOrType);
+    }
+
+    getGraphComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, throws: boolean = false) {
+        return this._node.graph.components.get(componentOrType, throws);
+    }
+
+    getGraphComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.graph.components.getArray(componentOrType);
+    }
+
+    getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, throws: boolean = false) {
+        return this._node.system.graph.components.get(componentOrType, throws);
+    }
+
+    getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.system.graph.components.getArray(componentOrType);
+    }
+
+    getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, throws: boolean = false) {
+        return this._node.system.components.get(componentOrType, throws);
+    }
+
+    getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.system.components.getArray(componentOrType);
+    }
+
+    getComponentById(id: string): Component | null {
+        return this._node.system.components.getById(id);
+    }
+
+    getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, throws: boolean = false) {
+        return this._node.graph.nodes.get(nodeOrType, throws);
+    }
+
+    getNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this._node.graph.nodes.getArray(nodeOrType);
+    }
+
+    getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, throws: boolean = false) {
+        return this._node.system.graph.nodes.get(nodeOrType, throws);
+    }
+
+    getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this._node.system.graph.nodes.getArray(nodeOrType);
+    }
+
+    getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, throws: boolean = false) {
+        return this._node.system.nodes.get(nodeOrType, throws);
+    }
+
+    getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this._node.system.nodes.getArray(nodeOrType);
+    }
+
+    getNodeById(id: string): Node | null {
+        return this._node.system.nodes.getById(id);
     }
 
     /**

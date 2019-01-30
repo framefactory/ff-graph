@@ -8,17 +8,17 @@
 import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import { ILinkable } from "./PropertyGroup";
+//import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrType, componentTypeName } from "./Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 const _EMPTY_ARRAY = [];
 
-export interface ILinkableSorter
-{
-    sort(linkables: ILinkable[]): ILinkable[];
-}
+// export interface ILinkableSorter
+// {
+//     sort(linkables: ILinkable[]): ILinkable[];
+// }
 
 export interface IComponentEvent<T extends Component = Component> extends ITypedEvent<string>
 {
@@ -112,11 +112,11 @@ export default class ComponentSet extends Publisher
         return this._typeLists[Component.type].length;
     }
 
-    sort(sorter: ILinkableSorter)
-    {
-        console.log("ComponentSet.sort");
-        this._typeLists[Component.type] = sorter.sort(this._typeLists[Component.type]) as Component[];
-    }
+    // sort(sorter: ILinkableSorter)
+    // {
+    //     console.log("ComponentSet.sort");
+    //     this._typeLists[Component.type] = sorter.sort(this._typeLists[Component.type]) as Component[];
+    // }
 
     /**
      * Returns true if there are components (of a certain type if given) in this set.
@@ -156,12 +156,12 @@ export default class ComponentSet extends Publisher
      * Returns an array of components in this set of a specific type if given.
      * @param componentOrType If given only returns components of the given type.
      */
-    getArray<T extends Component>(componentOrType?: ComponentOrType<T> | T): Readonly<T[]>
+    getArray<T extends Component>(componentOrType?: ComponentOrType<T>): Readonly<T[]>
     {
         return (this._typeLists[componentTypeName(componentOrType)] || _EMPTY_ARRAY) as T[];
     }
 
-    cloneArray<T extends Component>(componentOrType?: ComponentOrType<T> | T): Readonly<T[]>
+    cloneArray<T extends Component>(componentOrType?: ComponentOrType<T>): Readonly<T[]>
     {
         return this.getArray(componentOrType).slice();
     }
@@ -169,19 +169,28 @@ export default class ComponentSet extends Publisher
     /**
      * Returns the first found component in this set of the given type.
      * @param componentOrType Type of component to return.
+     * @param throws If true, the method throws an error if no component was found.
      */
-    get<T extends Component = Component>(componentOrType?: ComponentOrType<T> | T): T | undefined
+    get<T extends Component = Component>(componentOrType?: ComponentOrType<T>, throws: boolean = false): T | undefined
     {
-        const components = this._typeLists[componentTypeName(componentOrType)];
-        return components ? components[0] as T : undefined;
+        const type = componentTypeName(componentOrType);
+        const components = this._typeLists[type];
+        const component = components ? components[0] as T : undefined;
+
+        if (throws && !component) {
+            throw new Error(`no components of type '${type}' in set`);
+        }
+
+        return component;
     }
 
     /**
      * Returns the first found component in this set of the given type.
      * Throws an exception if there is no component of the specified type.
      * @param componentOrType Type of component to return.
+     * @deprecated
      */
-    safeGet<T extends Component = Component>(componentOrType: ComponentOrType<T> | T): T
+    safeGet<T extends Component = Component>(componentOrType: ComponentOrType<T>): T
     {
         const type = componentTypeName(componentOrType);
         const components = this._typeLists[type];

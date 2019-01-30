@@ -159,17 +159,26 @@ export default class NodeSet extends Publisher
     /**
      * Returns the first found node in this set of the given type.
      * @param nodeOrType Type of node to return.
+     * @param throws If true, the method throws an error if no node was found.
      */
-    get<T extends Node = Node>(nodeOrType?: NodeOrType<T>): T | undefined
+    get<T extends Node = Node>(nodeOrType?: NodeOrType<T>, throws: boolean = false): T | undefined
     {
-        const nodes = this._typeLists[nodeTypeName(nodeOrType)];
-        return nodes ? nodes[0] as T : undefined;
+        const type = nodeTypeName(nodeOrType);
+        const nodes = this._typeLists[type];
+        const node = nodes ? nodes[0] as T : undefined;
+
+        if (throws && !node) {
+            throw new Error(`no nodes of type '${type}' in set`);
+        }
+
+        return node;
     }
 
     /**
      * Returns the first found node in this set of the given type.
      * Throws an exception if there is no node of the specified type.
      * @param nodeOrType Type of node to return.
+     * @deprecated
      */
     safeGet<T extends Node = Node>(nodeOrType: NodeOrType<T>): T
     {
