@@ -126,7 +126,7 @@ export default function() {
             const system = new System();
             const node = system.graph.createNode("Test");
             const comps = new Array(10).fill(null).map(el => {
-                const component = new TestComponent();
+                const component = new TestComponent("1");
                 component.attach(node);
                 return component;
             });

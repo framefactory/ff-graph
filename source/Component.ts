@@ -151,7 +151,6 @@ export default class Component extends Publisher implements ILinkable
 
     /**
      * Returns the name of this component.
-     * @returns {string}
      */
     get name() {
         return this._name;
@@ -164,7 +163,7 @@ export default class Component extends Publisher implements ILinkable
     /**
      * Sets the name of this component.
      * This emits an [[IComponentChangeEvent]].
-     * @param {string} value
+     * @param value
      */
     set name(value: string)
     {

@@ -69,6 +69,7 @@ export default class Node extends Publisher
 
     /** The node's globally unique id. */
     readonly id: string;
+
     /** Collection of all components in this node. */
     readonly components = new ComponentSet();
 
@@ -91,7 +92,6 @@ export default class Node extends Publisher
 
     /**
      * Returns the type identifier of this component.
-     * @returns {string}
      */
     get type() {
         return (this.constructor as typeof Node).type;
@@ -106,22 +106,7 @@ export default class Node extends Publisher
     }
 
     /**
-     * Returns the system this node and its graph belong to.
-     */
-    get system() {
-        return this._graph.system;
-    }
-
-    /**
-     * Returns the graph this node is part of.
-     */
-    get graph() {
-        return this._graph;
-    }
-
-    /**
      * Returns the name of this node.
-     * @returns {string}
      */
     get name() {
         return this._name;
@@ -134,11 +119,25 @@ export default class Node extends Publisher
     /**
      * Sets the name of this node.
      * This emits an [[INodeChangeEvent]]
-     * @param {string} value
+     * @param value
      */
     set name(value: string) {
         this._name = value;
         this.emit<INodeChangeEvent>({ type: "change", what: "name", node: this });
+    }
+
+    /**
+     * Returns the graph this node is part of.
+     */
+    get graph() {
+        return this._graph;
+    }
+
+    /**
+     * Returns the system this node and its graph belong to.
+     */
+    get system() {
+        return this._graph.system;
     }
 
     /**
