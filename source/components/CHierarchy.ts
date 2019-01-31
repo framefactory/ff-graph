@@ -5,12 +5,10 @@
  * License: MIT
  */
 
-import { Dictionary } from "@ff/core/types";
 import { ITypedEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrClass } from "../Component";
+import Component, { ComponentOrClass, types } from "../Component";
 import Node from "../Node";
-import { ILinkable } from "../PropertyGroup";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -75,6 +73,10 @@ export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
     remove: boolean;
 }
 
+const _inputs = {
+    blocked: types.Boolean("Hierarchy.Blocked"),
+};
+
 /**
  * Allows arranging components in a hierarchical structure.
  *
@@ -83,7 +85,7 @@ export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
  */
 export default class CHierarchy extends Component
 {
-    static readonly type: string = "CHierarchy";
+    ins = this.addInputs(_inputs);
 
     protected _parent: CHierarchy = null;
     protected _children: CHierarchy[] = [];

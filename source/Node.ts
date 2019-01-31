@@ -98,6 +98,10 @@ export default class Node extends Publisher
     get className() {
         return this.constructor.name;
     }
+    get displayClassName() {
+        const name = this.constructor.name;
+        return name === "Node" ? name : name.substr(1);
+    }
 
     get text() {
         return (this.constructor as typeof Component).text;
@@ -115,7 +119,7 @@ export default class Node extends Publisher
     }
 
     get displayName() {
-        return this._name || this.text || this.className;
+        return this._name || this.text || this.displayClassName;
     }
 
     /**

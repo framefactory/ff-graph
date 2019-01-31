@@ -144,6 +144,10 @@ export default class Component extends Publisher implements ILinkable
     get className() {
         return this.constructor.name;
     }
+    get displayClassName() {
+        const name = this.constructor.name;
+        return name === "Component" ? name : name.substr(1);
+    }
 
     get text() {
         return (this.constructor as typeof Component).text;
@@ -161,7 +165,7 @@ export default class Component extends Publisher implements ILinkable
     }
 
     get displayName() {
-        return this._name || this.text || this.className;
+        return this._name || this.text || this.displayClassName;
     }
 
     /**
@@ -590,7 +594,7 @@ export default class Component extends Publisher implements ILinkable
         }
     }
 
-    /**
+     /**
      * Adds input properties to the component, specified by the provided property templates.
      * @param templates A plain object with property templates.
      * @param index Optional index at which to insert the new properties.
