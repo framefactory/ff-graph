@@ -9,7 +9,7 @@ import uniqueId from "@ff/core/uniqueId";
 import Publisher from "@ff/core/Publisher";
 
 import LinkableSorter from "./LinkableSorter";
-import Component, { IUpdateContext } from "./Component";
+import Component, { ComponentOrClass, IUpdateContext } from "./Component";
 import Node, { NodeOrClass } from "./Node";
 import System from "./System";
 
@@ -72,6 +72,86 @@ export default class Graph extends Publisher
     /** Returns the root hierarchy component of this graph. */
     get root() {
         return this._root;
+    }
+
+    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this.components.get(componentOrClass, nothrow);
+    }
+
+    getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.components.getArray(componentOrClass);
+    }
+
+    hasComponent(componentOrClass: ComponentOrClass) {
+        return this.components.has(componentOrClass);
+    }
+
+    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this.system.graph.components.get(componentOrClass, nothrow);
+    }
+
+    getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.system.graph.components.getArray(componentOrClass);
+    }
+
+    hasMainComponent(componentOrClass: ComponentOrClass) {
+        return this.system.graph.components.has(componentOrClass);
+    }
+
+    getSystemComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this.system.components.get(componentOrClass, nothrow);
+    }
+
+    getSystemComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.system.components.getArray(componentOrClass);
+    }
+
+    hasSystemComponent(componentOrClass: ComponentOrClass) {
+        return this.system.components.has(componentOrClass);
+    }
+
+    getComponentById(id: string): Component | null {
+        return this.system.components.getById(id);
+    }
+
+    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this.nodes.get(nodeOrClass, nothrow);
+    }
+
+    getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.nodes.getArray(nodeOrClass);
+    }
+
+    hasNode(nodeOrClass: NodeOrClass) {
+        return this.nodes.has(nodeOrClass);
+    }
+
+    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this.system.graph.nodes.get(nodeOrClass, nothrow);
+    }
+
+    getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.system.graph.nodes.getArray(nodeOrClass);
+    }
+
+    hasMainNode(nodeOrClass: NodeOrClass) {
+        return this.system.graph.nodes.has(nodeOrClass);
+    }
+
+    getSystemNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this.system.nodes.get(nodeOrClass, nothrow);
+    }
+
+    getSystemNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.system.nodes.getArray(nodeOrClass);
+    }
+
+    hasSystemNode(nodeOrClass: NodeOrClass) {
+        return this.system.nodes.has(nodeOrClass);
+    }
+
+    getNodeById(id: string): Node | null {
+        return this.system.nodes.getById(id);
     }
 
     /**
@@ -211,7 +291,7 @@ export default class Graph extends Publisher
         const result = [];
 
         for (let i = 0, n = nodes.length; i < n; ++i) {
-            const hierarchy = nodes[i].components.get<CHierarchy>("CHierarchy");
+            const hierarchy = nodes[i].components.get<CHierarchy>("CHierarchy", true);
             if (!hierarchy || !hierarchy.parent) {
                 result.push(nodes[i]);
             }

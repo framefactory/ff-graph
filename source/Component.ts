@@ -215,51 +215,51 @@ export default class Component extends Publisher implements ILinkable
         return this._node.components.get<CHierarchy>("CHierarchy");
     }
 
-    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
-        return this._node.components.get(componentOrClass, throws);
+    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this._node.components.get(componentOrClass, nothrow);
     }
 
     getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
         return this._node.components.getArray(componentOrClass);
     }
 
-    hasComponents(componentOrClass: ComponentOrClass) {
+    hasComponent(componentOrClass: ComponentOrClass) {
         return this._node.components.has(componentOrClass);
     }
 
-    getGraphComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
-        return this._node.graph.components.get(componentOrClass, throws);
+    getGraphComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this._node.graph.components.get(componentOrClass, nothrow);
     }
 
     getGraphComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
         return this._node.graph.components.getArray(componentOrClass);
     }
 
-    hasGraphComponents(componentOrClass: ComponentOrClass) {
+    hasGraphComponent(componentOrClass: ComponentOrClass) {
         return this._node.graph.components.has(componentOrClass);
     }
 
-    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
-        return this._node.system.graph.components.get(componentOrClass, throws);
+    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this._node.system.graph.components.get(componentOrClass, nothrow);
     }
 
     getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
         return this._node.system.graph.components.getArray(componentOrClass);
     }
 
-    hasMainComponents(componentOrClass: ComponentOrClass) {
+    hasMainComponent(componentOrClass: ComponentOrClass) {
         return this._node.system.graph.components.has(componentOrClass);
     }
 
-    getSystemComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
-        return this._node.system.components.get(componentOrClass, throws);
+    getSystemComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this._node.system.components.get(componentOrClass, nothrow);
     }
 
     getSystemComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
         return this._node.system.components.getArray(componentOrClass);
     }
 
-    hasSystemComponents(componentOrClass: ComponentOrClass) {
+    hasSystemComponent(componentOrClass: ComponentOrClass) {
         return this._node.system.components.has(componentOrClass);
     }
 
@@ -267,39 +267,39 @@ export default class Component extends Publisher implements ILinkable
         return this._node.system.components.getById(id);
     }
 
-    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
-        return this._node.graph.nodes.get(nodeOrClass, throws);
+    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this._node.graph.nodes.get(nodeOrClass, nothrow);
     }
 
     getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
         return this._node.graph.nodes.getArray(nodeOrClass);
     }
 
-    hasNodes(nodeOrClass: NodeOrClass) {
+    hasNode(nodeOrClass: NodeOrClass) {
         return this._node.graph.nodes.has(nodeOrClass);
     }
 
-    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
-        return this._node.system.graph.nodes.get(nodeOrClass, throws);
+    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this._node.system.graph.nodes.get(nodeOrClass, nothrow);
     }
 
     getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
         return this._node.system.graph.nodes.getArray(nodeOrClass);
     }
 
-    hasMainNodes(nodeOrClass: NodeOrClass) {
+    hasMainNode(nodeOrClass: NodeOrClass) {
         return this._node.system.graph.nodes.has(nodeOrClass);
     }
 
-    getSystemNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
-        return this._node.system.nodes.get(nodeOrClass, throws);
+    getSystemNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this._node.system.nodes.get(nodeOrClass, nothrow);
     }
 
     getSystemNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
         return this._node.system.nodes.getArray(nodeOrClass);
     }
 
-    hasSystemNodes(nodeOrClass: NodeOrClass) {
+    hasSystemNode(nodeOrClass: NodeOrClass) {
         return this._node.system.nodes.has(nodeOrClass);
     }
 

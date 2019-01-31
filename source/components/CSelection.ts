@@ -11,8 +11,8 @@ import ObjectRegistry from "@ff/core/ObjectRegistry";
 
 import { types } from "../propertyTypes";
 
-import Component, { IComponentEvent } from "../Component";
-import Node, { INodeEvent } from "../Node";
+import Component, { ComponentOrClass, IComponentEvent } from "../Component";
+import Node, { INodeEvent, NodeOrClass } from "../Node";
 import Graph from "../Graph";
 
 import CGraph from "./CGraph";
@@ -46,6 +46,20 @@ export default class CSelection extends CController<CSelection>
 
     readonly selectedNodes = new ObjectRegistry(Node);
     readonly selectedComponents = new ObjectRegistry(Component);
+
+    getSelectedNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.selectedNodes.get(nodeOrClass, true);
+    }
+    getSelectedNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this.selectedNodes.getArray(nodeOrClass);
+    }
+
+    getSelectedComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.selectedComponents.get(componentOrClass, true);
+    }
+    getSelectedComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this.selectedComponents.getArray(componentOrClass);
+    }
 
     private _activeGraph: Graph = null;
 
@@ -90,7 +104,7 @@ export default class CSelection extends CController<CSelection>
 
     activateChildGraph()
     {
-        const graphComponent = this.selectedComponents.get(CGraph);
+        const graphComponent = this.selectedComponents.get(CGraph, true);
         if (graphComponent) {
             this.activeGraph = graphComponent.innerGraph;
         }

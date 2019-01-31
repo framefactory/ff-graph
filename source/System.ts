@@ -34,8 +34,8 @@ export default class System extends Publisher
         this.graph = new Graph(this, null);
     }
 
-    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
-        return this.components.get(componentOrClass, throws);
+    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this.components.get(componentOrClass, nothrow);
     }
 
     getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
@@ -46,8 +46,8 @@ export default class System extends Publisher
         return this.components.has(componentOrClass);
     }
 
-    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, throws: boolean = false) {
-        return this.graph.components.get(componentOrClass, throws);
+    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this.graph.components.get(componentOrClass, nothrow);
     }
 
     getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
@@ -58,8 +58,8 @@ export default class System extends Publisher
         return this.graph.components.has(componentOrClass);
     }
 
-    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
-        return this.nodes.get(nodeOrClass, throws);
+    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this.nodes.get(nodeOrClass, nothrow);
     }
 
     getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
@@ -70,8 +70,8 @@ export default class System extends Publisher
         return this.nodes.has(nodeOrClass);
     }
 
-    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, throws: boolean = false) {
-        return this.graph.nodes.get(nodeOrClass, throws);
+    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this.graph.nodes.get(nodeOrClass, nothrow);
     }
 
     getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
