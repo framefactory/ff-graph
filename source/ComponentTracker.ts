@@ -39,7 +39,7 @@ export default class ComponentTracker<T extends Component = Component>
         this._registry = registry;
 
         registry.on(this.className, this.onComponent, this);
-        this.component = registry.get(scope);
+        this.component = registry.get(scope, true);
 
         if (this.component && didAdd) {
             didAdd(this.component);

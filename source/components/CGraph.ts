@@ -5,10 +5,11 @@
  * License: MIT
  */
 
-import Component, { IUpdateContext } from "../Component";
+import Component, { ComponentOrClass, IUpdateContext } from "../Component";
 import Graph from "../Graph";
 
 import CHierarchy from "./CHierarchy";
+import Node, { NodeOrClass } from "../Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -28,6 +29,30 @@ export default class CGraph extends Component
     }
     set innerRoot(root: CHierarchy) {
         this._innerRoot = root;
+    }
+
+    getInnerComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+        return this._innerGraph.components.get(componentOrClass, nothrow);
+    }
+
+    getInnerComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+        return this._innerGraph.components.getArray(componentOrClass);
+    }
+
+    hasInnerComponent(componentOrClass: ComponentOrClass) {
+        return this._innerGraph.components.has(componentOrClass);
+    }
+
+    getInnerNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+        return this._innerGraph.nodes.get(nodeOrClass, nothrow);
+    }
+
+    getInnerNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+        return this._innerGraph.nodes.getArray(nodeOrClass);
+    }
+
+    hasInnerNode(nodeOrClass: NodeOrClass) {
+        return this._innerGraph.nodes.has(nodeOrClass);
     }
 
     create()
