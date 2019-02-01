@@ -485,33 +485,13 @@ export default class Component extends Publisher implements ILinkable
     propagateUp(event: IPropagatingEvent<string>)
     {
         let target = this as Component;
+        target.emit(event);
 
-        while (target) {
+        target = target._node.components.get<CHierarchy>("CHierarchy");
+
+        while (target && !event.stopPropagation) {
             target.emit(event);
-
-            if (event.stopPropagation) {
-                return;
-            }
-
-            const components = target.components.getArray();
-            for (let i = 0, n = components.length; i < n; ++i) {
-                const component = components[i];
-                if (component !== target) {
-                    component.emit(event);
-
-                    if (event.stopPropagation) {
-                        return;
-                    }
-                }
-            }
-
-            const hierarchy = target.components.get<CHierarchy>("CHierarchy");
-            target = hierarchy ? hierarchy.parent : null;
-
-            // TODO: Should event propagate to parent graph?
-            // if (!target) {
-            //     target = hierarchy.graph.parent;
-            // }
+            target = (target as CHierarchy).parent;
         }
 
         if (!event.stopPropagation) {
