@@ -24,11 +24,8 @@ export default class CGraph extends Component
         return this._innerGraph;
     }
 
-    get innerRoot() {
-        return this._innerRoot;
-    }
-    set innerRoot(root: CHierarchy) {
-        this._innerRoot = root;
+    getInnerRoots() {
+        return this._innerGraph.roots;
     }
 
     getInnerComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
@@ -96,6 +93,14 @@ export default class CGraph extends Component
         const json = super.deflate();
         json.graph = this._innerGraph.deflate();
         return json;
+    }
+
+    onAddInnerRoot(component: CHierarchy)
+    {
+    }
+
+    onRemoveInnerRoot(component: CHierarchy)
+    {
     }
 }
 

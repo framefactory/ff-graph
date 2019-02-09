@@ -39,8 +39,9 @@ export default class Graph extends Publisher
     readonly nodes = new ObjectRegistry<Node>(Node);
     /** Collection of all components in this graph. */
     readonly components = new ObjectRegistry<Component>(Component);
+    /** List of root hierarchy components in this graph. */
+    readonly roots: CHierarchy[] = [];
 
-    private _root: CHierarchy;
     private _sorter = new LinkableSorter();
     private _sortRequested = true;
     private _sortedList: Component[] = null;
@@ -56,22 +57,6 @@ export default class Graph extends Publisher
         super({ knownEvents: false });
         this.system = system;
         this.parent = parent;
-    }
-
-    // TODO: This should use a tracker for the root component
-
-    /** Sets the root hierarchy component of this graph. */
-    set root(root: CHierarchy) {
-        this._root = root;
-
-        if (this.parent) {
-            this.parent.innerRoot = root;
-        }
-    }
-
-    /** Returns the root hierarchy component of this graph. */
-    get root() {
-        return this._root;
     }
 
     getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
@@ -446,5 +431,23 @@ export default class Graph extends Publisher
         }
 
         this._sortRequested = true;
+    }
+
+    _addRoot(component: CHierarchy)
+    {
+        this.roots.push(component);
+
+        if (this.parent) {
+            this.parent.onAddInnerRoot(component);
+        }
+    }
+
+    _removeRoot(component: CHierarchy)
+    {
+        this.roots.splice(this.roots.indexOf(component), 1);
+
+        if (this.parent) {
+            this.parent.onRemoveInnerRoot(component);
+        }
     }
 }

@@ -13,6 +13,7 @@ import ObjectRegistry, { IObjectEvent } from "@ff/core/ObjectRegistry";
 import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrClass, IComponentEvent } from "./Component";
 import Graph from "./Graph";
+import CHierarchy, { IChildComponentEvent } from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -438,6 +439,12 @@ export default class Node extends Publisher
 
         this.graph._addComponent(component);
         this.components.add(component);
+
+        const hierarchy = this.components.get<CHierarchy>("CHierarchy", true);
+        if (hierarchy) {
+            const event: IChildComponentEvent = { type: "child-component", add: true, remove: false, component };
+            hierarchy.traverseUp(true, false, true, component => component.emit(event));
+        }
     }
 
     /**
@@ -448,6 +455,12 @@ export default class Node extends Publisher
      */
     _removeComponent(component: Component)
     {
+        const hierarchy = this.components.get<CHierarchy>("CHierarchy", true);
+        if (hierarchy) {
+            const event: IChildComponentEvent = { type: "child-component", add: false, remove: true, component };
+            hierarchy.traverseUp(true, false, true, component => component.emit(event));
+        }
+
         this.components.remove(component);
         this.graph._removeComponent(component);
     }

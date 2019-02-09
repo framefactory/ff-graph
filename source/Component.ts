@@ -473,61 +473,6 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
-     * Propagates and emits an event as follows, until event.stopPropagation is set to true.
-     * 1. this component
-     * 2. sibling components of this
-     * 3. parent hierarchy component if available
-     * 4. siblings of parent hierarchy component
-     * 5. repeat 3/4 until at root
-     * 6. emits event on system
-     * @param event
-     */
-    propagateUp(event: IPropagatingEvent<string>)
-    {
-        let target = this as Component;
-        target.emit(event);
-
-        target = target._node.components.get<CHierarchy>("CHierarchy");
-
-        while (target && !event.stopPropagation) {
-            target.emit(event);
-            target = (target as CHierarchy).parent;
-        }
-
-        if (!event.stopPropagation) {
-            this.system.emit(event);
-        }
-    }
-
-    /**
-     * Propagates and emits an event as follows, until event.stopPropagation is set to true.
-     * 1. all children of the sibling hierarchy of this
-     * 2. for each child, repeat 1 until reaching leaf components with no children
-     * @param event
-     */
-    propagateDown(event: IPropagatingEvent<string>)
-    {
-        const hierarchy = this.components.get<CHierarchy>("CHierarchy");
-        const children = hierarchy ? hierarchy.children : null;
-
-        for (let i = 0, n = children.length; i < n; ++i) {
-            const components = children[i].components.getArray();
-            for (let j = 0, m = components.length; j < m; ++i) {
-                components[j].emit(event);
-                if (event.stopPropagation) {
-                    return;
-                }
-            }
-            for (let j = 0, m = components.length; j < m; ++i) {
-                components[j].propagateDown(event);
-                if (event.stopPropagation) {
-                    return;
-                }
-            }
-        }
-    }
-
-    /**
      * Returns a text representation of the component.
      * @returns {string}
      */

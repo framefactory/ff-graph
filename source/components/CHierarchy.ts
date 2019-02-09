@@ -5,10 +5,11 @@
  * License: MIT
  */
 
-import { ITypedEvent } from "@ff/core/Publisher";
+import { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
 import Component, { ComponentOrClass, types } from "../Component";
 import Node from "../Node";
+import CGraph from "./CGraph";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -62,7 +63,7 @@ const _getChildComponents = <T extends Component>(
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Emitted by [[Hierarchy]] component after it's parent has changed.
+ * Emitted by [[Hierarchy]] components if a hierarchy relation has changed in its tree line.
  * @event
  */
 export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
@@ -73,6 +74,17 @@ export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
     remove: boolean;
 }
 
+/**
+ * Emitted by [[Hierarchy]] components if a child component has been added or removed.
+ * @event
+ */
+export interface IChildComponentEvent extends ITypedEvent<"child-component">
+{
+    add: boolean;
+    remove: boolean;
+    component: Component;
+}
+
 const _inputs = {
     blocked: types.Boolean("Hierarchy.Blocked"),
 };
@@ -81,7 +93,8 @@ const _inputs = {
  * Allows arranging components in a hierarchical structure.
  *
  * ### Events
- * - *"change"* - emits [[IHierarchyChangeEvent]] after the instance's state has changed.
+ * - *"hierarchy"* - emits [[IHierarchyEvent]] if a hierarchy relation has changed in the component's tree line.
+ * - *"child-component"* - emits [[IChildComponentEvent]] if a child component has been added or removed.
  */
 export default class CHierarchy extends Component
 {
@@ -106,6 +119,12 @@ export default class CHierarchy extends Component
     get children(): Readonly<CHierarchy[]>
     {
         return this._children || [];
+    }
+
+    create()
+    {
+        super.create();
+        this.graph._addRoot(this);
     }
 
     dispose()
@@ -141,37 +160,29 @@ export default class CHierarchy extends Component
      * @param recursive If true, extends search to entire chain of ancestors,
      * including parent graphs.
      */
-    getParent<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): T | null
+    getParent<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): T | undefined
     {
         let parent = this._parent;
 
-        if (!parent) {
-            return null;
-        }
-
-        let component = parent.node.components.get(componentOrType);
-        if (component) {
-            return component;
-        }
-
-        if (recursive) {
-            parent = parent._parent;
-
-            // if at root, continue search at parent graph
-            if (!parent) {
-                const parentGraphComponent = this.graph.parent;
-                parent = parentGraphComponent ? parentGraphComponent.hierarchy : null;
-            }
-
+        do {
             while(parent) {
-                component = parent.node.components.get(componentOrType);
+                const component = parent.node.components.get(componentOrType, true);
                 if (component) {
                     return component;
                 }
-            }
-        }
 
-        return null;
+                parent = parent._parent;
+
+                // if at root, continue search at parent graph
+                if (!parent) {
+                    const parentGraphComponent = this.graph.parent;
+                    parent = parentGraphComponent ? parentGraphComponent.hierarchy : undefined;
+                }
+
+            }
+        } while(parent && recursive);
+
+        return undefined;
     }
 
     /**
@@ -195,13 +206,109 @@ export default class CHierarchy extends Component
     }
 
     /**
-     * Returns true if there is a child component of the given type.
-     * @param componentOrType
-     * @param recursive If true, extends search to entire subtree (breadth-first).
+     * Traverses the hierarchy up starting from this component. Executes the given callback function
+     * for each visited component.
+     * @param includeThis Includes this component in traversal.
+     * @param includeSiblings For each hierarchy component, executes callback for all sibling components in the same node.
+     * @param acrossGraphs When arriving at the root hierarchy component, continues traversal at the parent graph.
+     * @param callback The callback function to execute for each visited component.
      */
-    hasChildren<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): boolean
+    traverseUp(includeThis: boolean, includeSiblings: boolean, acrossGraphs: boolean, callback: (component: Component) => boolean)
     {
-        return !!_getChildComponent(this, componentOrType, recursive);
+        if (includeThis) {
+            if (includeSiblings) {
+                const siblings = this.node.components.getArray();
+                for (let i = 0, n = siblings.length; i < n; ++i) {
+                    if (callback(siblings[i])) {
+                        return;
+                    }
+                }
+            }
+            else if (callback(this)) {
+                return;
+            }
+        }
+
+        let parent = this._parent;
+
+        if (!parent && acrossGraphs) {
+            const graphComponent = this.node.graph.parent;
+            parent = graphComponent ? graphComponent.getComponent(CHierarchy, true) : null;
+        }
+
+        if (parent) {
+            parent.traverseUp(true, includeSiblings, acrossGraphs, callback);
+        }
+    }
+
+    /**
+     * Traverses the hierarchy down starting from this component. Executes the given callback function
+     * for each visited component.
+     * @param includeThis Includes this component in traversal.
+     * @param includeSiblings For each hierarchy component, executes callback for all sibling components in the same node.
+     * @param acrossGraphs Includes subgraphs in traversal.
+     * @param callback The callback function to execute for each visited component.
+     */
+    traverseDown(includeThis: boolean, includeSiblings: boolean, acrossGraphs: boolean, callback: (component: Component) => boolean)
+    {
+        if (includeThis) {
+            if (includeSiblings) {
+                const siblings = this.node.components.getArray();
+                for (let i = 0, n = siblings.length; i < n; ++i) {
+                    if (callback(siblings[i])) {
+                        return;
+                    }
+                }
+            }
+            else if (callback(this)) {
+                return;
+            }
+        }
+
+        if (acrossGraphs) {
+            const graphs = this.node.components.getArray(CGraph);
+            for (let i = 0, n = graphs.length; i < n; ++i) {
+                const innerRoots = graphs[i].getInnerRoots();
+                for (let j = 0, m = innerRoots.length; j < m; ++j) {
+                    innerRoots[j].traverseDown(true, includeSiblings, acrossGraphs, callback);
+                }
+            }
+        }
+
+        const children = this._children;
+        for (let i = 0, n = children.length; i < n; ++i) {
+            children[i].traverseDown(true, includeSiblings, acrossGraphs, callback);
+        }
+    }
+
+    /**
+     * Emits the given event on this component and on all parent components.
+     * Stops propagation as soon as `stopPropagation` is set to true on the event.
+     * @param includeSiblings Also emits the event on all sibling components in the same node.
+     * @param acrossGraphs When arriving at the root hierarchy component, continues traversal at the parent graph.
+     * @param event The event to be emitted.
+     */
+    propagateUp(includeSiblings: boolean, acrossGraphs: boolean, event: IPropagatingEvent<string>)
+    {
+        this.traverseUp(true, includeSiblings, acrossGraphs, component => {
+            component.emit(event);
+            return event.stopPropagation;
+        });
+    }
+
+    /**
+     * Emits the given event on this component and on all child components.
+     * Stops propagation as soon as `stopPropagation` is set to true on the event.
+     * @param includeSiblings Also emits the event on all sibling components in the same node.
+     * @param acrossGraphs Includes subgraphs in traversal.
+     * @param event The event to be emitted.
+     */
+    propagateDown(includeSiblings: boolean, acrossGraphs: boolean, event: IPropagatingEvent<string>)
+    {
+        this.traverseDown(true, includeSiblings, acrossGraphs, component => {
+            component.emit(event);
+            return event.stopPropagation;
+        });
     }
 
     /**
@@ -214,24 +321,18 @@ export default class CHierarchy extends Component
         if (component._parent) {
             throw new Error("can't add as child: component already has a parent");
         }
-        if (component === this.graph.root) {
-            throw new Error("can't add as child: component is root of graph");
-        }
 
         component._parent = this;
         this._children.push(component);
+
+        this.graph._removeRoot(component);
 
         const event: IHierarchyEvent = {
             type: "hierarchy", add: true, remove: false, parent: this, child: component
         };
 
-        while (component) {
-            component.emit<IHierarchyEvent>(event);
-            component.node.emit<IHierarchyEvent>(event);
-            component = component._parent;
-        }
-
-        this.graph.emit<IHierarchyEvent>(event);
+        this.traverseUp(true, false, true, component => component.emit(event));
+        this.traverseDown(false, false, true, component => component.emit(event));
         this.system.emit<IHierarchyEvent>(event);
     }
 
@@ -250,17 +351,14 @@ export default class CHierarchy extends Component
         this._children.splice(index, 1);
         component._parent = null;
 
+        this.graph._addRoot(component);
+
         const event: IHierarchyEvent = {
             type: "hierarchy", add: false, remove: true, parent: this, child: component
         };
 
-        while (component) {
-            component.emit<IHierarchyEvent>(event);
-            component.node.emit<IHierarchyEvent>(event);
-            component = component._parent;
-        }
-
-        this.graph.emit<IHierarchyEvent>(event);
+        this.traverseUp(true, false, true, component => component.emit(event));
+        this.traverseDown(false, false, true, component => component.emit(event));
         this.system.emit<IHierarchyEvent>(event);
     }
 
