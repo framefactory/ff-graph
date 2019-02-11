@@ -41,7 +41,7 @@ const outs = {
 
 export default class COscillator extends Component
 {
-    static readonly type: string = "COscillator";
+    static readonly typeName: string = "COscillator";
 
     ins = this.addInputs(ins);
     outs = this.addOutputs(outs);

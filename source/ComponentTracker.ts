@@ -5,9 +5,9 @@
  * License: MIT
  */
 
-import ObjectRegistry, { IObjectEvent, getClassName } from "@ff/core/ObjectRegistry";
+import ObjectRegistry, { IObjectEvent } from "@ff/core/ObjectRegistry";
 
-import Component, { ComponentOrClass } from "./Component";
+import Component, { ComponentOrType } from "./Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +19,7 @@ import Component, { ComponentOrClass } from "./Component";
 export default class ComponentTracker<T extends Component = Component>
 {
     /** The type of component to track. */
-    readonly className: string;
+    readonly typeName: string;
     /** Access to the component of the tracked type after it has been added. */
     component: T;
     /** Called after a component of the tracked type has been added to the node. */
@@ -29,16 +29,16 @@ export default class ComponentTracker<T extends Component = Component>
 
     private _registry: ObjectRegistry<Component>;
 
-    constructor(registry: ObjectRegistry<Component>, scope: ComponentOrClass<T>,
+    constructor(registry: ObjectRegistry<Component>, scope: ComponentOrType<T>,
                 didAdd?: (component: T) => void, willRemove?: (component: T) => void) {
 
-        this.className = getClassName(scope);
+        this.typeName = Component.getTypeName(scope);
         this.didAdd = didAdd;
         this.willRemove = willRemove;
 
         this._registry = registry;
 
-        registry.on(this.className, this.onComponent, this);
+        registry.on(this.typeName, this.onComponent, this);
         this.component = registry.get(scope, true);
 
         if (this.component && didAdd) {
@@ -48,7 +48,7 @@ export default class ComponentTracker<T extends Component = Component>
 
     dispose()
     {
-        this._registry.off(this.className, this.onComponent, this);
+        this._registry.off(this.typeName, this.onComponent, this);
         this.component = null;
         this.didAdd = null;
         this.willRemove = null;

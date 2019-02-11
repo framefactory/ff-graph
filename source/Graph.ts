@@ -9,8 +9,8 @@ import uniqueId from "@ff/core/uniqueId";
 import Publisher from "@ff/core/Publisher";
 
 import LinkableSorter from "./LinkableSorter";
-import Component, { ComponentOrClass, IUpdateContext } from "./Component";
-import Node, { NodeOrClass } from "./Node";
+import Component, { ComponentOrType, IUpdateContext } from "./Component";
+import Node, { NodeOrType } from "./Node";
 import System from "./System";
 
 import CHierarchy from "./components/CHierarchy";
@@ -59,80 +59,80 @@ export default class Graph extends Publisher
         this.parent = parent;
     }
 
-    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this.components.get(componentOrClass, nothrow);
+    getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this.components.get(componentOrType, nothrow);
     }
 
-    getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this.components.getArray(componentOrClass);
+    getComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this.components.getArray(componentOrType);
     }
 
-    hasComponent(componentOrClass: ComponentOrClass) {
-        return this.components.has(componentOrClass);
+    hasComponent(componentOrType: ComponentOrType) {
+        return this.components.has(componentOrType);
     }
 
-    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this.system.graph.components.get(componentOrClass, nothrow);
+    getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this.system.graph.components.get(componentOrType, nothrow);
     }
 
-    getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this.system.graph.components.getArray(componentOrClass);
+    getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this.system.graph.components.getArray(componentOrType);
     }
 
-    hasMainComponent(componentOrClass: ComponentOrClass) {
-        return this.system.graph.components.has(componentOrClass);
+    hasMainComponent(componentOrType: ComponentOrType) {
+        return this.system.graph.components.has(componentOrType);
     }
 
-    getSystemComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this.system.components.get(componentOrClass, nothrow);
+    getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this.system.components.get(componentOrType, nothrow);
     }
 
-    getSystemComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this.system.components.getArray(componentOrClass);
+    getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this.system.components.getArray(componentOrType);
     }
 
-    hasSystemComponent(componentOrClass: ComponentOrClass) {
-        return this.system.components.has(componentOrClass);
+    hasSystemComponent(componentOrType: ComponentOrType) {
+        return this.system.components.has(componentOrType);
     }
 
     getComponentById(id: string): Component | null {
         return this.system.components.getById(id);
     }
 
-    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this.nodes.get(nodeOrClass, nothrow);
+    getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this.nodes.get(nodeOrType, nothrow);
     }
 
-    getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this.nodes.getArray(nodeOrClass);
+    getNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this.nodes.getArray(nodeOrType);
     }
 
-    hasNode(nodeOrClass: NodeOrClass) {
-        return this.nodes.has(nodeOrClass);
+    hasNode(nodeOrType: NodeOrType) {
+        return this.nodes.has(nodeOrType);
     }
 
-    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this.system.graph.nodes.get(nodeOrClass, nothrow);
+    getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this.system.graph.nodes.get(nodeOrType, nothrow);
     }
 
-    getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this.system.graph.nodes.getArray(nodeOrClass);
+    getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this.system.graph.nodes.getArray(nodeOrType);
     }
 
-    hasMainNode(nodeOrClass: NodeOrClass) {
-        return this.system.graph.nodes.has(nodeOrClass);
+    hasMainNode(nodeOrType: NodeOrType) {
+        return this.system.graph.nodes.has(nodeOrType);
     }
 
-    getSystemNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this.system.nodes.get(nodeOrClass, nothrow);
+    getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this.system.nodes.get(nodeOrType, nothrow);
     }
 
-    getSystemNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this.system.nodes.getArray(nodeOrClass);
+    getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this.system.nodes.getArray(nodeOrType);
     }
 
-    hasSystemNode(nodeOrClass: NodeOrClass) {
-        return this.system.nodes.has(nodeOrClass);
+    hasSystemNode(nodeOrType: NodeOrType) {
+        return this.system.nodes.has(nodeOrType);
     }
 
     getNodeById(id: string): Node | null {
@@ -211,20 +211,20 @@ export default class Graph extends Publisher
     {
         this._sortedList = this._sorter.sort(this.components.getArray()) as Component[];
 
-        const name = this.parent ? this.parent.name || this.parent.className : "System";
+        const name = this.parent ? this.parent.name || this.parent.typeName : "System";
         console.log("Graph.sort - %s: sorted %s components", name, this._sortedList.length);
     }
 
     /**
      * Creates a new node of the given type. Adds it to the graph.
-     * @param nodeOrClass Type of the node to create.
+     * @param nodeOrType Type of the node to create.
      * @param name Optional name for the node.
      * @param id Optional unique identifier for the node (must omit unless serializing).
      */
-    createCustomNode<T extends Node>(nodeOrClass: NodeOrClass<T>, name?: string, id?: string): T
+    createCustomNode<T extends Node>(nodeOrType: NodeOrType<T>, name?: string, id?: string): T
     {
-        const classType = this.system.registry.getClass(nodeOrClass);
-        const node = new classType(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
+        const type = this.system.registry.getType(nodeOrType);
+        const node = new type(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
 
         node.attach(this);
 
@@ -257,20 +257,20 @@ export default class Graph extends Publisher
         return node;
     }
 
-    findNodeByName<T extends Node = Node>(name: string, nodeOrClass?: NodeOrClass<T>): T | undefined
+    findNodeByName<T extends Node = Node>(name: string, nodeOrType?: NodeOrType<T>): T | undefined
     {
-        const nodes = this.nodes.getArray(nodeOrClass);
+        const nodes = this.nodes.getArray(nodeOrType);
 
         for (let i = 0, n = nodes.length; i < n; ++i) {
             if (nodes[i].name === name) {
-                return nodes[i];
+                return nodes[i] as T;
             }
         }
 
         return undefined;
     }
 
-    findRootNodes<T extends Node = Node>(nodeOrType?: NodeOrClass<T>): T[]
+    findRootNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>): T[]
     {
         const nodes = this.nodes.getArray(nodeOrType);
         const result = [];
@@ -318,7 +318,7 @@ export default class Graph extends Publisher
 
             const jsonNode = this.deflateNode(node);
 
-            jsonNode.type = node.className;
+            jsonNode.type = node.typeName;
             jsonNode.id = node.id;
 
             if (node.name) {
@@ -403,7 +403,7 @@ export default class Graph extends Publisher
     _addComponent(component: Component)
     {
         if (component.isGraphSingleton && this.components.has(component)) {
-            throw new Error(`only one component of class '${component.className}' allowed per graph`);
+            throw new Error(`only one component of type '${component.typeName}' allowed per graph`);
         }
 
         this.system._addComponent(component);

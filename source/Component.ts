@@ -5,15 +5,15 @@
  * License: MIT
  */
 
-import { Dictionary, ClassOf } from "@ff/core/types";
-import Publisher, { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
+import { Dictionary, TypeOf } from "@ff/core/types";
+import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 import { IObjectEvent } from "@ff/core/ObjectRegistry";
 
 import { types, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
 import PropertyGroup, { ILinkable } from "./PropertyGroup";
 import ComponentTracker from "./ComponentTracker";
 import ComponentReference from "./ComponentReference";
-import Node, { NodeOrClass } from "./Node";
+import Node, { NodeOrType } from "./Node";
 import System from "./System";
 import CHierarchy from "./components/CHierarchy";
 
@@ -50,7 +50,7 @@ export interface IComponentDisposeEvent<T extends Component = Component> extends
 }
 
 /** A [[Component]] instance, [[Component]] constructor function or a component's type string. */
-export type ComponentOrClass<T extends Component = Component> = T | ClassOf<T> | string;
+export type ComponentOrType<T extends Component = Component> = T | TypeOf<T> | string;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +72,7 @@ export type ComponentOrClass<T extends Component = Component> = T | ClassOf<T> |
  */
 export default class Component extends Publisher implements ILinkable
 {
-    static readonly type: string = "Component";
+    static readonly typeName: string = "Component";
 
     static readonly text: string = "";
     static readonly icon: string = "";
@@ -81,10 +81,10 @@ export default class Component extends Publisher implements ILinkable
     static readonly isGraphSingleton: boolean = false;
     static readonly isSystemSingleton: boolean = false;
 
-    static getClassName<T extends Component>(scope?: ComponentOrClass<T>)
+    static getTypeName<T extends Component>(scope?: ComponentOrType<T>): string
     {
-        return typeof scope === "function" ? scope.name : (typeof scope === "object"
-            ? scope.constructor.name : (scope || Component.name));
+        return typeof scope === "function" ? (scope as any).typeName : (typeof scope === "object"
+            ? (scope.constructor as typeof Component).typeName : (scope || Component.typeName));
     }
 
     /** The component's globally unique id. */
@@ -138,15 +138,15 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
-     * Returns the class name of this component.
+     * Returns the type name of this component.
      * @returns {string}
      */
-    get className() {
-        return this.constructor.name;
+    get typeName() {
+        return (this.constructor as typeof Component).typeName;
     }
-    get displayClassName() {
-        const name = this.constructor.name;
-        return name === "Component" ? name : name.substr(1);
+    get displayTypeName() {
+        const typeName = this.typeName;
+        return typeName === "Component" ? typeName : typeName.substr(1);
     }
 
     get text() {
@@ -165,7 +165,7 @@ export default class Component extends Publisher implements ILinkable
     }
 
     get displayName() {
-        return this._name || this.text || this.displayClassName;
+        return this._name || this.text || this.displayTypeName;
     }
 
     /**
@@ -215,92 +215,92 @@ export default class Component extends Publisher implements ILinkable
         return this._node.components.get<CHierarchy>("CHierarchy");
     }
 
-    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this._node.components.get(componentOrClass, nothrow);
+    getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this._node.components.get(componentOrType, nothrow);
     }
 
-    getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this._node.components.getArray(componentOrClass);
+    getComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.components.getArray(componentOrType);
     }
 
-    hasComponent(componentOrClass: ComponentOrClass) {
-        return this._node.components.has(componentOrClass);
+    hasComponent(componentOrType: ComponentOrType) {
+        return this._node.components.has(componentOrType);
     }
 
-    getGraphComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this._node.graph.components.get(componentOrClass, nothrow);
+    getGraphComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this._node.graph.components.get(componentOrType, nothrow);
     }
 
-    getGraphComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this._node.graph.components.getArray(componentOrClass);
+    getGraphComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.graph.components.getArray(componentOrType);
     }
 
-    hasGraphComponent(componentOrClass: ComponentOrClass) {
-        return this._node.graph.components.has(componentOrClass);
+    hasGraphComponent(componentOrType: ComponentOrType) {
+        return this._node.graph.components.has(componentOrType);
     }
 
-    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this._node.system.graph.components.get(componentOrClass, nothrow);
+    getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this._node.system.graph.components.get(componentOrType, nothrow);
     }
 
-    getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this._node.system.graph.components.getArray(componentOrClass);
+    getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.system.graph.components.getArray(componentOrType);
     }
 
-    hasMainComponent(componentOrClass: ComponentOrClass) {
-        return this._node.system.graph.components.has(componentOrClass);
+    hasMainComponent(componentOrType: ComponentOrType) {
+        return this._node.system.graph.components.has(componentOrType);
     }
 
-    getSystemComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this._node.system.components.get(componentOrClass, nothrow);
+    getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this._node.system.components.get(componentOrType, nothrow);
     }
 
-    getSystemComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this._node.system.components.getArray(componentOrClass);
+    getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this._node.system.components.getArray(componentOrType);
     }
 
-    hasSystemComponent(componentOrClass: ComponentOrClass) {
-        return this._node.system.components.has(componentOrClass);
+    hasSystemComponent(componentOrType: ComponentOrType) {
+        return this._node.system.components.has(componentOrType);
     }
 
     getComponentById(id: string): Component | null {
         return this._node.system.components.getById(id);
     }
 
-    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this._node.graph.nodes.get(nodeOrClass, nothrow);
+    getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this._node.graph.nodes.get(nodeOrType, nothrow);
     }
 
-    getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this._node.graph.nodes.getArray(nodeOrClass);
+    getNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this._node.graph.nodes.getArray(nodeOrType);
     }
 
-    hasNode(nodeOrClass: NodeOrClass) {
-        return this._node.graph.nodes.has(nodeOrClass);
+    hasNode(nodeOrType: NodeOrType) {
+        return this._node.graph.nodes.has(nodeOrType);
     }
 
-    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this._node.system.graph.nodes.get(nodeOrClass, nothrow);
+    getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this._node.system.graph.nodes.get(nodeOrType, nothrow);
     }
 
-    getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this._node.system.graph.nodes.getArray(nodeOrClass);
+    getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this._node.system.graph.nodes.getArray(nodeOrType);
     }
 
-    hasMainNode(nodeOrClass: NodeOrClass) {
-        return this._node.system.graph.nodes.has(nodeOrClass);
+    hasMainNode(nodeOrType: NodeOrType) {
+        return this._node.system.graph.nodes.has(nodeOrType);
     }
 
-    getSystemNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this._node.system.nodes.get(nodeOrClass, nothrow);
+    getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this._node.system.nodes.get(nodeOrType, nothrow);
     }
 
-    getSystemNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this._node.system.nodes.getArray(nodeOrClass);
+    getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this._node.system.nodes.getArray(nodeOrType);
     }
 
-    hasSystemNode(nodeOrClass: NodeOrClass) {
-        return this._node.system.nodes.has(nodeOrClass);
+    hasSystemNode(nodeOrType: NodeOrType) {
+        return this._node.system.nodes.has(nodeOrType);
     }
 
     getNodeById(id: string): Node | null {
@@ -408,20 +408,20 @@ export default class Component extends Publisher implements ILinkable
      * Returns true if this component has or inherits from the given type.
      * @param scope
      */
-    is(scope: ComponentOrClass): boolean
+    is(scope: ComponentOrType): boolean
     {
-        const className = Component.getClassName(scope);
+        const typeName = Component.getTypeName(scope);
 
         let prototype = this;
 
         do {
             prototype = Object.getPrototypeOf(prototype);
 
-            if (prototype.constructor.name === className) {
+            if ((prototype.constructor as typeof Component).typeName === typeName) {
                 return true;
             }
 
-        } while (prototype.constructor.name !== Component.name);
+        } while ((prototype.constructor as typeof Component).typeName !== Component.typeName);
 
         return false;
     }
@@ -450,14 +450,14 @@ export default class Component extends Publisher implements ILinkable
     /**
      * Tracks the given component type. If a component of this type is added
      * to or removed from the node, it will be added or removed from the tracker.
-     * @param {ComponentOrClass} componentOrClass
+     * @param {ComponentOrType} componentOrType
      * @param {(component: T) => void} didAdd
      * @param {(component: T) => void} willRemove
      */
-    trackComponent<T extends Component>(componentOrClass: ComponentOrClass<T>,
+    trackComponent<T extends Component>(componentOrType: ComponentOrType<T>,
         didAdd?: (component: T) => void, willRemove?: (component: T) => void): ComponentTracker<T>
     {
-        const tracker = new ComponentTracker(this._node.components, componentOrClass, didAdd, willRemove);
+        const tracker = new ComponentTracker(this._node.components, componentOrType, didAdd, willRemove);
         this._trackers.push(tracker);
         return tracker;
     }
@@ -465,11 +465,11 @@ export default class Component extends Publisher implements ILinkable
     /**
      * Returns a weak reference to a component.
      * The reference is set to null after the linked component is removed.
-     * @param componentOrClass The type of component this reference accepts, or the component to link.
+     * @param componentOrType The type of component this reference accepts, or the component to link.
      */
-    referenceComponent<T extends Component>(componentOrClass: ComponentOrClass<T>): ComponentReference<T>
+    referenceComponent<T extends Component>(componentOrType: ComponentOrType<T>): ComponentReference<T>
     {
-        return new ComponentReference<T>(this.system, componentOrClass);
+        return new ComponentReference<T>(this.system, componentOrType);
     }
 
     /**
@@ -478,7 +478,7 @@ export default class Component extends Publisher implements ILinkable
      */
     toString()
     {
-        return `${this.className}${this.name ? " (" + this.name + ")" : ""}`;
+        return `${this.typeName}${this.name ? " (" + this.name + ")" : ""}`;
     }
 
     deflate()

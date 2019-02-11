@@ -7,7 +7,7 @@
 
 import { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrClass, types } from "../Component";
+import Component, { ComponentOrType, types } from "../Component";
 import Node from "../Node";
 import CGraph from "./CGraph";
 
@@ -16,7 +16,7 @@ import CGraph from "./CGraph";
 export { Node };
 
 const _getChildComponent = <T extends Component>(
-    hierarchy: CHierarchy, componentOrType: ComponentOrClass<T>, recursive: boolean): T | null => {
+    hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T | null => {
 
     let component;
 
@@ -42,7 +42,7 @@ const _getChildComponent = <T extends Component>(
 };
 
 const _getChildComponents = <T extends Component>(
-    hierarchy: CHierarchy, componentOrType: ComponentOrClass<T>, recursive: boolean): T[] => {
+    hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T[] => {
 
     let components = [];
 
@@ -98,6 +98,8 @@ const _inputs = {
  */
 export default class CHierarchy extends Component
 {
+    static readonly typeName: string = "CHierarchy";
+
     ins = this.addInputs(_inputs);
 
     protected _parent: CHierarchy = null;
@@ -144,7 +146,7 @@ export default class CHierarchy extends Component
      * Returns a component at the root of the hierarchy.
      * @returns A component of the given type that is a sibling of the root hierarchy component.
      */
-    getRoot<T extends Component>(componentOrType: ComponentOrClass<T>): T | null
+    getRoot<T extends Component>(componentOrType: ComponentOrType<T>): T | null
     {
         let root: CHierarchy = this;
         while(root._parent) {
@@ -160,7 +162,7 @@ export default class CHierarchy extends Component
      * @param recursive If true, extends search to entire chain of ancestors,
      * including parent graphs.
      */
-    getParent<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): T | undefined
+    getParent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | undefined
     {
         let parent = this._parent;
 
@@ -190,7 +192,7 @@ export default class CHierarchy extends Component
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChild<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): T | null
+    getChild<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
     {
         return _getChildComponent(this, componentOrType, recursive);
     }
@@ -200,7 +202,7 @@ export default class CHierarchy extends Component
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChildren<T extends Component>(componentOrType: ComponentOrClass<T>, recursive: boolean): Readonly<T[]>
+    getChildren<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): Readonly<T[]>
     {
         return _getChildComponents(this, componentOrType, recursive);
     }

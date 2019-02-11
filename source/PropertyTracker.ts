@@ -8,14 +8,14 @@
 import System from "./System";
 import Graph from "./Graph";
 import Node from "./Node";
-import { ComponentOrClass } from "./Component";
+import { ComponentOrType } from "./Component";
 import Property, { IPropertyDisposeEvent } from "./Property";
 
 import CHierarchy from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const _findInSubtree = function(componentType: ComponentOrClass, node: Node) {
+const _findInSubtree = function(componentType: ComponentOrType, node: Node) {
     const component = node.components.get(componentType);
     if (component) {
         return component;
@@ -75,7 +75,7 @@ export default class PropertyTracker<T extends any = any>
         }
     }
 
-    attachInput(scope: Node | Graph | System, componentType: ComponentOrClass, key: string)
+    attachInput(scope: Node | Graph | System, componentType: ComponentOrType, key: string)
     {
         let component = scope instanceof Node
             ? _findInSubtree(componentType, scope)
@@ -88,7 +88,7 @@ export default class PropertyTracker<T extends any = any>
         this.property = component.ins.getProperty(key);
     }
 
-    attachOutput(scope: Node | Graph | System, componentType: ComponentOrClass, key: string)
+    attachOutput(scope: Node | Graph | System, componentType: ComponentOrType, key: string)
     {
         let component = scope instanceof Node
             ? _findInSubtree(componentType, scope)

@@ -5,17 +5,17 @@
  * License: MIT
  */
 
-import Component, { ComponentOrClass, IUpdateContext } from "../Component";
+import Component, { ComponentOrType, IUpdateContext } from "../Component";
 import Graph from "../Graph";
 
 import CHierarchy from "./CHierarchy";
-import Node, { NodeOrClass } from "../Node";
+import Node, { NodeOrType } from "../Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export default class CGraph extends Component
 {
-    static readonly type: string = "CGraph";
+    static readonly typeName: string = "CGraph";
 
     protected _innerGraph: Graph = null;
     protected _innerRoot: CHierarchy = null;
@@ -28,27 +28,27 @@ export default class CGraph extends Component
         return this._innerGraph.roots;
     }
 
-    getInnerComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
+    getInnerComponent<T extends Component = Component>(componentOrClass?: ComponentOrType<T>, nothrow: boolean = false) {
         return this._innerGraph.components.get(componentOrClass, nothrow);
     }
 
-    getInnerComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
+    getInnerComponents<T extends Component = Component>(componentOrClass?: ComponentOrType<T>) {
         return this._innerGraph.components.getArray(componentOrClass);
     }
 
-    hasInnerComponent(componentOrClass: ComponentOrClass) {
+    hasInnerComponent(componentOrClass: ComponentOrType) {
         return this._innerGraph.components.has(componentOrClass);
     }
 
-    getInnerNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
+    getInnerNode<T extends Node = Node>(nodeOrClass?: NodeOrType<T>, nothrow: boolean = false) {
         return this._innerGraph.nodes.get(nodeOrClass, nothrow);
     }
 
-    getInnerNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
+    getInnerNodes<T extends Node = Node>(nodeOrClass?: NodeOrType<T>) {
         return this._innerGraph.nodes.getArray(nodeOrClass);
     }
 
-    hasInnerNode(nodeOrClass: NodeOrClass) {
+    hasInnerNode(nodeOrClass: NodeOrType) {
         return this._innerGraph.nodes.has(nodeOrClass);
     }
 

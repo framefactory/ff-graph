@@ -7,10 +7,10 @@
 
 import Publisher from "@ff/core/Publisher";
 import ObjectRegistry from "@ff/core/ObjectRegistry";
-import ClassRegistry from "@ff/core/ClassRegistry";
+import TypeRegistry from "@ff/core/TypeRegistry";
 
-import Component, { ComponentOrClass, IComponentEvent } from "./Component";
-import Node, { INodeEvent, NodeOrClass } from "./Node";
+import Component, { ComponentOrType, IComponentEvent } from "./Component";
+import Node, { INodeEvent, NodeOrType } from "./Node";
 import Graph from "./Graph";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19,72 +19,72 @@ export { IComponentEvent, INodeEvent };
 
 export default class System extends Publisher
 {
-    readonly registry: ClassRegistry;
+    readonly registry: TypeRegistry;
     readonly graph: Graph;
 
     readonly nodes = new ObjectRegistry<Node>(Node);
     readonly components = new ObjectRegistry<Component>(Component);
 
 
-    constructor(registry?: ClassRegistry)
+    constructor(registry?: TypeRegistry)
     {
         super({ knownEvents: false });
 
-        this.registry = registry || new ClassRegistry();
+        this.registry = registry || new TypeRegistry();
         this.graph = new Graph(this, null);
     }
 
-    getComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this.components.get(componentOrClass, nothrow);
+    getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this.components.get(componentOrType, nothrow);
     }
 
-    getComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this.components.getArray(componentOrClass);
+    getComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this.components.getArray(componentOrType);
     }
 
-    hasComponents(componentOrClass: ComponentOrClass) {
-        return this.components.has(componentOrClass);
+    hasComponents(componentOrType: ComponentOrType) {
+        return this.components.has(componentOrType);
     }
 
-    getMainComponent<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>, nothrow: boolean = false) {
-        return this.graph.components.get(componentOrClass, nothrow);
+    getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+        return this.graph.components.get(componentOrType, nothrow);
     }
 
-    getMainComponents<T extends Component = Component>(componentOrClass?: ComponentOrClass<T>) {
-        return this.graph.components.getArray(componentOrClass);
+    getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
+        return this.graph.components.getArray(componentOrType);
     }
 
-    hasMainComponents(componentOrClass: ComponentOrClass) {
-        return this.graph.components.has(componentOrClass);
+    hasMainComponents(componentOrType: ComponentOrType) {
+        return this.graph.components.has(componentOrType);
     }
 
-    getNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this.nodes.get(nodeOrClass, nothrow);
+    getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this.nodes.get(nodeOrType, nothrow);
     }
 
-    getNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this.nodes.getArray(nodeOrClass);
+    getNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this.nodes.getArray(nodeOrType);
     }
 
-    hasNodes(nodeOrClass: NodeOrClass) {
-        return this.nodes.has(nodeOrClass);
+    hasNodes(nodeOrType: NodeOrType) {
+        return this.nodes.has(nodeOrType);
     }
 
-    getMainNode<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>, nothrow: boolean = false) {
-        return this.graph.nodes.get(nodeOrClass, nothrow);
+    getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+        return this.graph.nodes.get(nodeOrType, nothrow);
     }
 
-    getMainNodes<T extends Node = Node>(nodeOrClass?: NodeOrClass<T>) {
-        return this.graph.nodes.getArray(nodeOrClass);
+    getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
+        return this.graph.nodes.getArray(nodeOrType);
     }
 
-    hasMainNodes(nodeOrClass: NodeOrClass) {
-        return this.graph.nodes.has(nodeOrClass);
+    hasMainNodes(nodeOrType: NodeOrType) {
+        return this.graph.nodes.has(nodeOrType);
     }
 
-    findNodeByName<T extends Node = Node>(name: string, nodeOrClass?: NodeOrClass<T>): T | undefined
+    findNodeByName<T extends Node = Node>(name: string, nodeOrType?: NodeOrType<T>): T | undefined
     {
-        const nodes = this.nodes.getArray(nodeOrClass);
+        const nodes = this.nodes.getArray(nodeOrType);
 
         for (let i = 0, n = nodes.length; i < n; ++i) {
             if (nodes[i].name === name) {
@@ -139,7 +139,7 @@ export default class System extends Publisher
     _addComponent(component: Component)
     {
         if (component.isSystemSingleton && this.components.has(component)) {
-            throw new Error(`only one component of class '${component.className}' allowed per system`);
+            throw new Error(`only one component of type '${component.typeName}' allowed per system`);
         }
 
         this.components.add(component);

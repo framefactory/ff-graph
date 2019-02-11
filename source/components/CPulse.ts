@@ -24,7 +24,7 @@ interface IPulseEvent extends ITypedEvent<"pulse">
 
 export default class CPulse extends Component
 {
-    static readonly type: string = "CPulse";
+    static readonly typeName: string = "CPulse";
     static readonly isSystemSingleton: boolean = true;
 
     readonly context: IPulseContext;
