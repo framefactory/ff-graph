@@ -102,7 +102,7 @@ export default class CPulse extends Component
 
         this.system.graph.tick(this.context);
         this.emit<IPulseEvent>(this._pulseEvent);
-        this.system.graph.finalize(this.context);
+        this.system.graph.complete(this.context);
     }
 
     protected onAnimationFrame()

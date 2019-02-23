@@ -45,7 +45,8 @@ export default class Graph extends Publisher
     private _sorter = new LinkableSorter();
     private _sortRequested = true;
     private _sortedList: Component[] = null;
-    private _finalizeList: Component[] = [];
+    private _completeList: Component[] = [];
+    private _isActive = false;
 
     /**
      * Creates a new graph instance.
@@ -55,8 +56,15 @@ export default class Graph extends Publisher
     constructor(system: System, parent: CGraph | null)
     {
         super({ knownEvents: false });
+
         this.system = system;
         this.parent = parent;
+
+        this.activate();
+    }
+
+    get isActive() {
+        return this._isActive;
     }
 
     getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
@@ -140,6 +148,32 @@ export default class Graph extends Publisher
     }
 
     /**
+     * Calls activate() on all components in the graph.
+     * This is done before any calls to update(), tick(). complete().
+     */
+    activate()
+    {
+        if (this._isActive) {
+            return;
+        }
+
+        this._isActive = true;
+
+        if (this._sortRequested) {
+            this._sortRequested = false;
+            this.sort();
+        }
+
+        const components = this._sortedList;
+        for (let i = 0, n = components.length; i < n; ++i) {
+            const component = components[i];
+            if (component.activate) {
+                component.activate();
+            }
+        }
+    }
+
+    /**
      * Called at the begin of each frame cycle. Calls update() on all components
      * in the graph whose changed flag is set, then calls tick() on all components.
      * Returns true if at least one component changed its state.
@@ -148,6 +182,10 @@ export default class Graph extends Publisher
      */
     tick(context: IUpdateContext): boolean
     {
+        if (!this._isActive) {
+            return;
+        }
+
         if (this._sortRequested) {
             this._sortRequested = false;
             this.sort();
@@ -178,18 +216,46 @@ export default class Graph extends Publisher
     }
 
     /**
-     * Calls finalize on all components in the graph.
-     * The finalize call happens at the end of a frame cycle.
+     * Calls complete on all components in the graph.
+     * The complete call happens at the end of a frame cycle.
      * @param context Context-specific information such as time, etc.
      */
-    finalize(context: IUpdateContext)
+    complete(context: IUpdateContext)
     {
-        const components = this._finalizeList;
+        if (!this._isActive) {
+            return;
+        }
+
+        const components = this._completeList;
         for (let i = 0, n = components.length; i < n; ++i) {
-            components[i].finalize(context);
+            components[i].complete(context);
         }
     }
 
+    /**
+     * Calls deactivate() on all components in the graph.
+     * After a call to deactivate, there are no more calls to update(), tick(), complete().
+     */
+    deactivate()
+    {
+        if (!this._isActive) {
+            return;
+        }
+
+        this._isActive = false;
+
+        const components = this._sortedList;
+        for (let i = 0, n = components.length; i < n; ++i) {
+            const component = components[i];
+            if (component.deactivate) {
+                component.deactivate();
+            }
+        }
+    }
+
+    /**
+     * Removes all content, i.e. all nodes and components from the graph.
+     */
     clear()
     {
         const nodes = this.nodes.cloneArray();
@@ -409,8 +475,8 @@ export default class Graph extends Publisher
         this.system._addComponent(component);
         this.components.add(component);
 
-        if (component.finalize) {
-            this._finalizeList.push(component);
+        if (component.complete) {
+            this._completeList.push(component);
         }
 
         this._sortRequested = true;
@@ -426,8 +492,8 @@ export default class Graph extends Publisher
         this.components.remove(component);
         this.system._removeComponent(component);
 
-        if (component.finalize) {
-            this._finalizeList.splice(this._finalizeList.indexOf(component), 1);
+        if (component.complete) {
+            this._completeList.splice(this._completeList.indexOf(component), 1);
         }
 
         this._sortRequested = true;

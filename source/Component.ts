@@ -99,7 +99,6 @@ export default class Component extends Publisher implements ILinkable
     private _node: Node = null;
     private _name: string = "";
     private _trackers: ComponentTracker[] = [];
-    private _firstAttached = false;
 
     /**
      * Protected constructor. Use [[Node.createComponent]] to create component instances.
@@ -209,6 +208,13 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
+     * Returns true if the component's graph is active.
+     */
+    get isActive() {
+        return this.graph.isActive;
+    }
+
+    /**
      * Returns the sibling hierarchy component if available.
      */
     get hierarchy() {
@@ -313,15 +319,13 @@ export default class Component extends Publisher implements ILinkable
      */
     attach(node: Node)
     {
-        if (this._node) {
-            this.detach();
-        }
-
         this._node = node;
 
-        if (!this._firstAttached) {
-            this._firstAttached = true;
-            this.create();
+        this.create();
+
+        // if graph is active, activate component
+        if (this.graph.isActive && this.activate) {
+            this.activate();
         }
 
         // note: adding the component informs subscribers, this must happen after create()
@@ -333,6 +337,10 @@ export default class Component extends Publisher implements ILinkable
      * Override to perform initialization tasks where you need access to other components.
      */
     create()
+    {
+    }
+
+    activate()
     {
     }
 
@@ -363,20 +371,13 @@ export default class Component extends Publisher implements ILinkable
      * only after all rendering is done.
      * @param context Information about the current update cycle.
      */
-    finalize(context: IUpdateContext)
+    complete(context: IUpdateContext)
     {
         throw new Error("this should never be called");
     }
 
-    /**
-     * Removes the component from its node.
-     */
-    detach()
+    deactivate()
     {
-        if (this._node) {
-            this._node._removeComponent(this);
-            this._node = null;
-        }
     }
 
     /**
@@ -386,6 +387,11 @@ export default class Component extends Publisher implements ILinkable
      */
     dispose()
     {
+        // deactivate component if graph is active
+        if (this.graph.isActive && this.deactivate) {
+            this.deactivate();
+        }
+
         // remove all links and trackers
         this.ins.dispose();
         this.outs.dispose();
@@ -393,7 +399,10 @@ export default class Component extends Publisher implements ILinkable
         this._trackers.forEach(tracker => tracker.dispose());
 
         // remove component from node
-        this.detach();
+        if (this._node) {
+            this._node._removeComponent(this);
+            this._node = null;
+        }
 
         // emit dispose event
         this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
@@ -542,6 +551,8 @@ export default class Component extends Publisher implements ILinkable
     }
 }
 
+Component.prototype.activate = null;
 Component.prototype.update = null;
 Component.prototype.tick = null;
-Component.prototype.finalize = null;
+Component.prototype.complete = null;
+Component.prototype.deactivate = null;

@@ -68,9 +68,9 @@ export default class CGraph extends Component
         return this._innerGraph.tick(context);
     }
 
-    finalize(context: IUpdateContext)
+    complete(context: IUpdateContext)
     {
-        return this._innerGraph.finalize(context);
+        return this._innerGraph.complete(context);
     }
 
     dispose()
@@ -80,6 +80,24 @@ export default class CGraph extends Component
         this._innerRoot = null;
 
         super.dispose();
+    }
+
+    activateInnerGraph()
+    {
+        this._innerGraph.activate();
+    }
+
+    deactivateInnerGraph()
+    {
+        this._innerGraph.deactivate();
+    }
+
+    /**
+     * Removes all components and nodes from the inner graph.
+     */
+    clearInnerGraph()
+    {
+        this._innerGraph.clear();
     }
 
     inflate(json: any)

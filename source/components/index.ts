@@ -6,6 +6,8 @@
  */
 
 import CController from "./CController";
+import CDocument from "./CDocument";
+import CDocumentManager from "./CDocumentManager";
 import CGraph from "./CGraph";
 import CHierarchy from "./CHierarchy";
 import COscillator from "./COscillator";
@@ -16,6 +18,8 @@ import CSelection from "./CSelection";
 
 export {
     CController,
+    CDocument,
+    CDocumentManager,
     CGraph,
     CHierarchy,
     COscillator,
@@ -24,6 +28,8 @@ export {
 };
 
 export const componentTypes = [
+    CDocument,
+    CDocumentManager,
     CGraph,
     CHierarchy,
     COscillator,

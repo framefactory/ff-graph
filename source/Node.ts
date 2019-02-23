@@ -245,23 +245,8 @@ export default class Node extends Publisher
      */
     attach(graph: Graph)
     {
-        if (this._graph) {
-            this.detach();
-        }
-
         this._graph = graph;
         graph._addNode(this);
-    }
-
-    /**
-     * Removes this node from its graph and system.
-     */
-    detach()
-    {
-        if (this._graph) {
-            this._graph._removeNode(this);
-            this._graph = null;
-        }
     }
 
     /**
@@ -290,7 +275,10 @@ export default class Node extends Publisher
         componentList.forEach(component => component.dispose());
 
         // remove node from system and graph
-        this.detach();
+        if (this._graph) {
+            this._graph._removeNode(this);
+            this._graph = null;
+        }
 
         // emit dispose event
         this.emit<INodeDisposeEvent>({ type: "dispose", node: this });
