@@ -10,6 +10,18 @@ import CDocument from "./CDocument";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Emitted after the set of documents has changed.
+ * @event
+ */
+export interface IDocumentEvent extends ITypedEvent<"document">
+{
+}
+
+/**
+ * Emitted after the active item has changed.
+ * @event
+ */
 export interface IActiveDocumentEvent extends ITypedEvent<"active-document">
 {
     previous: CDocument;
@@ -27,18 +39,16 @@ export default class CDocumentManager extends Component
 
     ins = this.addInputs(_inputs);
 
-    private _documents: CDocument[] = null;
     private _activeDocument: CDocument = null;
 
     get documents() {
-        return this._documents;
+        return this.getComponents(CDocument);
     }
 
     get activeDocument() {
         return this._activeDocument;
     }
     set activeDocument(document: CDocument) {
-
         if (document !== this._activeDocument) {
             const previous = this._activeDocument;
 
@@ -52,15 +62,15 @@ export default class CDocumentManager extends Component
                 document.activateInnerGraph();
             }
 
-            const index = this._documents.indexOf(document) + 1;
-            this.ins.activeDocument.setValue(index, true);
-
             this.emit<IActiveDocumentEvent>({
                 type: "active-document",
                 previous,
                 next: document
             });
         }
+
+        const index = this.documents.indexOf(document);
+        this.ins.activeDocument.setValue(index + 1, true);
     }
 
     create()
@@ -75,7 +85,7 @@ export default class CDocumentManager extends Component
 
         if (ins.activeDocument.changed) {
             const index = ins.activeDocument.getValidatedValue() - 1;
-            this.activeDocument = index >= 0 ? this._documents[index] : null;
+            this.activeDocument = index >= 0 ? this.documents[index] : null;
         }
 
         return true;
@@ -88,14 +98,18 @@ export default class CDocumentManager extends Component
 
     protected updateDocuments()
     {
-        const documents = this._documents = this.getComponents(CDocument);
+        console.log("updateDocuments", this.documents);
+        const documents = this.documents;
         const names = documents.map(document => document.displayName);
         names.unshift("(none)");
         this.ins.activeDocument.setOptions(names);
 
-        const activeDocument = this._activeDocument;
-        if (!activeDocument || (activeDocument && documents.indexOf(activeDocument) < 0)) {
-            this.activeDocument = documents[0];
+        let activeDocument = this._activeDocument;
+        if (!activeDocument || documents.indexOf(activeDocument) < 0) {
+            activeDocument = documents[0];
         }
+
+        this.activeDocument = activeDocument;
+        this.emit<IDocumentEvent>({ type: "document" });
     }
 }

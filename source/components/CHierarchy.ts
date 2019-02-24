@@ -270,7 +270,7 @@ export default class CHierarchy extends Component
         if (acrossGraphs) {
             const graphs = this.node.components.getArray(CGraph);
             for (let i = 0, n = graphs.length; i < n; ++i) {
-                const innerRoots = graphs[i].getInnerRoots();
+                const innerRoots = graphs[i].innerRoots;
                 for (let j = 0, m = innerRoots.length; j < m; ++j) {
                     innerRoots[j].traverseDown(true, includeSiblings, acrossGraphs, callback);
                 }

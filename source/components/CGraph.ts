@@ -23,8 +23,13 @@ export default class CGraph extends Component
     get innerGraph() {
         return this._innerGraph;
     }
-
-    getInnerRoots() {
+    get innerNodes() {
+        return this._innerGraph.nodes;
+    }
+    get innerComponents() {
+        return this._innerGraph.components;
+    }
+    get innerRoots() {
         return this._innerGraph.roots;
     }
 
