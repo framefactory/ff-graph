@@ -98,7 +98,6 @@ export default class CDocumentManager extends Component
 
     protected updateDocuments()
     {
-        console.log("updateDocuments", this.documents);
         const documents = this.documents;
         const names = documents.map(document => document.displayName);
         names.unshift("(none)");
