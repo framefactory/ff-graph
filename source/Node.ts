@@ -356,15 +356,16 @@ export default class Node extends Publisher
             const component = components[i];
 
             const jsonComp = this.deflateComponent(component);
+            if (jsonComp) {
+                jsonComp.type = component.typeName;
+                jsonComp.id = component.id;
 
-            jsonComp.type = component.typeName;
-            jsonComp.id = component.id;
+                if (component.name) {
+                    jsonComp.name = component.name;
+                }
 
-            if (component.name) {
-                jsonComp.name = component.name;
+                jsonComponents.push(jsonComp);
             }
-
-            jsonComponents.push(jsonComp);
         }
 
         if (jsonComponents.length > 0) {

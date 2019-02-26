@@ -43,7 +43,7 @@ export default class CDocument extends CGraph
         this.outs.active.setValue(false);
     }
 
-    update()
+    update(context)
     {
         const ins = this.ins;
 
@@ -53,6 +53,7 @@ export default class CDocument extends CGraph
 
         if (ins.dump.changed) {
             const json = this.deflate();
+            console.log("-------------------- DOCUMENT --------------------");
             console.log(JSON.stringify(json, null, 2));
         }
 
