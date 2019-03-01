@@ -28,16 +28,16 @@ export interface IActiveDocumentEvent extends ITypedEvent<"active-document">
     next: CDocument;
 }
 
-const _inputs = {
-    activeDocument: types.Option("Documents.Active", []),
-};
-
 export default class CDocumentManager extends Component
 {
     static readonly typeName: string = "CDocumentManager";
     static readonly isSystemSingleton = true;
 
-    ins = this.addInputs(_inputs);
+    protected static readonly docManagerIns = {
+        activeDocument: types.Option("Documents.Active", []),
+    };
+
+    ins = this.addInputs(CDocumentManager.docManagerIns);
 
     private _activeDocument: CDocument = null;
 

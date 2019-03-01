@@ -5,10 +5,14 @@
  * License: MIT
  */
 
-import Component, { IUpdateContext, ITypedEvent } from "../Component";
+import Component, { types, IUpdateContext, ITypedEvent } from "../Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Information about pulse timing, including absolute system time, elapsed time
+ * since the pulse was started, delta time since last pulse, and pulse (frame) number.
+ */
 export interface IPulseContext extends IUpdateContext
 {
     time: Date;
@@ -17,15 +21,30 @@ export interface IPulseContext extends IUpdateContext
     frameNumber: number;
 }
 
+/**
+ * Emitted by [[CPulse]] when an animation frame event occurs.
+ * @event
+ */
 interface IPulseEvent extends ITypedEvent<"pulse">
 {
+    /** Information about pulse timing. */
     context: IPulseContext;
 }
 
+/**
+ * Generates a steady stream of events based on `window.requestAnimationFrame`.
+ */
 export default class CPulse extends Component
 {
     static readonly typeName: string = "CPulse";
     static readonly isSystemSingleton: boolean = true;
+
+    protected static readonly pulseOuts = {
+        time: types.Number("Pulse.Time"),
+        frame: types.Integer("Pulse.Frame")
+    };
+
+    outs = this.addOutputs(CPulse.pulseOuts);
 
     readonly context: IPulseContext;
 
@@ -93,12 +112,16 @@ export default class CPulse extends Component
     pulse(milliseconds: number)
     {
         const context = this.context;
+        const outs = this.outs;
 
         context.time.setTime(milliseconds);
         const elapsed = milliseconds * 0.001 - this._secondsStarted;
         context.secondsDelta = elapsed - context.secondsElapsed;
         context.secondsElapsed = elapsed;
         context.frameNumber++;
+
+        outs.time.setValue(context.secondsElapsed);
+        outs.frame.setValue(context.frameNumber);
 
         this.system.graph.tick(this.context);
         this.emit<IPulseEvent>(this._pulseEvent);

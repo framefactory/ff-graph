@@ -6,26 +6,27 @@
  */
 
 import { types } from "../Component";
+
 import CGraph from "./CGraph";
 import CDocumentManager from "./CDocumentManager";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-const _inputs = {
-    activate: types.Event("Document.Activate"),
-    dump: types.Event("Document.Dump"),
-};
-
-const _outputs = {
-    active: types.Boolean("Document.Active"),
-};
-
 export default class CDocument extends CGraph
 {
     static readonly typeName: string = "CDocument";
 
-    ins = this.addInputs(_inputs);
-    outs = this.addOutputs(_outputs);
+    protected static readonly docIns = {
+        activate: types.Event("Document.Activate"),
+        dump: types.Event("Document.Dump"),
+    };
+
+    protected static readonly docOuts = {
+        active: types.Boolean("Document.Active"),
+    };
+
+    ins = this.addInputs(CDocument.docIns);
+    outs = this.addOutputs(CDocument.docOuts);
 
     get documentManager() {
         return this.getComponent(CDocumentManager);

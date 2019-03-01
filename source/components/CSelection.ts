@@ -30,16 +30,16 @@ export interface IActiveGraphEvent extends ITypedEvent<"active-graph">
 
 export type SelectionActions = Actions<CSelection>;
 
-const outs = {
-    selNodeCount: types.Integer("Selection.Nodes"),
-    selComponentCount: types.Integer("Selection.Components")
-};
-
 export default class CSelection extends CController<CSelection>
 {
     static readonly typeName: string = "CSelection";
 
-    outs = this.addOutputs(outs);
+    protected static readonly selOuts = {
+        selNodeCount: types.Integer("Selection.Nodes"),
+        selComponentCount: types.Integer("Selection.Components")
+    };
+
+    outs = this.addOutputs(CSelection.selOuts);
 
     multiSelect = false;
     exclusiveSelect = true;
