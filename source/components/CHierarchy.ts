@@ -85,10 +85,6 @@ export interface IChildComponentEvent extends ITypedEvent<"child-component">
     component: Component;
 }
 
-const _inputs = {
-    blocked: types.Boolean("Hierarchy.Blocked"),
-};
-
 /**
  * Allows arranging components in a hierarchical structure.
  *
@@ -99,8 +95,6 @@ const _inputs = {
 export default class CHierarchy extends Component
 {
     static readonly typeName: string = "CHierarchy";
-
-    ins = this.addInputs(_inputs);
 
     protected _parent: CHierarchy = null;
     protected _children: CHierarchy[] = [];
