@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import { TypeOf, PropOf, enumToArray, Dictionary, Constructor } from "@ff/core/types";
+import { TypeOf, PropOf, enumToArray, Dictionary } from "@ff/core/types";
 
 ////////////////////////////////////////////////////////////////////////////////
 

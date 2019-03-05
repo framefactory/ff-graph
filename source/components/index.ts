@@ -10,7 +10,9 @@ import CDocument from "./CDocument";
 import CDocumentManager from "./CDocumentManager";
 import CGraph from "./CGraph";
 import CHierarchy from "./CHierarchy";
+import CIns from "./CIns";
 import COscillator from "./COscillator";
+import COuts from "./COuts";
 import CPulse from "./CPulse";
 import CSelection from "./CSelection";
 
@@ -22,7 +24,9 @@ export {
     CDocumentManager,
     CGraph,
     CHierarchy,
+    CIns,
     COscillator,
+    COuts,
     CPulse,
     CSelection
 };
@@ -32,7 +36,9 @@ export const componentTypes = [
     CDocumentManager,
     CGraph,
     CHierarchy,
+    CIns,
     COscillator,
+    COuts,
     CPulse,
     CSelection
 ];

@@ -9,7 +9,7 @@ import { Dictionary, TypeOf } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 import { IObjectEvent } from "@ff/core/ObjectRegistry";
 
-import { types, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
+import Property, { types, IPropertySchema, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
 import PropertyGroup, { ILinkable } from "./PropertyGroup";
 import ComponentTracker from "./ComponentTracker";
 import ComponentReference from "./ComponentReference";
@@ -529,6 +529,27 @@ export default class Component extends Publisher implements ILinkable
         }
     }
 
+    addCustomInput(path: string, schema: IPropertySchema, index?: number): Property
+    {
+        this.changed = true;
+        return this.ins.createCustomProperty(path, schema, index);
+    }
+
+    allowCustomInput(schema: IPropertySchema): boolean
+    {
+        return false;
+    }
+
+    addCustomOutput(path: string, schema: IPropertySchema, index?: number): Property
+    {
+        return this.outs.createCustomProperty(path, schema, index);
+    }
+
+    allowCustomOutput(schema: IPropertySchema): boolean
+    {
+        return false;
+    }
+
      /**
      * Adds input properties to the component, specified by the provided property templates.
      * @param templates A plain object with property templates.
@@ -537,7 +558,7 @@ export default class Component extends Publisher implements ILinkable
     protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
     (templates: U, index?: number) : PropertyGroup & T["ins"] & PropertiesFromTemplates<U>
     {
-        return this.ins.createPropertiesFromTemplates(templates, index) as any;
+        return this.ins.createProperties(templates, index) as any;
     }
 
     /**
@@ -548,7 +569,7 @@ export default class Component extends Publisher implements ILinkable
     protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
     (templates: U, index?: number) : PropertyGroup & T["outs"] & PropertiesFromTemplates<U>
     {
-        return this.outs.createPropertiesFromTemplates(templates, index) as any;
+        return this.outs.createProperties(templates, index) as any;
     }
 }
 

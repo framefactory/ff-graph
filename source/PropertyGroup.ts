@@ -8,7 +8,8 @@
 import { Dictionary } from "@ff/core/types";
 import Publisher, { ITypedEvent } from "@ff/core/Publisher";
 
-import Property, { IPropertyTemplate, PropertiesFromTemplates } from "./Property";
+import Property, { IPropertySchema, PropertiesFromTemplates } from "./Property";
+import uniqueId from "@ff/core/uniqueId";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -64,6 +65,10 @@ export default class PropertyGroup extends Publisher
         this.properties = [];
     }
 
+    get customProperties() {
+        return this.properties.filter(property => property.custom);
+    }
+
     dispose()
     {
         this.unlinkAllProperties();
@@ -84,20 +89,91 @@ export default class PropertyGroup extends Publisher
      * @param templates plain object with property templates.
      * @param index Optional index at which to insert the properties.
      */
-    createPropertiesFromTemplates<U>(templates: U, index?: number): this & PropertiesFromTemplates<U>
+    createProperties<U>(templates: U, index?: number): this & PropertiesFromTemplates<U>
     {
         Object.keys(templates).forEach((key, i) => {
             const ii = index === undefined ? undefined : index + i;
-            this.createPropertyFromTemplate(templates[key], key, ii);
+            const template = templates[key];
+            this.createProperty(template.path, template.schema, key, ii);
         });
 
         return this as this & PropertiesFromTemplates<U>;
     }
 
-    createPropertyFromTemplate(template: IPropertyTemplate, key?: string, index?: number)
+    createProperty(path: string, schema: IPropertySchema, key: string, index?: number)
     {
-        const property = new Property(template.path, template.schema);
-        this._addProperty(property, key, index);
+        const property = new Property(path, schema);
+        this.addProperty(property, key, index);
+        return property;
+    }
+
+    createCustomProperty(path: string, schema: IPropertySchema, index?: number)
+    {
+        const property = new Property(path, schema, /* custom */ true);
+        this.addCustomProperty(property, index);
+        return property;
+    }
+
+    addCustomProperty(property: Property, index?: number)
+    {
+        const key = uniqueId(5);
+        this.addProperty(property, key, index);
+    }
+
+    addProperty(property: Property, key: string, index?: number)
+    {
+        if (property.group) {
+            throw new Error("can't add, property already part of a group");
+        }
+
+        if (this[key]) {
+            throw new Error(`key '${key}' already exists in group`);
+        }
+
+        (property as any)._group = this;
+        (property as any)._key = key;
+
+        if (index === undefined) {
+            this.properties.push(property);
+        }
+        else {
+            this.properties.splice(index, 0, property);
+        }
+
+        this[key] = property;
+
+        this.emit<IPropertyGroupPropertyEvent>({
+            type: "property", add: true, remove: false, property
+        });
+    }
+
+    /**
+     * Removes the given property from the set.
+     * @param {Property} property The property to be removed.
+     */
+    removeProperty(property: Property)
+    {
+        if (property.group !== this) {
+            throw new Error("can't remove, property not in this group");
+        }
+        if (property.hasLinks()) {
+            throw new Error("can't remove, property has links");
+        }
+
+        if (this[property.key] !== property) {
+            throw new Error(`property key '${property.key}' not found in group`);
+        }
+
+        this.properties.slice(this.properties.indexOf(property), 1);
+
+        delete this[property.key];
+
+        (property as any)._group = null;
+        (property as any)._key = "";
+
+        this.emit<IPropertyGroupPropertyEvent>({
+            type: "property", add: false, remove: true, property
+        });
     }
 
     /**
@@ -191,8 +267,8 @@ export default class PropertyGroup extends Publisher
         Object.keys(json).forEach(key => {
             const jsonProp = json[key];
             if (jsonProp.schema) {
-                const property = new Property(jsonProp.path, jsonProp.schema, true);
-                property.attach(this, key);
+                const property = new Property(jsonProp.path, jsonProp.schema, /* custom */ true);
+                this.addProperty(property, key);
             }
         });
     }
@@ -202,61 +278,5 @@ export default class PropertyGroup extends Publisher
         Object.keys(json).forEach(key => {
             this[key].inflate(json[key], linkableDict);
         });
-    }
-
-    _addProperty(property: Property, key?: string, index?: number)
-    {
-        if (property.group) {
-            property.detach();
-        }
-
-        if (key && this[key]) {
-            throw new Error(`key '${key}' already exists in group`);
-        }
-
-        (property as any)._group = this;
-        (property as any)._key = key;
-
-        if (index === undefined) {
-            this.properties.push(property);
-        }
-        else {
-            this.properties.splice(index, 0, property);
-        }
-
-        if (key) {
-            this[key] = property;
-        }
-
-        this.emit<IPropertyGroupPropertyEvent>({
-            type: "property", add: true, remove: false, property
-        });
-    }
-
-    /**
-     * Removes the given property from the set.
-     * @param {Property} property The property to be removed.
-     */
-    _removeProperty(property: Property)
-    {
-        if (property.group === this) {
-
-            if (this[property.key] !== property) {
-                throw new Error(`property not found in group: ${property.key}`);
-            }
-
-            this.properties.slice(this.properties.indexOf(property), 1);
-
-            if (property.key) {
-                delete this[property.key];
-            }
-
-            (property as any)._group = null;
-            (property as any)._key = "";
-
-            this.emit<IPropertyGroupPropertyEvent>({
-                type: "property", add: false, remove: true, property
-            });
-        }
     }
 }

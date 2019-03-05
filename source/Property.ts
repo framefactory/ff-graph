@@ -49,7 +49,7 @@ export default class Property<T = any> extends Publisher
 
     readonly type: ValueType;
     readonly schema: Readonly<IPropertySchema<T>>;
-    readonly user: boolean;
+    readonly custom: boolean;
     readonly elementCount: number;
 
     readonly inLinks: PropertyLink[];
@@ -63,9 +63,9 @@ export default class Property<T = any> extends Publisher
      * Creates a new linkable property.
      * @param path Name and group(s) the property is displayed under.
      * @param schema Property schema definition.
-     * @param user Marks the property as user-defined if set to true.
+     * @param custom Marks the property as user-defined if set to true.
      */
-    constructor(path: string, schema: IPropertySchema<T>, user?: boolean)
+    constructor(path: string, schema: IPropertySchema<T>, custom?: boolean)
     {
         super();
         this.addEvents("value", "link", "change", "dispose");
@@ -79,7 +79,7 @@ export default class Property<T = any> extends Publisher
 
         this.type = typeof (isArray ? preset[0] : preset) as ValueType;
         this.schema = schema;
-        this.user = user || false;
+        this.custom = custom || false;
         this.elementCount = isArray ? (preset as any).length : 1;
 
         this.inLinks = [];
@@ -113,27 +113,27 @@ export default class Property<T = any> extends Publisher
         return this._path.split(".").pop();
     }
 
-    /**
-     * Adds the property to the given group.
-     * @param group The property group this property should be added to.
-     * @param key An optional key under which the property is accessible in the property group.
-     * @param index An optional index position where the property should be inserted in the group.
-     */
-    attach(group: PropertyGroup, key?: string, index?: number)
-    {
-        group._addProperty(this, key, index);
-    }
-
-    /**
-     * Removes the property from the group it was previously added to.
-     * Does nothing if the property is not member of a group.
-     */
-    detach()
-    {
-        if (this._group) {
-            this._group._removeProperty(this);
-        }
-    }
+    // /**
+    //  * Adds the property to the given group.
+    //  * @param group The property group this property should be added to.
+    //  * @param key An optional key under which the property is accessible in the property group.
+    //  * @param index An optional index position where the property should be inserted in the group.
+    //  */
+    // attach(group: PropertyGroup, key?: string, index?: number)
+    // {
+    //     group._addProperty(this, key, index);
+    // }
+    //
+    // /**
+    //  * Removes the property from the group it was previously added to.
+    //  * Does nothing if the property is not member of a group.
+    //  */
+    // detach()
+    // {
+    //     if (this._group) {
+    //         this._group._removeProperty(this);
+    //     }
+    // }
 
     /**
      * Removes the property from its group, removes all links.
@@ -142,7 +142,10 @@ export default class Property<T = any> extends Publisher
     dispose()
     {
         this.unlink();
-        this.detach();
+
+        if (this._group) {
+            this._group.removeProperty(this);
+        }
 
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
@@ -486,6 +489,11 @@ export default class Property<T = any> extends Publisher
         return value === preset;
     }
 
+    hasLinks()
+    {
+        return this.inLinks.length > 0 || this.outLinks.length > 0;
+    }
+
     hasInLinks(index?: number)
     {
         const links = this.inLinks;
@@ -545,7 +553,7 @@ export default class Property<T = any> extends Publisher
 
     deflate()
     {
-        let json: any = this.user ? {
+        let json: any = this.custom ? {
             path: this.path,
             schema: Object.assign({}, this.schema)
         } : null;
