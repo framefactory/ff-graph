@@ -109,6 +109,10 @@ export default class Property<T = any> extends Publisher
         this.emit<IPropertyChangeEvent>({ type: "change", what: "path", property: this });
     }
 
+    get name() {
+        return this._path.split(".").pop();
+    }
+
     /**
      * Adds the property to the given group.
      * @param group The property group this property should be added to.

@@ -202,6 +202,7 @@ export default class Graph extends Publisher
             if (component.changed) {
                 if (component.update && component.update(context)) {
                     updated = component.updated = true;
+                    component.emit("update");
                 }
 
                 component.resetChanged();
@@ -290,6 +291,10 @@ export default class Graph extends Publisher
     createCustomNode<T extends Node>(nodeOrType: NodeOrType<T>, name?: string, id?: string): T
     {
         const type = this.system.registry.getType(nodeOrType);
+        if (!type) {
+            throw new Error(`node type '${Node.getTypeName(nodeOrType)}' not registered`);
+        }
+
         const node = new type(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
 
         node.attach(this);

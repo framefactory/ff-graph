@@ -58,7 +58,8 @@ export type ComponentOrType<T extends Component = Component> = T | TypeOf<T> | s
  * Base class for components in a node-component system.
  *
  * ### Events
- * - *"change"* - emits [[IComponentChangeEvent]] after the component's state has changed.
+ * - *"change"* - emits [[IComponentChangeEvent]] after the component's state (except changed properties) has changed.
+ * - *"update"* - emitted after the component has been updated due to changed properties.
  * - *"dispose"* - emits [[IComponentDisposeEvent]] if the component is about to be disposed.
  *
  * ### See also

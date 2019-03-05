@@ -294,7 +294,7 @@ export default class Node extends Publisher
     {
         const type = this.system.registry.getType(componentOrType);
         if (!type) {
-            throw new Error(`type '${Component.getTypeName(componentOrType)}' not registered`);
+            throw new Error(`component type '${Component.getTypeName(componentOrType)}' not registered`);
         }
 
         const component = new type(id || uniqueId(12, this.system.components.getDictionary())) as T;
