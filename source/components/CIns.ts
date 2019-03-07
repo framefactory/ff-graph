@@ -14,7 +14,7 @@ export default class CIns extends Component
 {
     static readonly typeName: string = "CIns";
 
-    protected customOuts: Property[] = null;
+    protected customOuts: Property[] = [];
 
     update(context)
     {

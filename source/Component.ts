@@ -451,9 +451,15 @@ export default class Component extends Publisher implements ILinkable
     resetChanged()
     {
         this.changed = false;
+
         const ins = this.ins.properties;
         for (let i = 0, n = ins.length; i < n; ++i) {
             ins[i].changed = false;
+        }
+
+        const outs = this.outs.properties;
+        for (let i = 0, n = outs.length; i < n; ++i) {
+            outs[i].changed = false;
         }
     }
 

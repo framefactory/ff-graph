@@ -14,7 +14,7 @@ export default class COuts extends Component
 {
     static readonly typeName: string = "COuts";
 
-    protected customIns: Property[] = null;
+    protected customIns: Property[] = [];
 
     update(context)
     {
