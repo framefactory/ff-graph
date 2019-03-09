@@ -25,10 +25,11 @@ export interface IPulseContext extends IUpdateContext
  * Emitted by [[CPulse]] when an animation frame event occurs.
  * @event
  */
-interface IPulseEvent extends ITypedEvent<"pulse">
+export interface IPulseEvent extends ITypedEvent<"pulse">
 {
     /** Information about pulse timing. */
     context: IPulseContext;
+    systemUpdated: boolean;
 }
 
 /**
@@ -70,7 +71,7 @@ export default class CPulse extends Component
         this._secondsStarted = Date.now() * 0.001;
         this._secondsStopped = this._secondsStarted;
         this._animHandler = 0;
-        this._pulseEvent = { type: "pulse", context: this.context };
+        this._pulseEvent = { type: "pulse", context: this.context, systemUpdated: false };
     }
 
     start()
@@ -123,7 +124,7 @@ export default class CPulse extends Component
         outs.time.setValue(context.secondsElapsed);
         outs.frame.setValue(context.frameNumber);
 
-        this.system.graph.tick(this.context);
+        this._pulseEvent.systemUpdated = this.system.graph.tick(this.context);
         this.emit<IPulseEvent>(this._pulseEvent);
         this.system.graph.complete(this.context);
     }

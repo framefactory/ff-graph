@@ -201,20 +201,21 @@ export default class Graph extends Publisher
 
             if (component.changed) {
                 if (component.update && component.update(context)) {
-                    updated = component.updated = true;
+                    component.updated = true;
                 }
 
                 if (component.tick && component.tick(context)) {
-                    updated = component.updated = true;
+                    component.updated = true;
                 }
 
                 component.resetChanged();
             }
             else if (component.tick && component.tick(context)) {
-                updated = component.updated = true;
+                component.updated = true;
             }
 
-            if (updated) {
+            if (component.updated) {
+                updated = true;
                 component.emit("update");
             }
         }

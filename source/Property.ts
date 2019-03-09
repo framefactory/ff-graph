@@ -230,7 +230,7 @@ export default class Property<T = any> extends Publisher
     linkFrom(source: Property, sourceIndex?: number, destinationIndex?: number)
     {
         if (!this.canLinkFrom(source, sourceIndex, destinationIndex)) {
-            throw new Error("can't link");
+            throw new Error(`can't link from '${source.path}' to '${this.path}'`);
         }
 
         const link = new PropertyLink(source, this, sourceIndex, destinationIndex);

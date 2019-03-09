@@ -8,7 +8,6 @@
 import { types } from "../Component";
 
 import CGraph from "./CGraph";
-import CDocumentManager from "./CDocumentManager";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -17,7 +16,6 @@ export default class CDocument extends CGraph
     static readonly typeName: string = "CDocument";
 
     protected static readonly docIns = {
-        activate: types.Event("Document.Activate"),
         dump: types.Event("Document.Dump"),
     };
 
@@ -28,9 +26,6 @@ export default class CDocument extends CGraph
     ins = this.addInputs(CDocument.docIns);
     outs = this.addOutputs(CDocument.docOuts);
 
-    get documentManager() {
-        return this.getComponent(CDocumentManager);
-    }
 
     activateInnerGraph()
     {
@@ -47,10 +42,6 @@ export default class CDocument extends CGraph
     update(context)
     {
         const ins = this.ins;
-
-        if (ins.activate.changed) {
-            this.documentManager.activeDocument = this;
-        }
 
         if (ins.dump.changed) {
             const json = this.deflate();

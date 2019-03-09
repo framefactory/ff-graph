@@ -5,72 +5,39 @@
  * License: MIT
  */
 
-import Component, { types, ITypedEvent } from "../Component";
+import Component, { types } from "../Component";
 import CDocument from "./CDocument";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-/**
- * Emitted after the set of documents has changed.
- * @event
- */
-export interface IDocumentEvent extends ITypedEvent<"document">
-{
-}
-
-/**
- * Emitted after the active item has changed.
- * @event
- */
-export interface IActiveDocumentEvent extends ITypedEvent<"active-document">
-{
-    previous: CDocument;
-    next: CDocument;
-}
 
 export default class CDocumentManager extends Component
 {
     static readonly typeName: string = "CDocumentManager";
     static readonly isSystemSingleton = true;
 
-    protected static readonly docManagerIns = {
-        activeDocument: types.Option("Documents.Active", []),
+    protected static readonly ins = {
+        activeDocument: types.Option("Documents.ActiveDocument", []),
     };
 
-    ins = this.addInputs(CDocumentManager.docManagerIns);
+    protected static readonly outs = {
+        activeDocument: types.Object("Documents.ActiveDocument", CDocument),
+        changedDocuments: types.Event("Documents.Changed"),
+    };
 
-    private _activeDocument: CDocument = null;
+    ins = this.addInputs(CDocumentManager.ins);
+    outs = this.addOutputs(CDocumentManager.outs);
 
     get documents() {
         return this.getComponents(CDocument);
     }
-
     get activeDocument() {
-        return this._activeDocument;
+        return this.outs.activeDocument.value;
     }
     set activeDocument(document: CDocument) {
-        if (document !== this._activeDocument) {
-            const previous = this._activeDocument;
-
-            if (previous) {
-                previous.deactivateInnerGraph();
-            }
-
-            this._activeDocument = document;
-
-            if (document) {
-                document.activateInnerGraph();
-            }
-
-            this.emit<IActiveDocumentEvent>({
-                type: "active-document",
-                previous,
-                next: document
-            });
+        if (document !== this.activeDocument) {
+            const index = this.documents.indexOf(document);
+            this.ins.activeDocument.setValue(index + 1);
         }
-
-        const index = this.documents.indexOf(document);
-        this.ins.activeDocument.setValue(index + 1, true);
     }
 
     create()
@@ -85,7 +52,19 @@ export default class CDocumentManager extends Component
 
         if (ins.activeDocument.changed) {
             const index = ins.activeDocument.getValidatedValue() - 1;
-            this.activeDocument = index >= 0 ? this.documents[index] : null;
+            const nextDocument = index >= 0 ? this.documents[index] : null;
+            const activeDocument = this.activeDocument;
+
+            if (nextDocument !== activeDocument) {
+                if (activeDocument) {
+                    activeDocument.deactivateInnerGraph();
+                }
+                if (nextDocument) {
+                    nextDocument.activateInnerGraph();
+                }
+
+                this.outs.activeDocument.setValue(nextDocument);
+            }
         }
 
         return true;
@@ -103,12 +82,16 @@ export default class CDocumentManager extends Component
         names.unshift("(none)");
         this.ins.activeDocument.setOptions(names);
 
-        let activeDocument = this._activeDocument;
-        if (!activeDocument || documents.indexOf(activeDocument) < 0) {
-            activeDocument = documents[0];
+        let activeDocument = this.activeDocument;
+
+        const index = activeDocument ?
+            documents.indexOf(activeDocument) :
+            Math.min(1, documents.length);
+
+        if (index !== this.ins.activeDocument.getValidatedValue()) {
+            this.ins.activeDocument.setValue(index);
         }
 
-        this.activeDocument = activeDocument;
-        this.emit<IDocumentEvent>({ type: "document" });
+        this.outs.changedDocuments.set();
     }
 }
