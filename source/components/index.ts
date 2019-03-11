@@ -15,6 +15,7 @@ import COscillator from "./COscillator";
 import COuts from "./COuts";
 import CPulse from "./CPulse";
 import CSelection from "./CSelection";
+import CTweenMachine from "./CTweenMachine";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -28,7 +29,8 @@ export {
     COscillator,
     COuts,
     CPulse,
-    CSelection
+    CSelection,
+    CTweenMachine,
 };
 
 export const componentTypes = [
@@ -40,5 +42,6 @@ export const componentTypes = [
     COscillator,
     COuts,
     CPulse,
-    CSelection
+    CSelection,
+    CTweenMachine,
 ];
