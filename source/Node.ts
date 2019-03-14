@@ -257,6 +257,9 @@ export default class Node extends Publisher
     {
     }
 
+    /**
+     * Removes all components from this node.
+     */
     clear()
     {
         // dispose components
