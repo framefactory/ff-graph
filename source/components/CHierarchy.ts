@@ -158,27 +158,29 @@ export default class CHierarchy extends Component
      */
     getParent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | undefined
     {
-        let parent = this._parent;
+        let parent: CHierarchy = this;
 
-        do {
-            while(parent) {
-                const component = parent.node.components.get(componentOrType, true);
-                if (component) {
-                    return component;
-                }
+        while(true) {
+            parent = parent._parent;
 
-                parent = parent._parent;
-
-                // if at root, continue search at parent graph
-                if (!parent) {
-                    const parentGraphComponent = this.graph.parent;
-                    parent = parentGraphComponent ? parentGraphComponent.hierarchy : undefined;
-                }
-
+            // if at root, continue search at parent graph
+            if (!parent) {
+                const parentGraphComponent = this.graph.parent;
+                parent = parentGraphComponent ? parentGraphComponent.hierarchy : undefined;
             }
-        } while(parent && recursive);
+            if (!parent) {
+                return undefined;
+            }
 
-        return undefined;
+            const component = parent.node.components.get(componentOrType, true);
+
+            if (component) {
+                return component;
+            }
+            if (!recursive) {
+                return undefined;
+            }
+        }
     }
 
     /**
