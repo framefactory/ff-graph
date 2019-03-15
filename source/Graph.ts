@@ -311,7 +311,11 @@ export default class Graph extends Publisher
         }
 
         if (!id) {
+            // only if we're not serializing
             node.createComponents();
+
+            // prohibit adding/removing components
+            node.lock();
         }
 
         return node;
@@ -331,6 +335,9 @@ export default class Graph extends Publisher
         if (name) {
             node.name = name;
         }
+
+        // allow adding/removing components
+        node.unlock();
 
         return node;
     }

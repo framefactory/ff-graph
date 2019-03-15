@@ -78,6 +78,7 @@ export default class Node extends Publisher
 
     private _graph: Graph = null;
     private _name: string = "";
+    private _isLocked: boolean = undefined;
 
     /**
      * Protected constructor. Please use [[Graph.createNode]] / [[Graph.createCustomNode]] to create node instances.
@@ -102,6 +103,10 @@ export default class Node extends Publisher
     get displayTypeName() {
         const typeName = this.typeName;
         return typeName === "Node" ? typeName : typeName.substr(1);
+    }
+
+    get isLocked() {
+        return this._isLocked;
     }
 
     get text() {
@@ -239,6 +244,20 @@ export default class Node extends Publisher
         return this._graph.system.nodes.getById(id);
     }
 
+    lock()
+    {
+        if (this._isLocked === false) {
+            throw new Error("can't lock an unlocked node again");
+        }
+
+        this._isLocked = true;
+    }
+
+    unlock()
+    {
+        this._isLocked = false;
+    }
+
     /**
      * Adds this node to the given graph and the system.
      * @param graph
@@ -295,6 +314,10 @@ export default class Node extends Publisher
      */
     createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string, id?: string): T
     {
+        if (this._isLocked === true) {
+            throw new Error("node is locked, can't create component");
+        }
+
         const type = this.system.registry.getType(componentOrType);
         if (!type) {
             throw new Error(`component type '${Component.getTypeName(componentOrType)}' not registered`);
@@ -358,6 +381,10 @@ export default class Node extends Publisher
         const json: any = {};
         const jsonComponents = [];
 
+        if (this._isLocked) {
+            json.locked = true;
+        }
+
         const components = this.components.getArray();
         for (let i = 0, n = components.length; i < n; ++i) {
             const component = components[i];
@@ -385,16 +412,24 @@ export default class Node extends Publisher
     /**
      * Deserializes the node and its components.
      * @param json serialized node data.
-     * @param linkableDict dictionary mapping component ids to components.
      */
-    fromJSON(json, linkableDict: Dictionary<ILinkable>)
+    fromJSON(json)
     {
+        this._isLocked = !!json.locked;
+
         if (json.components) {
-            json.forEach(jsonComp => {
-                const component = this.createComponent(jsonComp.type, jsonComp.name, jsonComp.id);
-                component.fromJSON(jsonComp);
-            });
+            json.forEach(jsonComp => this.componentFromJSON(jsonComp));
         }
+    }
+
+    /**
+     * Override to control how components are deserialized.
+     * @param jsonComp The JSON data for the component to be deserialized.
+     */
+    componentFromJSON(jsonComp)
+    {
+        const component = this.createComponent(jsonComp.type, jsonComp.name, jsonComp.id);
+        component.fromJSON(jsonComp);
     }
 
     /**
