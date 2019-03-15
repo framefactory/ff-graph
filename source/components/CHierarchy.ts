@@ -8,7 +8,7 @@
 import { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
 import Component, { ComponentOrType, types } from "../Component";
-import Node from "../Node";
+import Node, { NodeOrType } from "../Node";
 import CGraph from "./CGraph";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +140,7 @@ export default class CHierarchy extends Component
      * Returns a component at the root of the hierarchy.
      * @returns A component of the given type that is a sibling of the root hierarchy component.
      */
-    getRoot<T extends Component>(componentOrType: ComponentOrType<T>): T | null
+    getRootComponent<T extends Component>(componentOrType: ComponentOrType<T>): T | null
     {
         let root: CHierarchy = this;
         while(root._parent) {
@@ -156,7 +156,7 @@ export default class CHierarchy extends Component
      * @param recursive If true, extends search to entire chain of ancestors,
      * including parent graphs.
      */
-    getParent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | undefined
+    getParentComponent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | undefined
     {
         let parent: CHierarchy = this;
 
@@ -183,12 +183,54 @@ export default class CHierarchy extends Component
         }
     }
 
+    getParentNode<T extends Node>(nodeOrType: NodeOrType<T>, recursive: boolean): T | undefined
+    {
+        let parent: CHierarchy = this;
+
+        while(true) {
+            parent = parent._parent;
+
+            // if at root, continue search at parent graph
+            if (!parent) {
+                const parentGraphComponent = this.graph.parent;
+                parent = parentGraphComponent ? parentGraphComponent.hierarchy : undefined;
+            }
+            if (!parent) {
+                return undefined;
+            }
+
+            const node = parent.node;
+            if (node.is(nodeOrType)) {
+                return node as T;
+            }
+            if (!recursive) {
+                return undefined;
+            }
+        }
+    }
+
+    getSiblingNode<T extends Node>(nodeOrType: NodeOrType<T>): T | undefined
+    {
+        return this.getSiblingNodes(nodeOrType)[0];
+    }
+
+    getSiblingNodes<T extends Node>(nodeOrType: NodeOrType<T>): T[]
+    {
+        const thisParent = this._parent;
+
+        return this.graph.nodes.getArray(nodeOrType).filter(node => {
+            const hierarchy = node.components.get(CHierarchy);
+            const parent = hierarchy ? hierarchy._parent : null;
+            return parent == thisParent;
+        });
+    }
+
     /**
      * Returns the child component of the given type.
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChild<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
+    getChildComponent<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): T | null
     {
         return _getChildComponent(this, componentOrType, recursive);
     }
@@ -198,7 +240,7 @@ export default class CHierarchy extends Component
      * @param componentOrType
      * @param recursive If true, extends search to entire subtree (breadth-first).
      */
-    getChildren<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): Readonly<T[]>
+    getChildComponents<T extends Component>(componentOrType: ComponentOrType<T>, recursive: boolean): Readonly<T[]>
     {
         return _getChildComponents(this, componentOrType, recursive);
     }
