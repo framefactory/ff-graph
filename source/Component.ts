@@ -497,15 +497,15 @@ export default class Component extends Publisher implements ILinkable
         return `${this.typeName}${this.name ? " (" + this.name + ")" : ""}`;
     }
 
-    deflate()
+    toJSON()
     {
         let json: any = {};
 
-        const jsonIns = this.ins.deflate();
+        const jsonIns = this.ins.toJSON();
         if (jsonIns) {
             json.ins = jsonIns;
         }
-        const jsonOuts = this.outs.deflate();
+        const jsonOuts = this.outs.toJSON();
         if (jsonOuts) {
             json.outs = jsonOuts;
         }
@@ -513,25 +513,25 @@ export default class Component extends Publisher implements ILinkable
         return json;
     }
 
-    inflate(json: any)
+    fromJSON(json: any)
     {
         if (json.ins) {
-            this.ins.inflate(json.ins);
+            this.ins.fromJSON(json.ins);
         }
         if (json.outs) {
-            this.outs.inflate(json.outs);
+            this.outs.fromJSON(json.outs);
         }
     }
 
-    inflateReferences(json: any)
+    referencesFromJSON(json: any)
     {
         const dict = this.system.components.getDictionary();
 
         if (json.ins) {
-            this.ins.inflateLinks(json.ins, dict);
+            this.ins.linksFromJSON(json.ins, dict);
         }
         if (json.outs) {
-            this.outs.inflateLinks(json.outs, dict);
+            this.outs.linksFromJSON(json.outs, dict);
         }
     }
 

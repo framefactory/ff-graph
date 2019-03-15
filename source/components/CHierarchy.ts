@@ -402,9 +402,9 @@ export default class CHierarchy extends Component
         this.system.emit<IHierarchyEvent>(event);
     }
 
-    deflate()
+    toJSON()
     {
-        const json = super.deflate();
+        const json = super.toJSON();
 
         if (this._children.length > 0) {
             json.children = this._children.map(child => child.id);
@@ -413,9 +413,9 @@ export default class CHierarchy extends Component
         return json;
     }
 
-    inflateReferences(json: any)
+    referencesFromJSON(json: any)
     {
-        super.inflateReferences(json);
+        super.referencesFromJSON(json);
 
         const dict = this.system.components.getDictionary();
 

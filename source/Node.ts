@@ -353,7 +353,7 @@ export default class Node extends Publisher
      * Serializes the node and its components.
      * Return node serialization data, or null if the node should be excluded from serialization.
      */
-    deflate()
+    toJSON()
     {
         const json: any = {};
         const jsonComponents = [];
@@ -362,7 +362,7 @@ export default class Node extends Publisher
         for (let i = 0, n = components.length; i < n; ++i) {
             const component = components[i];
 
-            const jsonComp = this.deflateComponent(component);
+            const jsonComp = this.componentToJSON(component);
             if (jsonComp) {
                 jsonComp.type = component.typeName;
                 jsonComp.id = component.id;
@@ -387,12 +387,12 @@ export default class Node extends Publisher
      * @param json serialized node data.
      * @param linkableDict dictionary mapping component ids to components.
      */
-    inflate(json, linkableDict: Dictionary<ILinkable>)
+    fromJSON(json, linkableDict: Dictionary<ILinkable>)
     {
         if (json.components) {
             json.forEach(jsonComp => {
                 const component = this.createComponent(jsonComp.type, jsonComp.name, jsonComp.id);
-                component.inflate(jsonComp);
+                component.fromJSON(jsonComp);
             });
         }
     }
@@ -401,12 +401,12 @@ export default class Node extends Publisher
      * Deserializes the links of all components.
      * @param json serialized component data.
      */
-    inflateReferences(json)
+    referencesFromJSON(json)
     {
         if (json.components) {
             json.components.forEach(jsonComp => {
                 const component = this.components.getById(jsonComp.id);
-                component.inflateReferences(jsonComp);
+                component.referencesFromJSON(jsonComp);
             });
         }
     }
@@ -416,9 +416,9 @@ export default class Node extends Publisher
      * Return serialization data or null if the component should be excluded from serialization.
      * @param component The component to be serialized.
      */
-    protected deflateComponent(component: Component)
+    protected componentToJSON(component: Component)
     {
-        return component.deflate();
+        return component.toJSON();
     }
 
     /**

@@ -385,7 +385,7 @@ export default class Graph extends Publisher
      * Serializes the graph, its nodes and components.
      * Returns graph serialization data, which must be cloned or stringified immediately.
      */
-    deflate()
+    toJSON()
     {
         const json: any = {};
         const jsonNodes = [];
@@ -394,7 +394,7 @@ export default class Graph extends Publisher
         for (let i = 0, n = nodes.length; i < n; ++i) {
             const node = nodes[i];
 
-            const jsonNode = this.deflateNode(node);
+            const jsonNode = this.nodeToJSON(node);
 
             jsonNode.type = node.typeName;
             jsonNode.id = node.id;
@@ -417,12 +417,12 @@ export default class Graph extends Publisher
      * Deserializes the graph, its nodes and components.
      * @param json serialized graph data.
      */
-    inflate(json)
+    fromJSON(json)
     {
         if (json.nodes) {
             json.nodes.forEach(jsonNode => {
                 const node = this.createCustomNode(jsonNode.type, jsonNode.name, jsonNode.id);
-                node.inflate(jsonNode);
+                node.fromJSON(jsonNode);
             });
         }
     }
@@ -431,12 +431,12 @@ export default class Graph extends Publisher
      * Deserializes references between graphs, nodes, and components
      * @param json serialized graph data.
      */
-    inflateReferences(json)
+    referencesFromJSON(json)
     {
         if (json.nodes) {
             json.nodes.forEach(jsonNode => {
                 const node = this.nodes.getById(jsonNode.id);
-                node.inflateReferences(jsonNode);
+                node.referencesFromJSON(jsonNode);
             });
         }
     }
@@ -446,9 +446,9 @@ export default class Graph extends Publisher
      * Return serialization data or null if the node should be excluded from serialization.
      * @param node The node to be serialized.
      */
-    protected deflateNode(node: Node)
+    protected nodeToJSON(node: Node)
     {
-        return node.deflate();
+        return node.toJSON();
     }
 
     /**

@@ -105,16 +105,16 @@ export default class CGraph extends Component
         this._innerGraph.clear();
     }
 
-    inflate(json: any)
+    fromJSON(json: any)
     {
-        super.inflate(json);
-        this._innerGraph.inflate(json.graph);
+        super.fromJSON(json);
+        this._innerGraph.fromJSON(json.graph);
     }
 
-    deflate()
+    toJSON()
     {
-        const json = super.deflate();
-        json.graph = this._innerGraph.deflate();
+        const json = super.toJSON();
+        json.graph = this._innerGraph.toJSON();
         return json;
     }
 

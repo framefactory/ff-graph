@@ -47,9 +47,9 @@ export default class COuts extends Component
         return !!this.graph.parent;
     }
 
-    inflate(json: any)
+    fromJSON(json: any)
     {
-        super.inflate(json);
+        super.fromJSON(json);
 
         const outerComponent = this.graph.parent;
         if (outerComponent) {

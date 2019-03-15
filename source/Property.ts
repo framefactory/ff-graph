@@ -551,7 +551,7 @@ export default class Property<T = any> extends Publisher
         return this.outLinks.length;
     }
 
-    deflate()
+    toJSON()
     {
         let json: any = this.custom ? {
             path: this.path,
@@ -583,7 +583,7 @@ export default class Property<T = any> extends Publisher
         return json;
     }
 
-    inflate(json: any, linkableDict: Dictionary<ILinkable>)
+    fromJSON(json: any, linkableDict: Dictionary<ILinkable>)
     {
         if (json.value !== undefined) {
             this.value = json.value;

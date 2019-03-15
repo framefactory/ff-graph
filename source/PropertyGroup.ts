@@ -247,12 +247,12 @@ export default class PropertyGroup extends Publisher
         this.properties.forEach(property => property.unlink());
     }
 
-    deflate()
+    toJSON()
     {
         let json: any = null;
 
         this.properties.forEach(property => {
-            const jsonProp = property.deflate();
+            const jsonProp = property.toJSON();
             if (jsonProp) {
                 json = json || {};
                 json[property.key] = jsonProp;
@@ -262,7 +262,7 @@ export default class PropertyGroup extends Publisher
         return json;
     }
 
-    inflate(json: any)
+    fromJSON(json: any)
     {
         Object.keys(json).forEach(key => {
             const jsonProp = json[key];
@@ -273,10 +273,10 @@ export default class PropertyGroup extends Publisher
         });
     }
 
-    inflateLinks(json: any, linkableDict: Dictionary<ILinkable>)
+    linksFromJSON(json: any, linkableDict: Dictionary<ILinkable>)
     {
         Object.keys(json).forEach(key => {
-            this[key].inflate(json[key], linkableDict);
+            this[key].fromJSON(json[key], linkableDict);
         });
     }
 }

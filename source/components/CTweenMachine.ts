@@ -195,16 +195,16 @@ export default class CTweenMachine extends Component
         return true;
     }
 
-    inflate(json: any)
+    fromJSON(json: any)
     {
         if (json.state) {
-            this.inflateState(json.state);
+            this.stateFromJSON(json.state);
         }
 
-        super.inflate(json);
+        super.fromJSON(json);
     }
 
-    inflateState(json: IMachineState)
+    stateFromJSON(json: IMachineState)
     {
         if (json.targets) {
             this._targets = json.targets.map(jsonTarget => {
@@ -225,11 +225,11 @@ export default class CTweenMachine extends Component
         }
     }
 
-    deflate(): any
+    toJSON(): any
     {
-        const json = super.deflate();
+        const json = super.toJSON();
 
-        const state = this.deflateState();
+        const state = this.stateToJSON();
         if (state) {
             json.state = state;
         }
@@ -237,7 +237,7 @@ export default class CTweenMachine extends Component
         return json;
     }
 
-    deflateState(): IMachineState
+    stateToJSON(): IMachineState
     {
         const json: IMachineState = {};
 

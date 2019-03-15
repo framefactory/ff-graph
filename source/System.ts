@@ -98,18 +98,18 @@ export default class System extends Publisher
     /**
      * Serializes the content of the system, ready to be stringified.
      */
-    deflate()
+    toJSON()
     {
-        return this.graph.deflate();
+        return this.graph.toJSON();
     }
 
     /**
      * Deserializes the given JSON object.
      * @param json
      */
-    inflate(json)
+    fromJSON(json)
     {
-        this.graph.inflate(json);
+        this.graph.fromJSON(json);
     }
 
     toString(verbose: boolean = false)

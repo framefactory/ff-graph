@@ -44,7 +44,7 @@ export default class CDocument extends CGraph
         const ins = this.ins;
 
         if (ins.dump.changed) {
-            const json = this.deflate();
+            const json = this.toJSON();
             console.log("-------------------- DOCUMENT --------------------");
             console.log(JSON.stringify(json, null, 2));
         }
