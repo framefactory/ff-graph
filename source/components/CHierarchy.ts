@@ -63,7 +63,7 @@ const _getChildComponents = <T extends Component>(
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Emitted by [[Hierarchy]] components if a hierarchy relation has changed in its tree line.
+ * Emitted by [[CHierarchy]] components if a hierarchy relation has changed in its tree line.
  * @event
  */
 export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
