@@ -317,7 +317,7 @@ export default class Property<T = any> extends Publisher
         this.inLinks.splice(index, 1);
         this.requestSort();
 
-                // if last link is removed and if object, reset to default (usually null) values
+        // if last link is removed and if object, reset to default (usually null) values
         if (this.inLinks.length === 0 && this.type === "object") {
             this.reset();
         }

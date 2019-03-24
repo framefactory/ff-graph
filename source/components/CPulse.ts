@@ -126,7 +126,7 @@ export default class CPulse extends Component
 
         this._pulseEvent.systemUpdated = this.system.graph.tick(this.context);
         this.emit<IPulseEvent>(this._pulseEvent);
-        this.system.graph.complete(this.context);
+        this.system.graph.tock(this.context);
     }
 
     protected onAnimationFrame()

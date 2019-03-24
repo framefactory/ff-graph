@@ -31,7 +31,10 @@ export default class System extends Publisher
         super({ knownEvents: false });
 
         this.registry = registry || new TypeRegistry();
+
+        // create the main graph and activate it by default
         this.graph = new Graph(this, null);
+        this.graph.activate();
     }
 
     getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
@@ -109,6 +112,7 @@ export default class System extends Publisher
      */
     fromJSON(json)
     {
+        this.graph.clear();
         this.graph.fromJSON(json);
     }
 

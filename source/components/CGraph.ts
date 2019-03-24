@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType, IUpdateContext } from "../Component";
+import Component, { types, ComponentOrType, IUpdateContext } from "../Component";
 import Graph from "../Graph";
 
 import CHierarchy from "./CHierarchy";
@@ -13,9 +13,17 @@ import Node, { NodeOrType } from "../Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
+export { types };
+
 export default class CGraph extends Component
 {
     static readonly typeName: string = "CGraph";
+
+    protected static readonly graphIns = {
+        active: types.Boolean("Graph.Active", true),
+    };
+
+    ins = this.addInputs(CGraph.graphIns);
 
     protected _innerGraph: Graph = null;
     protected _innerRoot: CHierarchy = null;
@@ -57,25 +65,45 @@ export default class CGraph extends Component
         return this._innerGraph.nodes.has(nodeOrClass);
     }
 
+    isEmpty() {
+        return this._innerGraph.nodes.count() === 0;
+    }
+
     create()
     {
         this._innerGraph = new Graph(this.system, this);
     }
 
-    update(context: IUpdateContext): boolean
+    update(context: IUpdateContext)
     {
+        const ins = this.ins;
+
+        if (ins.active.changed) {
+            const isActive = ins.active.value;
+            const graph = this._innerGraph;
+
+            if (isActive !== graph.isActive) {
+                if (isActive) {
+                    this.activateInnerGraph();
+                }
+                else {
+                    this.deactivateInnerGraph();
+                }
+            }
+        }
+
         // TODO: Evaluate interface ins/outs
-        return false;
+        return true;
     }
 
-    tick(context: IUpdateContext): boolean
+    tick(context: IUpdateContext)
     {
         return this._innerGraph.tick(context);
     }
 
-    complete(context: IUpdateContext)
+    tock(context: IUpdateContext)
     {
-        return this._innerGraph.complete(context);
+        return this._innerGraph.tock(context);
     }
 
     dispose()
@@ -85,16 +113,6 @@ export default class CGraph extends Component
         this._innerRoot = null;
 
         super.dispose();
-    }
-
-    activateInnerGraph()
-    {
-        this._innerGraph.activate();
-    }
-
-    deactivateInnerGraph()
-    {
-        this._innerGraph.deactivate();
     }
 
     /**
@@ -108,12 +126,15 @@ export default class CGraph extends Component
     fromJSON(json: any)
     {
         super.fromJSON(json);
+
+        this._innerGraph.clear();
         this._innerGraph.fromJSON(json.graph);
     }
 
     toJSON()
     {
         const json = super.toJSON();
+
         json.graph = this._innerGraph.toJSON();
         return json;
     }
@@ -124,6 +145,16 @@ export default class CGraph extends Component
 
     onRemoveInnerRoot(component: CHierarchy)
     {
+    }
+
+    protected activateInnerGraph()
+    {
+        this._innerGraph.activate();
+    }
+
+    protected deactivateInnerGraph()
+    {
+        this._innerGraph.deactivate();
     }
 }
 

@@ -269,7 +269,7 @@ export default class Node extends Publisher
     }
 
     /**
-     * Override to create an initial set of components for the node.
+     * Override in custom node types to create a predefined set of components.
      * Note that this function is not called if a node is restored from serialization data.
      */
     createComponents()

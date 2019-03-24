@@ -45,7 +45,7 @@ export default class Graph extends Publisher
     private _sorter = new LinkableSorter();
     private _sortRequested = true;
     private _sortedList: Component[] = null;
-    private _completeList: Component[] = [];
+    private _tockList: Component[] = [];
     private _isActive = false;
 
     /**
@@ -59,8 +59,6 @@ export default class Graph extends Publisher
 
         this.system = system;
         this.parent = parent;
-
-        this.activate();
     }
 
     get isActive() {
@@ -149,7 +147,7 @@ export default class Graph extends Publisher
 
     /**
      * Calls activate() on all components in the graph.
-     * This is done before any calls to update(), tick(). complete().
+     * This is done before any calls to update(), tick(), and tock().
      */
     activate()
     {
@@ -169,6 +167,27 @@ export default class Graph extends Publisher
             const component = components[i];
             if (component.activate) {
                 component.activate();
+            }
+        }
+    }
+
+    /**
+     * Calls deactivate() on all components in the graph.
+     * After a call to deactivate, there are no more calls to update(), tick(), tock().
+     */
+    deactivate()
+    {
+        if (!this._isActive) {
+            return;
+        }
+
+        this._isActive = false;
+
+        const components = this._sortedList;
+        for (let i = 0, n = components.length; i < n; ++i) {
+            const component = components[i];
+            if (component.deactivate) {
+                component.deactivate();
             }
         }
     }
@@ -224,40 +243,19 @@ export default class Graph extends Publisher
     }
 
     /**
-     * Calls complete on all components in the graph.
-     * The complete call happens at the end of a frame cycle.
+     * Calls tock() on all components in the graph.
+     * The tock() call happens at the end of a frame cycle.
      * @param context Context-specific information such as time, etc.
      */
-    complete(context: IUpdateContext)
+    tock(context: IUpdateContext)
     {
         if (!this._isActive) {
             return;
         }
 
-        const components = this._completeList;
+        const components = this._tockList;
         for (let i = 0, n = components.length; i < n; ++i) {
-            components[i].complete(context);
-        }
-    }
-
-    /**
-     * Calls deactivate() on all components in the graph.
-     * After a call to deactivate, there are no more calls to update(), tick(), complete().
-     */
-    deactivate()
-    {
-        if (!this._isActive) {
-            return;
-        }
-
-        this._isActive = false;
-
-        const components = this._sortedList;
-        for (let i = 0, n = components.length; i < n; ++i) {
-            const component = components[i];
-            if (component.deactivate) {
-                component.deactivate();
-            }
+            components[i].tock(context);
         }
     }
 
@@ -314,8 +312,11 @@ export default class Graph extends Publisher
             // only if we're not serializing
             node.createComponents();
 
+            // TODO: Temporarily disabled
+            node.unlock();
+
             // prohibit adding/removing components
-            node.lock();
+            //node.lock();
         }
 
         return node;
@@ -494,8 +495,8 @@ export default class Graph extends Publisher
         this.system._addComponent(component);
         this.components.add(component);
 
-        if (component.complete) {
-            this._completeList.push(component);
+        if (component.tock) {
+            this._tockList.push(component);
         }
 
         this._sortRequested = true;
@@ -511,8 +512,8 @@ export default class Graph extends Publisher
         this.components.remove(component);
         this.system._removeComponent(component);
 
-        if (component.complete) {
-            this._completeList.splice(this._completeList.indexOf(component), 1);
+        if (component.tock) {
+            this._tockList.splice(this._tockList.indexOf(component), 1);
         }
 
         this._sortRequested = true;

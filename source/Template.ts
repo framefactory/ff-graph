@@ -55,7 +55,7 @@ export default class Derived extends Base
         return false;
     }
 
-    complete()
+    tock()
     {
     }
 

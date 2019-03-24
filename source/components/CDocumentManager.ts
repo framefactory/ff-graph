@@ -57,10 +57,10 @@ export default class CDocumentManager extends Component
 
             if (nextDocument !== activeDocument) {
                 if (activeDocument) {
-                    activeDocument.deactivateInnerGraph();
+                    activeDocument.ins.active.setValue(false);
                 }
                 if (nextDocument) {
-                    nextDocument.activateInnerGraph();
+                    nextDocument.ins.active.setValue(true);
                 }
 
                 this.outs.activeDocument.setValue(nextDocument);

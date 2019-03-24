@@ -30,6 +30,17 @@ export interface IActiveGraphEvent extends ITypedEvent<"active-graph">
 
 export type SelectionActions = Actions<CSelection>;
 
+/**
+ * Manages selection state for nodes and components.
+ * Use [[CSelection.exclusiveSelect]] to decide whether node and component selection is mutually exclusive.
+ * A selection always encompasses only items in one graph, the *active graph*. When the active graph changes,
+ * an [[IActiveGraphEvent]] is fired.
+ *
+ * ### Events
+ * - *"active-graph"* - emits an [[IActiveGraphEvent]] after the active graph has changed.
+ * - *<ComponentType>* - [[CSelection.selectedComponents]] emits an [[IComponentEvent]] if a component is selected/unselected.
+ * - *<NodeType>* - [[CSelection.selectedNodes]] emits an [[INodeEvent]] if a node is selected/unselected.
+ */
 export default class CSelection extends CController<CSelection>
 {
     static readonly typeName: string = "CSelection";

@@ -19,25 +19,8 @@ export default class CDocument extends CGraph
         dump: types.Event("Document.Dump"),
     };
 
-    protected static readonly docOuts = {
-        active: types.Boolean("Document.Active"),
-    };
 
-    ins = this.addInputs(CDocument.docIns);
-    outs = this.addOutputs(CDocument.docOuts);
-
-
-    activateInnerGraph()
-    {
-        super.activateInnerGraph();
-        this.outs.active.setValue(true);
-    }
-
-    deactivateInnerGraph()
-    {
-        super.deactivateInnerGraph();
-        this.outs.active.setValue(false);
-    }
+    ins = this.addInputs<CGraph, typeof CDocument.docIns>(CDocument.docIns);
 
     update(context)
     {

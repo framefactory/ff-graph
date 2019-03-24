@@ -372,7 +372,7 @@ export default class Component extends Publisher implements ILinkable
      * only after all rendering is done.
      * @param context Information about the current update cycle.
      */
-    complete(context: IUpdateContext)
+    tock(context: IUpdateContext)
     {
         throw new Error("this should never be called");
     }
@@ -582,5 +582,5 @@ export default class Component extends Publisher implements ILinkable
 Component.prototype.activate = null;
 Component.prototype.update = null;
 Component.prototype.tick = null;
-Component.prototype.complete = null;
+Component.prototype.tock = null;
 Component.prototype.deactivate = null;
