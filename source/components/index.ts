@@ -5,12 +5,13 @@
  * License: MIT
  */
 
+import CComponentProvider from "./CComponentProvider";
 import CController from "./CController";
 import CDocument from "./CDocument";
-import CDocumentManager from "./CDocumentManager";
 import CGraph from "./CGraph";
 import CHierarchy from "./CHierarchy";
 import CIns from "./CIns";
+import CNodeProvider from "./CNodeProvider";
 import COscillator from "./COscillator";
 import COuts from "./COuts";
 import CPulse from "./CPulse";
@@ -20,12 +21,13 @@ import CTweenMachine from "./CTweenMachine";
 ////////////////////////////////////////////////////////////////////////////////
 
 export {
+    CComponentProvider,
     CController,
     CDocument,
-    CDocumentManager,
     CGraph,
     CHierarchy,
     CIns,
+    CNodeProvider,
     COscillator,
     COuts,
     CPulse,
@@ -34,11 +36,13 @@ export {
 };
 
 export const componentTypes = [
+    CComponentProvider,
+    CController,
     CDocument,
-    CDocumentManager,
     CGraph,
     CHierarchy,
     CIns,
+    CNodeProvider,
     COscillator,
     COuts,
     CPulse,

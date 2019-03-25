@@ -23,7 +23,7 @@ export enum ENodeScope {
 }
 
 /**
- * Emitted by [[CActiveNode]] if the active node changes.
+ * Emitted by [[CNodeProvider]] if the active node changes.
  * @event
  */
 export interface IActiveNodeEvent<T extends Node = Node> extends ITypedEvent<"active-node">
@@ -33,33 +33,48 @@ export interface IActiveNodeEvent<T extends Node = Node> extends ITypedEvent<"ac
 }
 
 /**
+ * Emitted by [[CNodeProvider]] if the set of scoped nodes changes.
+ * @event
+ */
+export interface IScopedNodesEvent extends ITypedEvent<"scoped-nodes">
+{
+}
+
+/**
  * Defines a scope of nodes. Exactly one node can be the active node. The scope
  * of candidate nodes is definable. The active node can be driven by the current selection.
  *
  * ### Events
  * - *"active-node"* - Emits [[IActiveNodeEvent]] if the active node changes.
  */
-export default class CActiveNode<T extends Node = Node> extends Component
+export default class CNodeProvider<T extends Node = Node> extends Component
 {
-    static readonly typeName: string = "CActiveNode";
+    static readonly typeName: string = "CNodeProvider";
 
-    protected static readonly anOuts = {
-        activeNode: types.Object("Nodes.Active", Node),
-        scopeUpdate: types.Event("Nodes.Update"),
-    };
-
-    outs = this.addOutputs(CActiveNode.anOuts);
-    
-    protected readonly nodeType: NodeOrType<T> = Node as any;
-    /** If a node in scope is selected, it becomes the active node. */
-    protected readonly followNodeSelection = true;
-    /** If a component is selected whose parent node is in scope, the node becomes the active node. */
-    protected readonly followComponentSelection = false;
-    /** If the active node is unselected, keep it active anyway. */
-    protected readonly retainSelection = true;
+    static readonly nodeType: NodeOrType = Node as any;
+    static readonly followNodeSelection = true;
+    static readonly followComponentSelection = false;
+    static readonly retainSelection = true;
 
     private _scope: ENodeScope = ENodeScope.Graph;
     private _scopedGraph: CGraph = null;
+    private _activeNode: T = null;
+
+    get nodeType() {
+        return (this.constructor as typeof CNodeProvider).nodeType;
+    }
+    /** If a node in scope is selected, it becomes the active node. */
+    get followNodeSelection() {
+        return (this.constructor as typeof CNodeProvider).followNodeSelection;
+    }
+    /** If a component is selected whose parent node is in scope, the node becomes the active node. */
+    get followComponentSelection() {
+        return (this.constructor as typeof CNodeProvider).followComponentSelection;
+    }
+    /** If the active node is unselected, keep it active anyway. */
+    get retainSelection() {
+        return (this.constructor as typeof CNodeProvider).retainSelection;
+    }
 
     get scope() {
         return this._scope;
@@ -75,9 +90,15 @@ export default class CActiveNode<T extends Node = Node> extends Component
         return this._scopedGraph;
     }
     set scopedGraph(graphComponent: CGraph) {
-        this._scopedGraph = graphComponent;
-        if (!this.isNodeInScope(this.activeNode)) {
-            this.activeNode = null;
+        if (graphComponent !== this._scopedGraph) {
+            this._scopedGraph = graphComponent;
+
+            if (!this.isNodeInScope(this.activeNode)) {
+                this.activeNode = null;
+            }
+
+            this.onScopedNodes();
+            this.emit<IScopedNodesEvent>({ type: "scoped-nodes" });
         }
     }
 
@@ -85,15 +106,15 @@ export default class CActiveNode<T extends Node = Node> extends Component
         switch (this._scope) {
             case ENodeScope.Graph:
                 const graph = this._scopedGraph ? this._scopedGraph.innerGraph : this.graph;
-                return graph.getNodes(this.nodeType);
+                return graph.getNodes(this.nodeType) as T[];
             case ENodeScope.Main:
-                return this.getMainNodes(this.nodeType);
+                return this.getMainNodes(this.nodeType) as T[];
             case ENodeScope.System:
-                return this.getSystemNodes(this.nodeType);
+                return this.getSystemNodes(this.nodeType) as T[];
         }
     }
-    get activeNode(): T {
-        return this.outs.activeNode.value as T;
+    get activeNode() {
+        return this._activeNode;
     }
     set activeNode(node: T) {
         if (!this.isNodeInScope(node)) {
@@ -110,8 +131,9 @@ export default class CActiveNode<T extends Node = Node> extends Component
                 this.activateNode(node);
             }
 
+            this._activeNode = node;
+            this.onActiveNode(activeNode, node);
             this.emit<IActiveNodeEvent>({ type: "active-node", previous: activeNode, next: node });
-            this.outs.activeNode.setValue(node);
         }
     }
 
@@ -135,6 +157,10 @@ export default class CActiveNode<T extends Node = Node> extends Component
 
     dispose()
     {
+        if (this.activeNode) {
+            this.activeNode = null;
+        }
+
         this.system.nodes.off(Node, this.onNode, this);
 
         if (this.followNodeSelection) {
@@ -155,6 +181,14 @@ export default class CActiveNode<T extends Node = Node> extends Component
     {
     }
 
+    protected onActiveNode(previous: T, next: T)
+    {
+    }
+
+    protected onScopedNodes()
+    {
+    }
+
     protected onNode(event: INodeEvent)
     {
         // in case the active node is removed
@@ -163,7 +197,8 @@ export default class CActiveNode<T extends Node = Node> extends Component
         }
 
         if (this.isNodeInScope(event.object)) {
-            this.outs.scopeUpdate.set();
+            this.onScopedNodes();
+            this.emit<IScopedNodesEvent>({ type: "scoped-nodes" });
         }
     }
 

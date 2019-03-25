@@ -5,13 +5,15 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType, ITypedEvent, types } from "../Component";
-import Node from "../Node";
+import Component, { types, ComponentOrType, ITypedEvent } from "../Component";
 
+import Node from "../Node";
 import CGraph from "./CGraph";
 import CSelection, { INodeEvent, IComponentEvent } from "./CSelection";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export { types };
 
 export enum EComponentScope {
     // Components in the given scoped node.
@@ -25,12 +27,21 @@ export enum EComponentScope {
 }
 
 /**
- * Emitted by [[CActiveComponent]] if the active component changes.
+ * Emitted by [[CComponentProvider]] if the active component changes.
+ * @event
  */
 export interface IActiveComponentEvent<T extends Component = Component> extends ITypedEvent<"active-component">
 {
     previous: T;
     next: T;
+}
+
+/**
+ * Emitted by [[CComponentProvider]] if the set of scoped components changes.
+ * @event
+ */
+export interface IScopedComponentsEvent extends ITypedEvent<"scoped-components">
+{
 }
 
 /**
@@ -40,28 +51,35 @@ export interface IActiveComponentEvent<T extends Component = Component> extends 
  * ### Events
  * - *"active-component"* - Emits [[IActiveComponentEvent]] if the active component changes.
  */
-export default class CActiveComponent<T extends Component = Component> extends Component
+export default class CComponentProvider<T extends Component = Component> extends Component
 {
-    static readonly typeName: string = "CActiveComponent";
+    static readonly typeName: string = "CComponentProvider";
 
-    protected static readonly acOuts = {
-        activeComponent: types.Object("Components.Active", Component),
-        scopeUpdate: types.Event("Components.Update"),
-    };
-
-    outs = this.addOutputs(CActiveComponent.acOuts);
-
-    protected readonly componentType: ComponentOrType<T> = Component as any;
-    /** If a component in scope is selected, it becomes the active component. */
-    protected readonly followComponentSelection = true;
-    /** If a node is selected containing a component in scope, the component becomes the active component. */
-    protected readonly followNodeSelection = false;
-    /** If the active component is unselected, keep it active anyway. */
-    protected readonly retainSelection = true;
+    static readonly componentType: ComponentOrType = Component as any;
+    static readonly followComponentSelection = true;
+    static readonly followNodeSelection = false;
+    static readonly retainSelection = true;
 
     private _scope: EComponentScope = EComponentScope.Node;
     private _scopedNode: Node = null;
     private _scopedGraph: CGraph = null;
+    private _activeComponent: T = null;
+
+    get componentType() {
+        return (this.constructor as typeof CComponentProvider).componentType;
+    }
+    /** If a component in scope is selected, it becomes the active component. */
+    get followComponentSelection() {
+        return (this.constructor as typeof CComponentProvider).followComponentSelection;
+    }
+    /** If a node is selected containing a component in scope, the component becomes the active component. */
+    get followNodeSelection() {
+        return (this.constructor as typeof CComponentProvider).followNodeSelection;
+    }
+    /** If the active component is unselected, keep it active anyway. */
+    get retainSelection() {
+        return (this.constructor as typeof CComponentProvider).retainSelection;
+    }
 
     get scope() {
         return this._scope;
@@ -77,16 +95,31 @@ export default class CActiveComponent<T extends Component = Component> extends C
         return this._scopedNode;
     }
     set scopedNode(node: Node) {
+        if (node !== this._scopedNode) {
+            this._scopedNode = node;
 
+            if (!this.isComponentInScope(this.activeComponent)) {
+                this.activeComponent = null;
+            }
+
+            this.onScopedComponents();
+            this.emit<IScopedComponentsEvent>({ type: "scoped-components" });
+        }
     }
 
     get scopedGraph() {
         return this._scopedGraph;
     }
     set scopedGraph(graphComponent: CGraph) {
-        this._scopedGraph = graphComponent;
-        if (!this.isComponentInScope(this.activeComponent)) {
-            this.activeComponent = null;
+        if (graphComponent !== this._scopedGraph) {
+            this._scopedGraph = graphComponent;
+
+            if (!this.isComponentInScope(this.activeComponent)) {
+                this.activeComponent = null;
+            }
+
+            this.onScopedComponents();
+            this.emit<IScopedComponentsEvent>({ type: "scoped-components" });
         }
     }
 
@@ -94,19 +127,19 @@ export default class CActiveComponent<T extends Component = Component> extends C
         switch (this._scope) {
             case EComponentScope.Node:
                 const node = this._scopedNode || this.node;
-                return node.getComponents(this.componentType);
+                return node.getComponents(this.componentType) as T[];
             case EComponentScope.Graph:
                 const graph = this._scopedGraph ? this._scopedGraph.innerGraph : this.graph;
-                return graph.getComponents(this.componentType);
+                return graph.getComponents(this.componentType) as T[];
             case EComponentScope.Main:
-                return this.getMainComponents(this.componentType);
+                return this.getMainComponents(this.componentType) as T[];
             case EComponentScope.System:
-                return this.getSystemComponents(this.componentType);
+                return this.getSystemComponents(this.componentType) as T[];
         }
     }
 
-    get activeComponent(): T {
-        return this.outs.activeComponent.value as T;
+    get activeComponent() {
+        return this._activeComponent;
     }
     set activeComponent(component: T) {
         if (!this.isComponentInScope(component)) {
@@ -123,8 +156,9 @@ export default class CActiveComponent<T extends Component = Component> extends C
                 this.activateComponent(component);
             }
 
+            this._activeComponent = component;
+            this.onActiveComponent(activeComponent, component);
             this.emit<IActiveComponentEvent>({ type: "active-component", previous: activeComponent, next: component });
-            this.outs.activeComponent.setValue(component);
         }
     }
 
@@ -148,6 +182,10 @@ export default class CActiveComponent<T extends Component = Component> extends C
 
     dispose()
     {
+        if (this.activeComponent) {
+            this.activeComponent = null;
+        }
+
         this.system.components.off(Component, this.onComponent, this);
 
         if (this.followComponentSelection) {
@@ -168,6 +206,14 @@ export default class CActiveComponent<T extends Component = Component> extends C
     {
     }
 
+    protected onActiveComponent(previous: T, next: T)
+    {
+    }
+
+    protected onScopedComponents()
+    {
+    }
+
     protected onComponent(event: IComponentEvent)
     {
         // in case the active component is removed
@@ -176,7 +222,8 @@ export default class CActiveComponent<T extends Component = Component> extends C
         }
 
         if (this.isComponentInScope(event.object)) {
-            this.outs.scopeUpdate.set();
+            this.onScopedComponents();
+            this.emit<IScopedComponentsEvent>({ type: "scoped-components" });
         }
     }
 
