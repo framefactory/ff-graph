@@ -81,7 +81,7 @@ export default class CNodeProvider<T extends Node = Node> extends Component
     }
     set scope(scope: ENodeScope) {
         this._scope = scope;
-        if (!this.isNodeInScope(this.activeNode)) {
+        if (this._activeNode && !this.isNodeInScope(this._activeNode)) {
             this.activeNode = null;
         }
     }
@@ -93,7 +93,7 @@ export default class CNodeProvider<T extends Node = Node> extends Component
         if (graphComponent !== this._scopedGraph) {
             this._scopedGraph = graphComponent;
 
-            if (!this.isNodeInScope(this.activeNode)) {
+            if (this._activeNode && !this.isNodeInScope(this._activeNode)) {
                 this.activeNode = null;
             }
 
@@ -117,10 +117,6 @@ export default class CNodeProvider<T extends Node = Node> extends Component
         return this._activeNode;
     }
     set activeNode(node: T) {
-        if (!this.isNodeInScope(node)) {
-            throw new Error("can't activate, node out of scope");
-        }
-
         const activeNode = this.activeNode;
 
         if (node !== activeNode) {
@@ -128,6 +124,10 @@ export default class CNodeProvider<T extends Node = Node> extends Component
                 this.deactivateNode(activeNode);
             }
             if (node) {
+                if (!this.isNodeInScope(node)) {
+                    throw new Error("can't activate, node out of scope");
+                }
+
                 this.activateNode(node);
             }
 
@@ -228,6 +228,10 @@ export default class CNodeProvider<T extends Node = Node> extends Component
 
     protected isNodeInScope(node: Node)
     {
+        if (!node.is(this.nodeType)) {
+            return false;
+        }
+
         switch (this._scope) {
             case ENodeScope.Graph:
                 const graph = this._scopedGraph ? this._scopedGraph.innerGraph : this.graph;

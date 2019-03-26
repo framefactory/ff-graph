@@ -86,7 +86,7 @@ export default class CComponentProvider<T extends Component = Component> extends
     }
     set scope(scope: EComponentScope) {
         this._scope = scope;
-        if (!this.isComponentInScope(this.activeComponent)) {
+        if (this._activeComponent && !this.isComponentInScope(this._activeComponent)) {
             this.activeComponent = null;
         }
     }
@@ -98,7 +98,7 @@ export default class CComponentProvider<T extends Component = Component> extends
         if (node !== this._scopedNode) {
             this._scopedNode = node;
 
-            if (!this.isComponentInScope(this.activeComponent)) {
+            if (this._activeComponent && !this.isComponentInScope(this._activeComponent)) {
                 this.activeComponent = null;
             }
 
@@ -114,7 +114,7 @@ export default class CComponentProvider<T extends Component = Component> extends
         if (graphComponent !== this._scopedGraph) {
             this._scopedGraph = graphComponent;
 
-            if (!this.isComponentInScope(this.activeComponent)) {
+            if (this._activeComponent && !this.isComponentInScope(this._activeComponent)) {
                 this.activeComponent = null;
             }
 
@@ -142,10 +142,6 @@ export default class CComponentProvider<T extends Component = Component> extends
         return this._activeComponent;
     }
     set activeComponent(component: T) {
-        if (!this.isComponentInScope(component)) {
-            throw new Error("can't activate, component out of scope");
-        }
-
         const activeComponent = this.activeComponent;
 
         if (component !== activeComponent) {
@@ -153,6 +149,10 @@ export default class CComponentProvider<T extends Component = Component> extends
                 this.deactivateComponent(activeComponent);
             }
             if (component) {
+                if (!this.isComponentInScope(component)) {
+                    throw new Error("can't activate, component out of scope");
+                }
+
                 this.activateComponent(component);
             }
 
@@ -257,6 +257,10 @@ export default class CComponentProvider<T extends Component = Component> extends
 
     protected isComponentInScope(component: Component)
     {
+        if (!component.is(this.componentType)) {
+            return false;
+        }
+
         switch (this._scope) {
             case EComponentScope.Node:
                 const node = this._scopedNode || this.node;

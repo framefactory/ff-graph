@@ -468,8 +468,8 @@ export default class Node extends Publisher
             throw new Error(`only one component of type '${component.typeName}' allowed per node`);
         }
 
-        this.graph._addComponent(component);
         this.components.add(component);
+        this.graph._addComponent(component);
 
         const hierarchy = this.components.get<CHierarchy>("CHierarchy", true);
         if (hierarchy) {
@@ -492,8 +492,8 @@ export default class Node extends Publisher
             hierarchy.traverseUp(true, false, true, component => component.emit(event));
         }
 
-        this.components.remove(component);
         this.graph._removeComponent(component);
+        this.components.remove(component);
     }
 
 }

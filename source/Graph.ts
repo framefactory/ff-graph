@@ -492,8 +492,8 @@ export default class Graph extends Publisher
             throw new Error(`only one component of type '${component.typeName}' allowed per graph`);
         }
 
-        this.system._addComponent(component);
         this.components.add(component);
+        this.system._addComponent(component);
 
         if (component.tock) {
             this._tockList.push(component);
@@ -509,8 +509,8 @@ export default class Graph extends Publisher
      */
     _removeComponent(component: Component)
     {
-        this.components.remove(component);
         this.system._removeComponent(component);
+        this.components.remove(component);
 
         if (component.tock) {
             this._tockList.splice(this._tockList.indexOf(component), 1);
