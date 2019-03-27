@@ -7,13 +7,39 @@
 
 import { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
 
-import Component, { ComponentOrType, types } from "../Component";
+import Component, { ComponentOrType, IComponentEvent, types } from "../Component";
 import Node, { NodeOrType } from "../Node";
 import CGraph from "./CGraph";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Node };
+
+const _hasChildComponents = (
+    hierarchy: CHierarchy, componentOrType: ComponentOrType, recursive: boolean): boolean => {
+
+    let hasComponent;
+
+    const children = hierarchy.children;
+    for (let i = 0, n = children.length; i < n; ++i) {
+        hasComponent = children[i].components.has(componentOrType);
+
+        if (hasComponent) {
+            return true;
+        }
+    }
+
+    if (recursive) {
+        for (let i = 0, n = children.length; i < n; ++i) {
+            hasComponent = _hasChildComponents(children[i], componentOrType, true);
+            if (hasComponent) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
 
 const _getChildComponent = <T extends Component>(
     hierarchy: CHierarchy, componentOrType: ComponentOrType<T>, recursive: boolean): T | null => {
@@ -63,7 +89,7 @@ const _getChildComponents = <T extends Component>(
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Emitted by [[CHierarchy]] components if a hierarchy relation has changed in its tree line.
+ * Emitted by [[CHierarchy]] components if a hierarchy relation has changed above or below the component.
  * @event
  */
 export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
@@ -75,10 +101,10 @@ export interface IHierarchyEvent extends ITypedEvent<"hierarchy">
 }
 
 /**
- * Emitted by [[Hierarchy]] components if a child component has been added or removed.
+ * Emitted by [[Hierarchy]] components if a child component has been added or removed below the component.
  * @event
  */
-export interface IChildComponentEvent extends ITypedEvent<"child-component">
+export interface IChildEvent extends ITypedEvent<"child">
 {
     add: boolean;
     remove: boolean;
@@ -120,18 +146,25 @@ export default class CHierarchy extends Component
     create()
     {
         super.create();
+
         this.graph._addRoot(this);
+
+        this.node.components.on(Component, this.onComponent, this);
     }
 
     dispose()
     {
+        this.node.components.off(Component, this.onComponent, this);
+
+        // detach all children
+        this._children.slice().forEach(child => this.removeChild(child));
+
         // detach this from its parent
         if (this._parent) {
             this._parent.removeChild(this);
         }
 
-        // dispose of children
-        this._children.slice().forEach(child => child.node.dispose());
+        this.graph._removeRoot(this);
 
         super.dispose();
     }
@@ -166,7 +199,7 @@ export default class CHierarchy extends Component
             // if at root, continue search at parent graph
             if (!parent) {
                 const parentGraphComponent = this.graph.parent;
-                parent = parentGraphComponent ? parentGraphComponent.hierarchy : undefined;
+                parent = parentGraphComponent ? parentGraphComponent.components.get(CHierarchy) : undefined;
             }
             if (!parent) {
                 return undefined;
@@ -193,7 +226,7 @@ export default class CHierarchy extends Component
             // if at root, continue search at parent graph
             if (!parent) {
                 const parentGraphComponent = this.graph.parent;
-                parent = parentGraphComponent ? parentGraphComponent.hierarchy : undefined;
+                parent = parentGraphComponent ? parentGraphComponent.components.get(CHierarchy) : undefined;
             }
             if (!parent) {
                 return undefined;
@@ -223,6 +256,11 @@ export default class CHierarchy extends Component
             const parent = hierarchy ? hierarchy._parent : null;
             return parent == thisParent;
         });
+    }
+
+    hasChildComponents(componentOrType: ComponentOrType, recursive: boolean): boolean
+    {
+        return _hasChildComponents(this, componentOrType, recursive);
     }
 
     /**
@@ -387,12 +425,6 @@ export default class CHierarchy extends Component
             throw new Error("component not a child of this");
         }
 
-        const index = this._children.indexOf(component);
-        this._children.splice(index, 1);
-        component._parent = null;
-
-        this.graph._addRoot(component);
-
         const event: IHierarchyEvent = {
             type: "hierarchy", add: false, remove: true, parent: this, child: component
         };
@@ -400,6 +432,28 @@ export default class CHierarchy extends Component
         this.traverseUp(true, false, true, component => component.emit(event));
         this.traverseDown(false, false, true, component => component.emit(event));
         this.system.emit<IHierarchyEvent>(event);
+
+        const index = this._children.indexOf(component);
+        this._children.splice(index, 1);
+        component._parent = null;
+
+        this.graph._addRoot(component);
+    }
+
+    protected onComponent(event: IComponentEvent)
+    {
+        if (event.object === this) {
+            return;
+        }
+
+        const childEvent: IChildEvent = {
+            type: "child",
+            add: event.add,
+            remove: event.remove,
+            component: event.object
+        };
+
+        this.traverseUp(true, false, true, component => component.emit(childEvent));
     }
 
     toJSON()

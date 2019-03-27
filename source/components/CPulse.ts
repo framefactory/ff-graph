@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Component, { types, IUpdateContext, ITypedEvent } from "../Component";
+import Component, { types, IUpdateContext, ITypedEvent, Node } from "../Component";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -54,9 +54,9 @@ export default class CPulse extends Component
     private _animHandler: number;
     private _pulseEvent: IPulseEvent;
 
-    constructor(id: string)
+    constructor(node: Node, id: string)
     {
-        super(id);
+        super(node, id);
         this.addEvent("pulse");
 
         this.onAnimationFrame = this.onAnimationFrame.bind(this);

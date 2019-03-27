@@ -15,11 +15,10 @@ import ComponentTracker from "./ComponentTracker";
 import ComponentReference from "./ComponentReference";
 import Node, { NodeOrType } from "./Node";
 import System from "./System";
-import CHierarchy from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { types, ITypedEvent };
+export { types, ITypedEvent, Node };
 
 
 export interface IUpdateContext
@@ -90,6 +89,7 @@ export default class Component extends Publisher implements ILinkable
 
     /** The component's globally unique id. */
     readonly id: string;
+    readonly node: Node;
 
     ins: PropertyGroup = new PropertyGroup(this);
     outs: PropertyGroup = new PropertyGroup(this);
@@ -97,23 +97,67 @@ export default class Component extends Publisher implements ILinkable
     changed: boolean = true;
     updated: boolean = false;
 
-    private _node: Node = null;
     private _name: string = "";
     private _trackers: ComponentTracker[] = [];
 
     /**
      * Protected constructor. Use [[Node.createComponent]] to create component instances.
-     * @param id Unique id for the component. A unique id is usually created automatically,
-     * do not specify except while de-serializing the component.
+     * @param node Node to attach the new component to.
+     * @param id Unique id for the component.
      *
-     * Note that during execution of the constructor, the component is not yet attached
-     * to a node/graph/system. Do not try to get access to other components,
-     * the parent node, graph, or the system here.
+     * Note that during execution of the constructor, you have access to the component's
+     * node, graph, and system. The component has not yet been advertised to other components though.
      */
-    constructor(id: string)
+    constructor(node: Node, id: string)
     {
         super({ knownEvents: false });
+
+        this.node = node;
         this.id = id;
+    }
+
+    /**
+     * Called after the component has been constructed and attached to a node.
+     * Override to perform initialization tasks where you need access to other components.
+     */
+    create()
+    {
+        this.node._addComponent(this);
+
+        // if graph is active, activate component
+        if (this.graph.isActive && this.activate) {
+            this.activate();
+        }
+    }
+
+    /**
+     * Removes the component from its node and deletes it.
+     * Override to perform cleanup tasks (remove event listeners, etc.).
+     * Must call super implementation if overridden!
+     */
+    dispose()
+    {
+        // deactivate component if graph is active
+        if (this.graph.isActive && this.deactivate) {
+            this.deactivate();
+        }
+
+        // emit dispose event
+        this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
+
+        // remove all links and trackers
+        this.ins.dispose();
+        this.outs.dispose();
+
+        this._trackers.forEach(tracker => tracker.dispose());
+
+        // remove component from node
+        if (this.node) {
+            this.node._removeComponent(this);
+
+            // TODO: debug only
+            (this as any).node = null;
+        }
     }
 
     /**
@@ -180,24 +224,17 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
-     * Returns the node this component belongs to.
-     */
-    get node() {
-        return this._node;
-    }
-
-    /**
      * Returns the graph this component and its node belong to.
      */
     get graph() {
-        return this._node.graph;
+        return this.node.graph;
     }
 
     /**
      * Returns the system this component and its node belong to.
      */
     get system(): System {
-        return this._node.system;
+        return this.node.system;
     }
 
     /**
@@ -205,7 +242,7 @@ export default class Component extends Publisher implements ILinkable
      * Sibling components are components belonging to the same node.
      */
     get components() {
-        return this._node.components;
+        return this.node.components;
     }
 
     /**
@@ -215,130 +252,96 @@ export default class Component extends Publisher implements ILinkable
         return this.graph.isActive;
     }
 
-    /**
-     * Returns the sibling hierarchy component if available.
-     */
-    get hierarchy() {
-        return this._node.components.get<CHierarchy>("CHierarchy");
-    }
-
     getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
-        return this._node.components.get(componentOrType, nothrow);
+        return this.node.components.get(componentOrType, nothrow);
     }
 
     getComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
-        return this._node.components.getArray(componentOrType);
+        return this.node.components.getArray(componentOrType);
     }
 
     hasComponent(componentOrType: ComponentOrType) {
-        return this._node.components.has(componentOrType);
+        return this.node.components.has(componentOrType);
     }
 
     getGraphComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
-        return this._node.graph.components.get(componentOrType, nothrow);
+        return this.node.graph.components.get(componentOrType, nothrow);
     }
 
     getGraphComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
-        return this._node.graph.components.getArray(componentOrType);
+        return this.node.graph.components.getArray(componentOrType);
     }
 
     hasGraphComponent(componentOrType: ComponentOrType) {
-        return this._node.graph.components.has(componentOrType);
+        return this.node.graph.components.has(componentOrType);
     }
 
     getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
-        return this._node.system.graph.components.get(componentOrType, nothrow);
+        return this.node.system.graph.components.get(componentOrType, nothrow);
     }
 
     getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
-        return this._node.system.graph.components.getArray(componentOrType);
+        return this.node.system.graph.components.getArray(componentOrType);
     }
 
     hasMainComponent(componentOrType: ComponentOrType) {
-        return this._node.system.graph.components.has(componentOrType);
+        return this.node.system.graph.components.has(componentOrType);
     }
 
     getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
-        return this._node.system.components.get(componentOrType, nothrow);
+        return this.node.system.components.get(componentOrType, nothrow);
     }
 
     getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
-        return this._node.system.components.getArray(componentOrType);
+        return this.node.system.components.getArray(componentOrType);
     }
 
     hasSystemComponent(componentOrType: ComponentOrType) {
-        return this._node.system.components.has(componentOrType);
+        return this.node.system.components.has(componentOrType);
     }
 
     getComponentById(id: string): Component | null {
-        return this._node.system.components.getById(id);
+        return this.node.system.components.getById(id);
     }
 
     getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
-        return this._node.graph.nodes.get(nodeOrType, nothrow);
+        return this.node.graph.nodes.get(nodeOrType, nothrow);
     }
 
     getNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
-        return this._node.graph.nodes.getArray(nodeOrType);
+        return this.node.graph.nodes.getArray(nodeOrType);
     }
 
     hasNode(nodeOrType: NodeOrType) {
-        return this._node.graph.nodes.has(nodeOrType);
+        return this.node.graph.nodes.has(nodeOrType);
     }
 
     getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
-        return this._node.system.graph.nodes.get(nodeOrType, nothrow);
+        return this.node.system.graph.nodes.get(nodeOrType, nothrow);
     }
 
     getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
-        return this._node.system.graph.nodes.getArray(nodeOrType);
+        return this.node.system.graph.nodes.getArray(nodeOrType);
     }
 
     hasMainNode(nodeOrType: NodeOrType) {
-        return this._node.system.graph.nodes.has(nodeOrType);
+        return this.node.system.graph.nodes.has(nodeOrType);
     }
 
     getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
-        return this._node.system.nodes.get(nodeOrType, nothrow);
+        return this.node.system.nodes.get(nodeOrType, nothrow);
     }
 
     getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
-        return this._node.system.nodes.getArray(nodeOrType);
+        return this.node.system.nodes.getArray(nodeOrType);
     }
 
     hasSystemNode(nodeOrType: NodeOrType) {
-        return this._node.system.nodes.has(nodeOrType);
+        return this.node.system.nodes.has(nodeOrType);
     }
 
     getNodeById(id: string): Node | null {
-        return this._node.system.nodes.getById(id);
-    }
-
-    /**
-     * Adds the component to the given node.
-     * @param node Node to attach the new component to.
-     */
-    attach(node: Node)
-    {
-        this._node = node;
-
-        this.create();
-
-        // if graph is active, activate component
-        if (this.graph.isActive && this.activate) {
-            this.activate();
-        }
-
-        // note: adding the component informs subscribers, this must happen after create()
-        node._addComponent(this);
-    }
-
-    /**
-     * Called after the component has been constructed and attached to a node.
-     * Override to perform initialization tasks where you need access to other components.
-     */
-    create()
-    {
+        return this.node.system.nodes.getById(id);
     }
 
     activate()
@@ -379,34 +382,6 @@ export default class Component extends Publisher implements ILinkable
 
     deactivate()
     {
-    }
-
-    /**
-     * Removes the component from its node and deletes it.
-     * Override to perform cleanup tasks (remove event listeners, etc.).
-     * Must call super implementation if overridden!
-     */
-    dispose()
-    {
-        // deactivate component if graph is active
-        if (this.graph.isActive && this.deactivate) {
-            this.deactivate();
-        }
-
-        // remove all links and trackers
-        this.ins.dispose();
-        this.outs.dispose();
-
-        this._trackers.forEach(tracker => tracker.dispose());
-
-        // remove component from node
-        if (this._node) {
-            this._node._removeComponent(this);
-            this._node = null;
-        }
-
-        // emit dispose event
-        this.emit<IComponentDisposeEvent>({ type: "dispose", component: this });
     }
 
     requestSort()
@@ -473,7 +448,7 @@ export default class Component extends Publisher implements ILinkable
     trackComponent<T extends Component>(componentOrType: ComponentOrType<T>,
         didAdd?: (component: T) => void, willRemove?: (component: T) => void): ComponentTracker<T>
     {
-        const tracker = new ComponentTracker(this._node.components, componentOrType, didAdd, willRemove);
+        const tracker = new ComponentTracker(this.node.components, componentOrType, didAdd, willRemove);
         this._trackers.push(tracker);
         return tracker;
     }

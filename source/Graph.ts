@@ -264,9 +264,13 @@ export default class Graph extends Publisher
      */
     clear()
     {
-        const nodes = this.nodes.cloneArray();
+        const nodes = this.nodes.cloneArray().reverse();
         for (let i = 0, n = nodes.length; i < n; ++i) {
             nodes[i].dispose();
+        }
+
+        if (this.nodes.length > 0) {
+            throw new Error("graph not empty");
         }
     }
 
@@ -300,9 +304,8 @@ export default class Graph extends Publisher
             throw new Error(`node type '${Node.getTypeName(nodeOrType)}' not registered`);
         }
 
-        const node = new type(id || uniqueId(12, this.system.nodes.getDictionary())) as T;
-
-        node.attach(this);
+        const node = new type(this, id || uniqueId(12, this.system.nodes.getDictionary())) as T;
+        node.create();
 
         if (name) {
             node.name = name;
@@ -329,9 +332,8 @@ export default class Graph extends Publisher
      */
     createNode(name?: string, id?: string): Node
     {
-        const node = new Node(id || uniqueId(12, this.system.nodes.getDictionary()));
-
-        node.attach(this);
+        const node = new Node(this, id || uniqueId(12, this.system.nodes.getDictionary()));
+        node.create();
 
         if (name) {
             node.name = name;
@@ -503,7 +505,7 @@ export default class Graph extends Publisher
     }
 
     /**
-     * Removes a component from the graph and the system. Called by [[Component.detach]], do not call directly.
+     * Removes a component from the graph and the system. Called by [[Component.dispose]], do not call directly.
      * @param component
      * @private
      */
@@ -530,10 +532,10 @@ export default class Graph extends Publisher
 
     _removeRoot(component: CHierarchy)
     {
-        this.roots.splice(this.roots.indexOf(component), 1);
-
         if (this.parent) {
             this.parent.onRemoveInnerRoot(component);
         }
+
+        this.roots.splice(this.roots.indexOf(component), 1);
     }
 }

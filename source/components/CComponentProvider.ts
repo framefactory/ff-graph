@@ -5,15 +5,13 @@
  * License: MIT
  */
 
-import Component, { types, ComponentOrType, ITypedEvent } from "../Component";
+import Component, { ComponentOrType, ITypedEvent } from "../Component";
 
 import Node from "../Node";
 import CGraph from "./CGraph";
 import CSelection, { INodeEvent, IComponentEvent } from "./CSelection";
 
 ////////////////////////////////////////////////////////////////////////////////
-
-export { types };
 
 export enum EComponentScope {
     // Components in the given scoped node.

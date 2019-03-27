@@ -33,6 +33,7 @@ export default class Derived extends Base
 
     create()
     {
+        super.create();
     }
 
     update(): boolean
@@ -61,5 +62,6 @@ export default class Derived extends Base
 
     dispose()
     {
+        super.dispose();
     }
 }

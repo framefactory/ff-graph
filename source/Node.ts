@@ -13,7 +13,7 @@ import ObjectRegistry, { IObjectEvent } from "@ff/core/ObjectRegistry";
 import { ILinkable } from "./PropertyGroup";
 import Component, { ComponentOrType, IComponentEvent } from "./Component";
 import Graph from "./Graph";
-import CHierarchy, { IChildComponentEvent } from "./components/CHierarchy";
+import CHierarchy, { IChildEvent } from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -72,25 +72,28 @@ export default class Node extends Publisher
 
     /** The node's globally unique id. */
     readonly id: string;
+    readonly graph: Graph = null;
 
     /** Collection of all components in this node. */
     readonly components = new ObjectRegistry<Component>(Component);
 
-    private _graph: Graph = null;
     private _name: string = "";
     private _isLocked: boolean = undefined;
 
     /**
      * Protected constructor. Please use [[Graph.createNode]] / [[Graph.createCustomNode]] to create node instances.
+     * @param graph
      * @param id Unique id for the node. A unique id is usually created automatically,
      * do not specify except while de-serializing the component.
      *
      * Note that during execution of the constructor, the node is not yet attached to a graph/system.
      * Do not try to get access to other nodes, components, the parent graph, or the system here.
      */
-    constructor(id: string)
+    constructor(graph: Graph, id: string)
     {
         super({ knownEvents: false });
+
+        this.graph = graph;
         this.id = id;
     }
 
@@ -139,17 +142,10 @@ export default class Node extends Publisher
     }
 
     /**
-     * Returns the graph this node is part of.
-     */
-    get graph() {
-        return this._graph;
-    }
-
-    /**
      * Returns the system this node and its graph belong to.
      */
     get system() {
-        return this._graph.system;
+        return this.graph.system;
     }
 
     getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
@@ -177,71 +173,71 @@ export default class Node extends Publisher
     }
 
     getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
-        return this._graph.system.graph.components.get(componentOrType, nothrow);
+        return this.graph.system.graph.components.get(componentOrType, nothrow);
     }
 
     getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
-        return this._graph.system.graph.components.getArray(componentOrType);
+        return this.graph.system.graph.components.getArray(componentOrType);
     }
 
     hasMainComponent(componentOrType: ComponentOrType) {
-        return this._graph.system.graph.components.has(componentOrType);
+        return this.graph.system.graph.components.has(componentOrType);
     }
 
     getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
-        return this._graph.system.components.get(componentOrType, nothrow);
+        return this.graph.system.components.get(componentOrType, nothrow);
     }
 
     getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
-        return this._graph.system.components.getArray(componentOrType);
+        return this.graph.system.components.getArray(componentOrType);
     }
 
     hasSystemComponent(componentOrType: ComponentOrType) {
-        return this._graph.system.components.has(componentOrType);
+        return this.graph.system.components.has(componentOrType);
     }
 
     getComponentById(id: string): Component | null {
-        return this._graph.system.components.getById(id);
+        return this.graph.system.components.getById(id);
     }
 
     getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
-        return this._graph.nodes.get(nodeOrType, nothrow);
+        return this.graph.nodes.get(nodeOrType, nothrow);
     }
 
     getNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
-        return this._graph.nodes.getArray(nodeOrType);
+        return this.graph.nodes.getArray(nodeOrType);
     }
 
     hasNode(nodeOrType: NodeOrType) {
-        return this._graph.nodes.has(nodeOrType);
+        return this.graph.nodes.has(nodeOrType);
     }
 
     getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
-        return this._graph.system.graph.nodes.get(nodeOrType, nothrow);
+        return this.graph.system.graph.nodes.get(nodeOrType, nothrow);
     }
 
     getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
-        return this._graph.system.graph.nodes.getArray(nodeOrType);
+        return this.graph.system.graph.nodes.getArray(nodeOrType);
     }
 
     hasMainNode(nodeOrType: NodeOrType) {
-        return this._graph.system.graph.nodes.has(nodeOrType);
+        return this.graph.system.graph.nodes.has(nodeOrType);
     }
 
     getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
-        return this._graph.system.nodes.get(nodeOrType, nothrow);
+        return this.graph.system.nodes.get(nodeOrType, nothrow);
     }
 
     getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
-        return this._graph.system.nodes.getArray(nodeOrType);
+        return this.graph.system.nodes.getArray(nodeOrType);
     }
 
     hasSystemNode(nodeOrType: NodeOrType) {
-        return this._graph.system.nodes.has(nodeOrType);
+        return this.graph.system.nodes.has(nodeOrType);
     }
 
     getNodeById(id: string): Node | null {
-        return this._graph.system.nodes.getById(id);
+        return this.graph.system.nodes.getById(id);
     }
 
     lock()
@@ -260,12 +256,10 @@ export default class Node extends Publisher
 
     /**
      * Adds this node to the given graph and the system.
-     * @param graph
      */
-    attach(graph: Graph)
+    create()
     {
-        this._graph = graph;
-        graph._addNode(this);
+        this.graph._addNode(this);
     }
 
     /**
@@ -293,17 +287,19 @@ export default class Node extends Publisher
     dispose()
     {
         // dispose components
-        const componentList = this.components.getArray().slice();
+        const componentList = this.components.cloneArray().reverse();
         componentList.forEach(component => component.dispose());
-
-        // remove node from system and graph
-        if (this._graph) {
-            this._graph._removeNode(this);
-            this._graph = null;
-        }
 
         // emit dispose event
         this.emit<INodeDisposeEvent>({ type: "dispose", node: this });
+
+        // remove node from system and graph
+        if (this.graph) {
+            this.graph._removeNode(this);
+
+            // TODO: debug only
+            (this as any).graph = null;
+        }
     }
 
     /**
@@ -323,9 +319,8 @@ export default class Node extends Publisher
             throw new Error(`component type '${Component.getTypeName(componentOrType)}' not registered`);
         }
 
-        const component = new type(id || uniqueId(12, this.system.components.getDictionary())) as T;
-
-        component.attach(this);
+        const component = new type(this, id || uniqueId(12, this.system.components.getDictionary())) as T;
+        component.create();
 
         if (name) {
             component.name = name;
@@ -470,12 +465,6 @@ export default class Node extends Publisher
 
         this.components.add(component);
         this.graph._addComponent(component);
-
-        const hierarchy = this.components.get<CHierarchy>("CHierarchy", true);
-        if (hierarchy) {
-            const event: IChildComponentEvent = { type: "child-component", add: true, remove: false, component };
-            hierarchy.traverseUp(true, false, true, component => component.emit(event));
-        }
     }
 
     /**
@@ -486,12 +475,6 @@ export default class Node extends Publisher
      */
     _removeComponent(component: Component)
     {
-        const hierarchy = this.components.get<CHierarchy>("CHierarchy", true);
-        if (hierarchy) {
-            const event: IChildComponentEvent = { type: "child-component", add: false, remove: true, component };
-            hierarchy.traverseUp(true, false, true, component => component.emit(event));
-        }
-
         this.graph._removeComponent(component);
         this.components.remove(component);
     }

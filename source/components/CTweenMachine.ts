@@ -90,6 +90,7 @@ export default class CTweenMachine extends Component
 
     create()
     {
+        super.create();
         this.updateStateList();
     }
 

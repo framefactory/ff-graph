@@ -74,13 +74,15 @@ export default class CSelection extends CController<CSelection>
 
     private _activeGraph: Graph = null;
 
-    constructor(id: string)
+    constructor(node: Node, id: string)
     {
-        super(id);
+        super(node, id);
         this.addEvents("select-node", "select-component", "active-graph", "update");
 
         this.selectedNodes.on(Node, e => this.onSelectNode(e.object, e.add));
         this.selectedComponents.on(Component, e => this.onSelectComponent(e.object, e.add));
+
+        this._activeGraph = this.system.graph;
     }
 
     get activeGraph() {
@@ -124,8 +126,6 @@ export default class CSelection extends CController<CSelection>
     create()
     {
         super.create();
-
-        this._activeGraph = this.system.graph;
 
         this.system.nodes.on(Node, this.onSystemNode, this);
         this.system.components.on(Component, this.onSystemComponent, this);

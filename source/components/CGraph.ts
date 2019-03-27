@@ -13,7 +13,7 @@ import Node, { NodeOrType } from "../Node";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { types };
+export { Node, types };
 
 export default class CGraph extends Component
 {
@@ -27,6 +27,12 @@ export default class CGraph extends Component
 
     protected _innerGraph: Graph = null;
     protected _innerRoot: CHierarchy = null;
+
+    constructor(node: Node, id: string)
+    {
+        super(node, id);
+        this._innerGraph = new Graph(this.system, this);
+    }
 
     get innerGraph() {
         return this._innerGraph;
@@ -67,11 +73,6 @@ export default class CGraph extends Component
 
     isEmpty() {
         return this._innerGraph.nodes.count() === 0;
-    }
-
-    create()
-    {
-        this._innerGraph = new Graph(this.system, this);
     }
 
     update(context: IUpdateContext)
