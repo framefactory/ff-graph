@@ -413,7 +413,7 @@ export default class Node extends Publisher
         this._isLocked = !!json.locked;
 
         if (json.components) {
-            json.forEach(jsonComp => this.componentFromJSON(jsonComp));
+            json.components.forEach(jsonComp => this.componentFromJSON(jsonComp));
         }
     }
 

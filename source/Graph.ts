@@ -434,16 +434,8 @@ export default class Graph extends Publisher
                 const node = this.createCustomNode(jsonNode.type, jsonNode.name, jsonNode.id);
                 node.fromJSON(jsonNode);
             });
-        }
-    }
 
-    /**
-     * Deserializes references between graphs, nodes, and components
-     * @param json serialized graph data.
-     */
-    referencesFromJSON(json)
-    {
-        if (json.nodes) {
+            // deserialize references between graphs, nodes, and components
             json.nodes.forEach(jsonNode => {
                 const node = this.nodes.getById(jsonNode.id);
                 node.referencesFromJSON(jsonNode);
