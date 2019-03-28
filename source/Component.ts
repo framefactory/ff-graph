@@ -260,6 +260,15 @@ export default class Component extends Publisher implements ILinkable
         return this.node.components.getArray(componentOrType);
     }
 
+    createComponent<T extends Component = Component>(componentOrType: ComponentOrType<T>)
+    {
+        return this.node.createComponent(componentOrType);
+    }
+
+    getOrCreateComponent<T extends Component = Component>(componentOrType: ComponentOrType<T>) {
+        return this.node.components.get(componentOrType, true) || this.node.createComponent(componentOrType);
+    }
+
     hasComponent(componentOrType: ComponentOrType) {
         return this.node.components.has(componentOrType);
     }
@@ -470,6 +479,13 @@ export default class Component extends Publisher implements ILinkable
     toString()
     {
         return `${this.typeName}${this.name ? " (" + this.name + ")" : ""}`;
+    }
+
+    dump(indent: string = "")
+    {
+        console.log(indent + `%cComponent '${this.typeName}' (${this.displayName})`, "color: green");
+        this.ins.properties.forEach(prop => prop.dump(indent + "  IN  "));
+        this.outs.properties.forEach(prop => prop.dump(indent + "  OUT "));
     }
 
     toJSON()

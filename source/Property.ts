@@ -608,6 +608,11 @@ export default class Property<T = any> extends Publisher
         return `${this.path} [${typeName}]`
     }
 
+    dump(indent: string = "")
+    {
+        console.log(indent + `Property '${this.path}', key: ${this.key}, value: ${this.value}`);
+    }
+
     /**
      * Validates the given value against the property schema.
      * @param value

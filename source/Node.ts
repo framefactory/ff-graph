@@ -156,6 +156,10 @@ export default class Node extends Publisher
         return this.components.getArray(componentOrType);
     }
 
+    getOrCreateComponent<T extends Component = Component>(componentOrType: ComponentOrType<T>) {
+        return this.components.get(componentOrType, true) || this.createComponent(componentOrType);
+    }
+
     hasComponent(componentOrType: ComponentOrType) {
         return this.components.has(componentOrType);
     }
@@ -365,6 +369,12 @@ export default class Node extends Publisher
         }
 
         return text;
+    }
+
+    dump(indent: string = "")
+    {
+        console.log(indent + `%cNode '${this.typeName}' (${this.displayName})`, "color: blue");
+        this.components.getArray().forEach(comp => comp.dump(indent + "  "));
     }
 
     /**

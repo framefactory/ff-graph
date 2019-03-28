@@ -140,6 +140,12 @@ export default class CGraph extends Component
         return json;
     }
 
+    dump(indent = "")
+    {
+        super.dump(indent);
+        this.innerGraph.dump(indent + "  ");
+    }
+
     onAddInnerRoot(component: CHierarchy)
     {
     }

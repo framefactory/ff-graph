@@ -495,4 +495,14 @@ export default class CHierarchy extends Component
     {
         return super.toString() + ` - children: ${this.children.length}`;
     }
+
+    dump(indent: string)
+    {
+        super.dump(indent);
+
+        if (this.children.length > 0) {
+            console.log(indent + "%cChildren", "color: purple");
+            this.children.forEach(child => child.node.dump(indent + "  "));
+        }
+    }
 }

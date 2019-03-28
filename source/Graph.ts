@@ -391,6 +391,13 @@ export default class Graph extends Publisher
         return text;
     }
 
+    dump(indent = "")
+    {
+        console.log(indent + "%cGraph", "color: red");
+        const roots = this.findRootNodes();
+        roots.forEach(node => node.dump(indent + "  "));
+    }
+
     /**
      * Serializes the graph, its nodes and components.
      * Returns graph serialization data, which must be cloned or stringified immediately.
