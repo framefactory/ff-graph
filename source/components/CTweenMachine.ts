@@ -20,8 +20,6 @@ import { getEasingFunction, EEasingCurve } from "@ff/core/easing";
 import Component, { types } from "../Component";
 import Property from "../Property";
 import { IPulseContext } from "./CPulse";
-import { Dictionary } from "@ff/core/types";
-import clone from "@ff/core/clone";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -43,9 +41,8 @@ export interface ITweenTarget
 
 export interface ITweenState
 {
-    id: string;
-    title: string;
     values: any[];
+    name: string;
     duration: number;
     curve: EEasingCurve;
     threshold: number;
@@ -56,101 +53,91 @@ export default class CTweenMachine extends Component
     static readonly typeName: string = "CTweenMachine";
 
     protected static readonly ins = {
-        stateSelect: types.Option("Machine.States", []),
-        save: types.Event("Control.Save"),
-        load: types.Event("Control.Load"),
-        tween: types.Event("Control.Tween"),
-        delete: types.Event("Control.Delete"),
-        id: types.String("State.Id"),
-        title: types.String("State.Title"),
-        duration: types.Number("Tween.Duration", 1),
-        curve: types.Enum("Tween.Curve", EEasingCurve),
-        threshold: types.Percent("Tween.Threshold", 0.5),
+        index: types.Integer("Control.Index"),
+        next: types.Event("Control.Next"),
+        previous: types.Event("Control.Previous"),
+        first: types.Event("Control.First"),
+        tween: types.Boolean("Control.Tween", true),
+        loop: types.Boolean("Control.Loop", true),
     };
 
     protected static readonly outs = {
-        id: types.String("State.Id"),
-        title: types.String("State.Title"),
-        tweening: types.Boolean("Tween.IsTweening"),
-        time: types.Number("Tween.Time"),
-        completed: types.Percent("Tween.Completed"),
-        switched: types.Boolean("Tween.Switched"),
+        count: types.Integer("States.Count"),
+        index: types.Integer("States.Index"),
+        tweening: types.Boolean("Control.IsTweening"),
+        time: types.Number("Control.Time"),
+        completed: types.Percent("Control.Completed"),
+        switched: types.Boolean("Control.Switched"),
+        start: types.Event("Control.Start"),
+        switch: types.Event("Control.Switch"),
+        end: types.Event("Control.End"),
     };
 
     ins = this.addInputs(CTweenMachine.ins);
     outs = this.addOutputs(CTweenMachine.outs);
 
     private _targets: ITweenTarget[] = [];
-    private _states: Dictionary<ITweenState> = {};
+    private _states: ITweenState[] = [];
 
     private _currentValues: any[] = null;
     private _targetState: ITweenState = null;
     private _startTime = 0;
     private _easingFunction = null;
 
-    create()
-    {
-        super.create();
-        this.updateStateList();
+    get states() {
+        return this._states;
     }
 
     update(context: IPulseContext)
     {
         const ins = this.ins;
+        const outs = this.outs;
 
-        if (ins.stateSelect.changed) {
-            const id = ins.stateSelect.getOptionText();
-            const state = this._states[id];
-            if (state) {
-                ins.id.setValue(id);
-            }
+        const states = this._states;
+        let index = this.ins.index.value;
+        index = Math.min(states.length - 1, Math.max(0, index));
+
+        if (index === -1) {
+            outs.index.setValue(-1);
+            return true;
         }
 
-        const stateId = ins.id.value;
+        let targetIndex = index;
 
-        if (ins.save.changed && stateId) {
-            const state = this._states[stateId] = {
-                id: stateId,
-                title: ins.title.value,
-                values: this.getValues(),
-                duration: ins.duration.value,
-                curve: ins.curve.getValidatedValue(),
-                threshold: ins.threshold.value,
-            };
-            this.updateStateList();
-            this.setCurrentState(state);
+        if (ins.index.changed) {
+            targetIndex = Math.max(-1, Math.min(states.length - 1, ins.index.value));
         }
-        if (ins.load.changed && stateId) {
-            const state = this._states[stateId];
-            if (state) {
-                ins.title.setValue(state.title);
-                ins.duration.setValue(state.duration);
-                ins.curve.setValue(state.curve);
-                ins.threshold.setValue(state.threshold);
+        if (ins.next.changed) {
+            targetIndex = ins.loop.value ? (index + 1) % states.length : index + 1;
+        }
+        else if (ins.previous.changed) {
+            targetIndex = ins.loop.value ? (index + states.length - 1) % states.length : index - 1;
+        }
+        else if (ins.first.changed) {
+            targetIndex = 0;
+        }
 
-                this.setCurrentState(state);
-                this.setValues(state.values);
-            }
-        }
-        if (ins.tween.changed && stateId) {
-            const state = this._states[stateId];
-            if (state) {
-                this._currentValues = this.getValues();
-                this._targetState = state;
+        if (targetIndex !== outs.index.value) {
+            outs.index.setValue(targetIndex);
+            const targetState = states[targetIndex];
+
+            if (ins.tween.value) {
+                this._targetState = targetState;
+                this._currentValues = this.getCurrentValues();
                 this._startTime = context.secondsElapsed;
-                this._easingFunction = getEasingFunction(state.curve);
-                this.outs.switched.setValue(false);
-                this.outs.tweening.setValue(true);
-
-                this.setCurrentState(state);
+                this._easingFunction = getEasingFunction(targetState.curve);
+                outs.switched.setValue(false);
+                outs.tweening.setValue(true);
+                outs.start.set();
             }
-        }
-        if (ins.delete.changed && stateId) {
-            delete this._states[stateId];
-            this.updateStateList();
+            else {
+                this.setValues(targetState.values);
+            }
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     tick(context: IPulseContext)
@@ -177,6 +164,7 @@ export default class CTweenMachine extends Component
             outs.completed.setValue(tweenFactor);
             if (shouldSwitch) {
                 outs.switched.setValue(true);
+                outs.switch.set();
             }
         }
         else {
@@ -185,7 +173,11 @@ export default class CTweenMachine extends Component
             outs.tweening.setValue(false);
             outs.time.setValue(targetState.duration);
             outs.completed.setValue(1);
-            outs.switched.setValue(true);
+            outs.end.set();
+
+            if (!outs.switched.value) {
+                outs.switched.setValue(true);
+            }
 
             this._currentValues = null;
             this._targetState = null;
@@ -219,11 +211,12 @@ export default class CTweenMachine extends Component
             });
         }
         if (json.states) {
-            this._states = {};
-            json.states.forEach(state => {
-                this._states[state.id] = state;
-            });
+            this._states = json.states.slice();
         }
+
+        this._startTime = 0;
+        this.ins.index.setValue(0);
+        this.emit("list-update");
     }
 
     toJSON(): any
@@ -246,11 +239,10 @@ export default class CTweenMachine extends Component
         if (targets.length > 0) {
             json.targets = targets.map(target => ({ id: target.id, key: target.key }));
         }
-        const stateIds = Object.keys(this._states);
-        if (stateIds.length > 0) {
-            json.states = stateIds.map(id => {
-                return clone(this._states[id]);
-            });
+
+        const states = this._states;
+        if (states.length > 0) {
+            json.states = states.slice();
         }
 
         return json;
@@ -320,28 +312,6 @@ export default class CTweenMachine extends Component
         );
     }
 
-    protected updateStateList()
-    {
-        const keys = Object.keys(this._states);
-        if (keys.length === 0) {
-            keys.push("(none)");
-        }
-
-        this.ins.stateSelect.setOptions(keys);
-    }
-
-    protected setCurrentState(state: ITweenState)
-    {
-        const index = Object.keys(this._states).indexOf(state.id);
-        if (index >= 0) {
-            this.ins.stateSelect.setValue(index);
-        }
-
-        const outs = this.outs;
-        outs.id.setValue(state.id);
-        outs.title.setValue(state.title);
-    }
-
     protected getProperty(componentId: string, propertyKey: string): Property | undefined
     {
         const component = this.system.components.getById(componentId);
@@ -406,7 +376,7 @@ export default class CTweenMachine extends Component
         }
     }
 
-    protected getValues(): any[]
+    getCurrentValues(): any[]
     {
         const values = [];
         const targets = this._targets;
