@@ -48,7 +48,7 @@ export default class Property<T = any> extends Publisher
     changed: boolean;
 
     readonly type: ValueType;
-    readonly schema: Readonly<IPropertySchema<T>>;
+    readonly schema: IPropertySchema<T>;
     readonly custom: boolean;
     readonly elementCount: number;
 
@@ -433,7 +433,7 @@ export default class Property<T = any> extends Publisher
             throw new Error(`property type mismatch, can't set options on '${this.path}'`);
         }
 
-        (this.schema as IPropertySchema).options = options.slice();
+        this.schema.options = options.slice();
         this.emit<IPropertyChangeEvent>({ type: "change", what: "options", property: this });
     }
 

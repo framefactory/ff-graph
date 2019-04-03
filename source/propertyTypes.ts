@@ -31,6 +31,7 @@ export interface IPropertySchema<T = any>
     objectType?: TypeOf<T>;
     multi?: boolean;
     event?: boolean;
+    static?: boolean; // not linkable if true
     semantic?: string;
 }
 

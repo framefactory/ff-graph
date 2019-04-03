@@ -19,7 +19,7 @@ import { Dictionary } from "@ff/core/types";
 import { getEasingFunction, EEasingCurve } from "@ff/core/easing";
 
 import Component, { types } from "../Component";
-import Property from "../Property";
+import Property, { IPropertyDisposeEvent } from "../Property";
 import { IPulseContext } from "./CPulse";
 import uniqueId from "@ff/core/uniqueId";
 
@@ -33,18 +33,6 @@ export interface IMachineState
     targets?: ITweenTarget[];
 }
 
-export interface ITweenTarget
-{
-    /** Target component id. */
-    id: string;
-    /** Target property key. */
-    key: string;
-    /** True if target property should be tweened. */
-    isNumber?: boolean;
-    /** True if target property is an array. */
-    isArray?: boolean;
-}
-
 export interface ITweenState
 {
     id?: string;
@@ -52,6 +40,21 @@ export interface ITweenState
     curve: EEasingCurve;
     duration: number;
     threshold: number;
+}
+
+export interface ITweenTarget
+{
+    /** Target component id. */
+    id: string;
+    /** Target property key. */
+    key: string;
+}
+
+export interface ITargetEntry
+{
+    property: Property;
+    isNumber: boolean;
+    isArray: boolean;
 }
 
 export default class CTweenMachine extends Component
@@ -84,8 +87,8 @@ export default class CTweenMachine extends Component
     ins = this.addInputs(CTweenMachine.ins);
     outs = this.addOutputs(CTweenMachine.outs);
 
-    private _targets: ITweenTarget[] = [];
-    private _states: Dictionary<ITweenState> = {};
+    protected targets: ITargetEntry[] = [];
+    protected states: Dictionary<ITweenState> = {};
 
     private _currentValues: any[] = null;
     private _targetState: ITweenState = null;
@@ -93,12 +96,30 @@ export default class CTweenMachine extends Component
     private _easingFunction = null;
 
     getState(id: string) {
-        return this._states[id];
+        return this.states[id];
     }
     setState(state: ITweenState) {
         state.id = state.id || uniqueId(6);
-        this._states[state.id] = state;
+        this.states[state.id] = state;
         return state.id;
+    }
+
+    clear()
+    {
+        this.targets.forEach(target => target.property.off("dispose", this.onPropertyDispose, this));
+        this.targets.length = 0;
+        this.states = {};
+
+        this._currentValues = null;
+        this._targetState = null;
+        this._startTime = 0;
+        this._easingFunction = null;
+    }
+
+    dispose()
+    {
+        this.clear();
+        super.dispose();
     }
 
     update(context: IPulseContext)
@@ -106,7 +127,7 @@ export default class CTweenMachine extends Component
         const ins = this.ins;
         const outs = this.outs;
 
-        const states = this._states;
+        const states = this.states;
         const id = ins.id.value;
         const state = states[id];
 
@@ -207,6 +228,52 @@ export default class CTweenMachine extends Component
         return true;
     }
 
+    addTargetProperty(property: Property)
+    {
+        if (property.type === "object" || property.schema.event) {
+            throw new Error("can't add object or event properties");
+        }
+
+        if (this.getTarget(property)) {
+            throw new Error("can't add, target already exists");
+        }
+
+        property.on<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
+
+        const isNumber = property.type === "number";
+        const isArray = property.isArray();
+
+        this.targets.push({ property, isNumber, isArray });
+
+        const states = this.states;
+        const keys = Object.keys(states);
+        for (let i = 0, n = keys.length; i < n; ++i) {
+            states[keys[i]].values.push(property.cloneValue());
+        }
+        if (this._currentValues) {
+            this._currentValues.push(property.cloneValue());
+        }
+
+        console.log("CTweenMachine.addTargetProperty - component: '%s', property: '%s'",
+            (property.group.linkable as Component).displayName, property.path);
+    }
+
+    removeTargetProperty(property: Property)
+    {
+        const target = this.getTarget(property);
+
+        if (!target) {
+            throw new Error("can't remove, target doesn't exist");
+        }
+
+        this.removeTarget(target);
+    }
+
+    hasTargetProperty(property: Property)
+    {
+        return !!this.getTarget(property);
+    }
+
     fromJSON(json: any)
     {
         super.fromJSON(json);
@@ -219,18 +286,17 @@ export default class CTweenMachine extends Component
     stateFromJSON(json: IMachineState)
     {
         if (json.targets) {
-            this._targets = json.targets.map(jsonTarget => {
+            this.targets = json.targets.map(jsonTarget => {
                 const property = this.getProperty(jsonTarget.id, jsonTarget.key);
                 return {
-                    id: jsonTarget.id,
-                    key: jsonTarget.key,
+                    property,
                     isNumber: !!property && property.type === "number",
                     isArray: !!property && property.isArray(),
                 };
             });
         }
         if (json.states) {
-            json.states.forEach(state => this._states[state.id] = state);
+            json.states.forEach(state => this.states[state.id] = state);
         }
 
         this._startTime = 0;
@@ -252,59 +318,44 @@ export default class CTweenMachine extends Component
     {
         const json: IMachineState = {};
 
-        const targets = this._targets;
+        const targets = this.targets;
         if (targets.length > 0) {
-            json.targets = targets.map(target => ({ id: target.id, key: target.key }));
+            json.targets = targets.map(target => ({
+                id: target.property.group.linkable.id,
+                key: target.property.key
+            }));
         }
 
-        const keys = Object.keys(this._states);
+        const keys = Object.keys(this.states);
         if (keys.length > 0) {
-            json.states = keys.map(key => this._states[key]);
+            json.states = keys.map(key => this.states[key]);
         }
 
         return json;
     }
 
-    addTarget(component: Component, property: Property)
-    {
-        if (this.hasTarget(component, property)) {
-            throw new Error("can't add, target already exists");
-        }
-        if (property.type === "object") {
-            throw new Error("can't add, property is of type object");
-        }
-
-        const id = component.id;
-        const key = property.key;
-
-        const isNumber = property.type === "number";
-        const isArray = property.isArray();
-
-        this._targets.push({ id, key, isNumber, isArray });
-
-        const states = this._states;
-        const keys = Object.keys(states);
-        for (let i = 0, n = keys.length; i < n; ++i) {
-            states[keys[i]].values.push(undefined);
-        }
-        if (this._currentValues) {
-            this._currentValues.push(undefined);
-        }
+    getTargetProperties() {
+        return this.targets.map(target => target.property);
     }
 
-    removeTarget(component: Component, property: Property)
+    protected onPropertyDispose(event: IPropertyDisposeEvent)
     {
-        const target = this.getTarget(component, property);
+        event.property.off<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
 
-        if (!target) {
-            throw new Error("can't remove, target doesn't exist");
-        }
+        const target = this.getTarget(event.property);
+        this.removeTarget(target);
+    }
 
-        const index = this._targets.indexOf(target);
+    protected removeTarget(target: ITargetEntry)
+    {
+        const index = this.targets.indexOf(target);
+        this.targets.splice(index, 1);
+        this.removeChannel(index);
+    }
 
-        this._targets.splice(index, 1);
-
-        const states = this._states;
+    protected removeChannel(index: number)
+    {
+        const states = this.states;
         const keys = Object.keys(states);
         for (let i = 0, n = keys.length; i < n; ++i) {
             states[keys[i]].values.splice(index, 1);
@@ -314,19 +365,9 @@ export default class CTweenMachine extends Component
         }
     }
 
-    hasTarget(component: Component, property: Property)
+    protected getTarget(property: Property)
     {
-        return !!this.getTarget(component, property);
-    }
-
-    getTarget(component: Component, property: Property)
-    {
-        const componentId = component.id;
-        const propertyKey = property.key;
-
-        return this._targets.find(
-            target => target.id === componentId && target.key === propertyKey
-        );
+        return this.targets.find(target => target.property === property);
     }
 
     protected getProperty(componentId: string, propertyKey: string): Property | undefined
@@ -343,15 +384,11 @@ export default class CTweenMachine extends Component
     protected setValues(valuesA: any[], valuesB: any[], factor: number, doSwitch: boolean)
     protected setValues(valuesA: any[], valuesB?: any[], factor?: number, doSwitch?: boolean)
     {
-        const targets = this._targets;
+        const targets = this.targets;
 
         for (let i = 0, n = targets.length; i < n; ++i) {
             const target = targets[i];
-
-            const property = this.getProperty(target.id, target.key);
-            if (!property) {
-                continue;
-            }
+            const property = target.property;
 
             if (target.isNumber && valuesB) {
                 const vA = valuesA[i];
@@ -396,11 +433,9 @@ export default class CTweenMachine extends Component
     getCurrentValues(): any[]
     {
         const values = [];
-        const targets = this._targets;
+        const targets = this.targets;
         for (let i = 0, n = targets.length; i < n; ++i) {
-            const target = targets[i];
-            const property = this.getProperty(target.id, target.key);
-            values.push(property ? property.cloneValue() : undefined);
+            values.push(targets[i].property.cloneValue());
         }
 
         return values;
