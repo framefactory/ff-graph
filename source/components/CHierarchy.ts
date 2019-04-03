@@ -156,8 +156,8 @@ export default class CHierarchy extends Component
     {
         this.node.components.off(Component, this.onComponent, this);
 
-        // detach all children
-        this._children.slice().forEach(child => this.removeChild(child));
+        // dispose of all child nodes
+        this._children.slice().forEach(child => child.node.dispose());
 
         // detach this from its parent
         if (this._parent) {
@@ -423,7 +423,7 @@ export default class CHierarchy extends Component
     /**
      * Removes a child component from this hierarchy component.
      * Emits a hierarchy event at this component, its node and all their parents.
-     * @param {CHierarchy} component
+     * @param component
      */
     removeChild(component: CHierarchy)
     {
