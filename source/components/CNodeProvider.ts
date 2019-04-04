@@ -52,9 +52,9 @@ export default class CNodeProvider<T extends Node = Node> extends Component
     static readonly typeName: string = "CNodeProvider";
 
     static readonly nodeType: NodeOrType = Node as any;
-    static readonly followNodeSelection = true;
-    static readonly followComponentSelection = false;
-    static readonly retainSelection = true;
+    static readonly followNodeSelection: boolean = true;
+    static readonly followComponentSelection: boolean = false;
+    static readonly retainSelection: boolean = true;
 
     private _scope: ENodeScope = ENodeScope.Graph;
     private _scopedGraph: CGraph = null;

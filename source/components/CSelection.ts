@@ -244,6 +244,7 @@ export default class CSelection extends CController<CSelection>
     {
         if (event.remove && this.selectedNodes.contains(event.object)) {
             this.selectedNodes.remove(event.object);
+            this.updateStats();
         }
     }
 
@@ -251,6 +252,7 @@ export default class CSelection extends CController<CSelection>
     {
         if (event.remove && this.selectedComponents.contains(event.object)) {
             this.selectedComponents.remove(event.object);
+            this.updateStats();
         }
     }
 
