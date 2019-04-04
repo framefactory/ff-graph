@@ -103,6 +103,9 @@ export default class CTweenMachine extends Component
         this.states[state.id] = state;
         return state.id;
     }
+    deleteState(id: string) {
+        delete this.states[id];
+    }
 
     clear()
     {
@@ -254,7 +257,7 @@ export default class CTweenMachine extends Component
             this._currentValues.push(property.cloneValue());
         }
 
-        console.log("CTweenMachine.addTargetProperty - component: '%s', property: '%s'",
+        console.log("CTweenMachine.addTargetProperty - component: %s, property: %s",
             (property.group.linkable as Component).displayName, property.path);
     }
 
@@ -267,6 +270,9 @@ export default class CTweenMachine extends Component
         }
 
         this.removeTarget(target);
+
+        console.log("CTweenMachine.removeTargetProperty - component: %s, property: %s",
+            (property.group.linkable as Component).displayName, property.path);
     }
 
     hasTargetProperty(property: Property)
