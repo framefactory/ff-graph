@@ -44,7 +44,7 @@ export default class Graph extends Publisher
 
     private _sorter = new LinkableSorter();
     private _sortRequested = true;
-    private _sortedList: Component[] = null;
+    private _sortedList: Readonly<Component[]> = null;
     private _tockList: Component[] = [];
     private _isActive = false;
 

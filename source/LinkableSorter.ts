@@ -26,7 +26,7 @@ export default class LinkableSorter
         this.sorted = [];
     }
 
-    sort(linkables: ILinkable[]): ILinkable[]
+    sort(linkables: Readonly<ILinkable[]>): ILinkable[]
     {
         for (let i = 0, n = linkables.length; i < n; ++i) {
             this.visit(linkables[i]);
