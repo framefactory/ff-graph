@@ -98,6 +98,7 @@ export default class Component extends Publisher implements ILinkable
     updated: boolean = false;
 
     private _name: string = "";
+    private _tags = new Set<string>();
     private _trackers: ComponentTracker[] = [];
 
     /**
@@ -224,6 +225,37 @@ export default class Component extends Publisher implements ILinkable
     }
 
     /**
+     * Returns the set of tags this component is associated with.
+     */
+    get tags(): Readonly<Set<string>> {
+        return this._tags;
+    }
+
+    /**
+     * Adds a tag to this component. Adding a tag that already exists has no effect.
+     * @param tag The tag name. Valid tag names are all non-empty strings except "tag".
+     */
+    addTag(tag: string)
+    {
+        if (!this._tags.has(tag)) {
+            this._tags.add(tag);
+            this.node._addComponentTag(tag, this);
+        }
+    }
+
+    /**
+     * Removes a tag from this component. Removing a non-existing tag has no effect.
+     * @param tag The tag name. Valid tag names are all non-empty strings except "tag".
+     */
+    removeTag(tag: string)
+    {
+        if (this._tags.has(tag)) {
+            this._tags.delete(tag);
+            this.node._removeComponentTag(tag, this);
+        }
+    }
+
+    /**
      * Returns the graph this component and its node belong to.
      */
     get graph() {
@@ -260,6 +292,10 @@ export default class Component extends Publisher implements ILinkable
         return this.node.components.getArray(componentOrType);
     }
 
+    getComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.node.components.getByTag(tag);
+    }
+
     createComponent<T extends Component = Component>(componentOrType: ComponentOrType<T>)
     {
         return this.node.createComponent(componentOrType);
@@ -281,6 +317,10 @@ export default class Component extends Publisher implements ILinkable
         return this.node.graph.components.getArray(componentOrType);
     }
 
+    getGraphComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.node.graph.components.getByTag(tag);
+    }
+
     hasGraphComponent(componentOrType: ComponentOrType) {
         return this.node.graph.components.has(componentOrType);
     }
@@ -293,6 +333,10 @@ export default class Component extends Publisher implements ILinkable
         return this.node.system.graph.components.getArray(componentOrType);
     }
 
+    getMainComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.node.system.graph.components.getByTag(tag);
+    }
+
     hasMainComponent(componentOrType: ComponentOrType) {
         return this.node.system.graph.components.has(componentOrType);
     }
@@ -303,6 +347,10 @@ export default class Component extends Publisher implements ILinkable
 
     getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
         return this.node.system.components.getArray(componentOrType);
+    }
+
+    getSystemComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.node.system.components.getByTag(tag);
     }
 
     hasSystemComponent(componentOrType: ComponentOrType) {
@@ -321,6 +369,10 @@ export default class Component extends Publisher implements ILinkable
         return this.node.graph.nodes.getArray(nodeOrType);
     }
 
+    getNodesByTag<T extends Node = Node>(tag: string) {
+        return this.node.graph.nodes.getByTag(tag);
+    }
+
     hasNode(nodeOrType: NodeOrType) {
         return this.node.graph.nodes.has(nodeOrType);
     }
@@ -333,6 +385,10 @@ export default class Component extends Publisher implements ILinkable
         return this.node.system.graph.nodes.getArray(nodeOrType);
     }
 
+    getMainNodesByTag<T extends Node = Node>(tag: string) {
+        return this.node.system.graph.nodes.getByTag(tag);
+    }
+
     hasMainNode(nodeOrType: NodeOrType) {
         return this.node.system.graph.nodes.has(nodeOrType);
     }
@@ -343,6 +399,10 @@ export default class Component extends Publisher implements ILinkable
 
     getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
         return this.node.system.nodes.getArray(nodeOrType);
+    }
+
+    getSystemNodesByTag<T extends Node = Node>(tag: string) {
+        return this.node.system.nodes.getByTag(tag);
     }
 
     hasSystemNode(nodeOrType: NodeOrType) {

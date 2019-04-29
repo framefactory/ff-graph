@@ -45,6 +45,10 @@ export default class System extends Publisher
         return this.components.getArray(componentOrType);
     }
 
+    getComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.components.getByTag(tag);
+    }
+
     hasComponents(componentOrType: ComponentOrType) {
         return this.components.has(componentOrType);
     }
@@ -55,6 +59,10 @@ export default class System extends Publisher
 
     getMainComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
         return this.graph.components.getArray(componentOrType);
+    }
+
+    getMainComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.graph.components.getByTag(tag);
     }
 
     hasMainComponents(componentOrType: ComponentOrType) {
@@ -69,6 +77,10 @@ export default class System extends Publisher
         return this.nodes.getArray(nodeOrType);
     }
 
+    getNodesByTag<T extends Node = Node>(tag: string) {
+        return this.nodes.getByTag(tag);
+    }
+
     hasNodes(nodeOrType: NodeOrType) {
         return this.nodes.has(nodeOrType);
     }
@@ -79,6 +91,10 @@ export default class System extends Publisher
 
     getMainNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
         return this.graph.nodes.getArray(nodeOrType);
+    }
+
+    getMainNodesByTag<T extends Node = Node>(tag: string) {
+        return this.graph.nodes.getByTag(tag);
     }
 
     hasMainNodes(nodeOrType: NodeOrType) {
@@ -140,6 +156,16 @@ export default class System extends Publisher
         this.nodes.remove(node);
     }
 
+    _addNodeTag(tag: string, node: Node)
+    {
+        this.nodes.addByTag(tag, node);
+    }
+
+    _removeNodeTag(tag: string, node: Node)
+    {
+        this.nodes.removeByTag(tag, node);
+    }
+
     _addComponent(component: Component)
     {
         if (component.isSystemSingleton && this.components.has(component)) {
@@ -152,5 +178,15 @@ export default class System extends Publisher
     _removeComponent(component: Component)
     {
         this.components.remove(component);
+    }
+
+    _addComponentTag(tag: string, component: Component)
+    {
+        this.components.addByTag(tag, component);
+    }
+
+    _removeComponentTag(tag: string, component: Component)
+    {
+        this.components.removeByTag(tag, component);
     }
 }

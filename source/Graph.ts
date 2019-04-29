@@ -73,6 +73,10 @@ export default class Graph extends Publisher
         return this.components.getArray(componentOrType);
     }
 
+    getComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.components.getByTag(tag);
+    }
+
     hasComponent(componentOrType: ComponentOrType) {
         return this.components.has(componentOrType);
     }
@@ -85,6 +89,10 @@ export default class Graph extends Publisher
         return this.system.graph.components.getArray(componentOrType);
     }
 
+    getMainComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.system.graph.components.getByTag(tag);
+    }
+
     hasMainComponent(componentOrType: ComponentOrType) {
         return this.system.graph.components.has(componentOrType);
     }
@@ -95,6 +103,10 @@ export default class Graph extends Publisher
 
     getSystemComponents<T extends Component = Component>(componentOrType?: ComponentOrType<T>) {
         return this.system.components.getArray(componentOrType);
+    }
+
+    getSystemComponentsByTag<T extends Component = Component>(tag: string) {
+        return this.system.components.getByTag(tag);
     }
 
     hasSystemComponent(componentOrType: ComponentOrType) {
@@ -113,6 +125,10 @@ export default class Graph extends Publisher
         return this.nodes.getArray(nodeOrType);
     }
 
+    getNodesByTag<T extends Node = Node>(tag: string) {
+        return this.nodes.getByTag(tag);
+    }
+
     hasNode(nodeOrType: NodeOrType) {
         return this.nodes.has(nodeOrType);
     }
@@ -125,6 +141,10 @@ export default class Graph extends Publisher
         return this.system.graph.nodes.getArray(nodeOrType);
     }
 
+    getMainNodesByTag<T extends Node = Node>(tag: string) {
+        return this.system.graph.nodes.getByTag(tag);
+    }
+
     hasMainNode(nodeOrType: NodeOrType) {
         return this.system.graph.nodes.has(nodeOrType);
     }
@@ -135,6 +155,10 @@ export default class Graph extends Publisher
 
     getSystemNodes<T extends Node = Node>(nodeOrType?: NodeOrType<T>) {
         return this.system.nodes.getArray(nodeOrType);
+    }
+
+    getSystemNodesByTag<T extends Node = Node>(tag: string) {
+        return this.system.nodes.getByTag(tag);
     }
 
     hasSystemNode(nodeOrType: NodeOrType) {
@@ -483,6 +507,30 @@ export default class Graph extends Publisher
     }
 
     /**
+     * Registers a node with a given tag.
+     * @param tag
+     * @param node
+     * @private
+     */
+    _addNodeTag(tag: string, node: Node)
+    {
+        this.nodes.addByTag(tag, node);
+        this.system._addNodeTag(tag, node);
+    }
+
+    /**
+     * Unregisters a node from a given tag.
+     * @param tag
+     * @param node
+     * @private
+     */
+    _removeNodeTag(tag: string, node: Node)
+    {
+        this.system._removeNodeTag(tag, node);
+        this.nodes.removeByTag(tag, node);
+    }
+
+    /**
      * Adds a component to the graph and the system. Called by [[Component.attach]], do not call directly.
      * @param component
      * @private
@@ -518,6 +566,30 @@ export default class Graph extends Publisher
         }
 
         this._sortRequested = true;
+    }
+
+    /**
+     * Registers a component with a given tag.
+     * @param tag
+     * @param component
+     * @private
+     */
+    _addComponentTag(tag: string, component: Component)
+    {
+        this.components.addByTag(tag, component);
+        this.system._addComponentTag(tag, component);
+    }
+
+    /**
+     * Unregisters a component from a given tag.
+     * @param tag
+     * @param component
+     * @private
+     */
+    _removeComponentTag(tag: string, component: Component)
+    {
+        this.system._removeComponentTag(tag, component);
+        this.components.removeByTag(tag, component);
     }
 
     _addRoot(component: CHierarchy)
