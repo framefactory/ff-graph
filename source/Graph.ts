@@ -313,6 +313,7 @@ export default class Graph extends Publisher
 
         const name = this.parent ? this.parent.name || this.parent.typeName : "System";
         console.log("Graph.sort - %s: sorted %s components", name, this._sortedList.length);
+        //this._sortedList.forEach((comp, index) => console.log("#%s - %s (node: %s)", index, comp.displayName, comp.node.displayName));
     }
 
     /**

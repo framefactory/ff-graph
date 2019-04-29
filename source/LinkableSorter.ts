@@ -52,8 +52,9 @@ export default class LinkableSorter
 
         visiting[linkable.id] = true;
 
-        // for each output property, follow all outgoing links
-        const outProps = linkable.outs.properties;
+        // for each in/out property, follow all outgoing links
+        const outProps = linkable.outs.properties.concat(linkable.ins.properties);
+
         for (let i0 = 0, n0 = outProps.length; i0 < n0; ++i0) {
             const outLinks = outProps[i0].outLinks;
             for (let i1 = 0, n1 = outLinks.length; i1 < n1; ++i1) {
