@@ -270,17 +270,22 @@ export default class Graph extends Publisher
      * Calls tock() on all components in the graph.
      * The tock() call happens at the end of a frame cycle.
      * @param context Context-specific information such as time, etc.
+     * @returns true if at least one component was updated.
      */
-    tock(context: IUpdateContext)
+    tock(context: IUpdateContext): boolean
     {
         if (!this._isActive) {
             return;
         }
 
         const components = this._tockList;
+        let updated = false;
+
         for (let i = 0, n = components.length; i < n; ++i) {
-            components[i].tock(context);
+            updated = components[i].tock(context) || updated;
         }
+
+        return updated;
     }
 
     /**

@@ -421,7 +421,7 @@ export default class Component extends Publisher implements ILinkable
      * Called during each cycle if the component's input properties have changed.
      * Override to update the status of the component based on the input properties.
      * @param context Information about the current update cycle.
-     * @returns True if the state of the component has been changed during the update.
+     * @returns True if the state of the component has changed.
      */
     update(context: IUpdateContext): boolean
     {
@@ -432,6 +432,7 @@ export default class Component extends Publisher implements ILinkable
      * Called during each cycle, after the component has been updated.
      * Override to let the component perform regular tasks.
      * @param context Information about the current update cycle.
+     * @returns True if the state of the component has changed.
      */
     tick(context: IUpdateContext): boolean
     {
@@ -443,8 +444,9 @@ export default class Component extends Publisher implements ILinkable
      * Override to perform update operations which need to happen
      * only after all rendering is done.
      * @param context Information about the current update cycle.
+     * @returns True if the state of the component has changed.
      */
-    tock(context: IUpdateContext)
+    tock(context: IUpdateContext): boolean
     {
         throw new Error("this should never be called");
     }

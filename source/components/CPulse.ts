@@ -53,6 +53,7 @@ export default class CPulse extends Component
     private _secondsStopped: number;
     private _animHandler: number;
     private _pulseEvent: IPulseEvent;
+    private _systemUpdated = false;
 
     constructor(node: Node, id: string)
     {
@@ -124,9 +125,10 @@ export default class CPulse extends Component
         outs.time.setValue(context.secondsElapsed);
         outs.frame.setValue(context.frameNumber);
 
-        this._pulseEvent.systemUpdated = this.system.graph.tick(this.context);
+        // indicate if system was updated either during current tick or previous tock
+        this._pulseEvent.systemUpdated = this.system.graph.tick(this.context) || this._systemUpdated;
         this.emit<IPulseEvent>(this._pulseEvent);
-        this.system.graph.tock(this.context);
+        this._systemUpdated = this.system.graph.tock(this.context);
     }
 
     protected onAnimationFrame()
