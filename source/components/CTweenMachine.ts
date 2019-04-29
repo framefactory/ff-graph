@@ -98,11 +98,13 @@ export default class CTweenMachine extends Component
     getState(id: string) {
         return this.states[id];
     }
+
     setState(state: ITweenState) {
         state.id = state.id || uniqueId(6);
         this.states[state.id] = state;
         return state.id;
     }
+
     deleteState(id: string) {
         delete this.states[id];
     }
@@ -125,10 +127,27 @@ export default class CTweenMachine extends Component
         super.dispose();
     }
 
+    tweenTo(stateId: string, secondsElapsed: number)
+    {
+        const state = this.states[stateId];
+        const outs = this.outs;
+
+        if (state) {
+            this._targetState = state;
+            this._currentValues = this.getCurrentValues();
+            this._startTime = secondsElapsed;
+            this._easingFunction = getEasingFunction(state.curve);
+            outs.switched.setValue(false);
+            outs.tweening.setValue(true);
+            outs.start.set();
+            return true;
+        }
+
+    }
+
     update(context: IPulseContext)
     {
         const ins = this.ins;
-        const outs = this.outs;
 
         const states = this.states;
         const id = ins.id.value;
@@ -142,13 +161,7 @@ export default class CTweenMachine extends Component
             }
 
             if (ins.tween.changed) {
-                this._targetState = state;
-                this._currentValues = this.getCurrentValues();
-                this._startTime = context.secondsElapsed;
-                this._easingFunction = getEasingFunction(state.curve);
-                outs.switched.setValue(false);
-                outs.tweening.setValue(true);
-                outs.start.set();
+                this.tweenTo(id, context.secondsElapsed);
                 return true;
             }
             if (ins.recall.changed) {
