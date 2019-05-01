@@ -14,7 +14,7 @@ import TestComponent from "./TestComponent";
 export default function() {
     suite("Property", function() {
         const system = new System();
-        system.registry.registerComponentType(TestComponent);
+        system.registry.add(TestComponent);
 
         const node = system.graph.createNode("Test");
         const comp0 = node.createComponent(TestComponent, "one");
@@ -126,9 +126,7 @@ export default function() {
             const system = new System();
             const node = system.graph.createNode("Test");
             const comps = new Array(10).fill(null).map(el => {
-                const component = new TestComponent("1");
-                component.attach(node);
-                return component;
+                return node.createComponent(TestComponent);
             });
             const indices = [ 5, 7, 1, 0, 6, 9, 4, 8, 2, 3 ];
             for (let i = 1; i < indices.length; ++i) {

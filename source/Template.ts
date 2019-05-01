@@ -56,8 +56,9 @@ export default class Derived extends Base
         return false;
     }
 
-    tock()
+    tock(): boolean
     {
+        return false;
     }
 
     dispose()
