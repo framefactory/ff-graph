@@ -256,7 +256,7 @@ export default class CTweenMachine extends Component
 
         property.on<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
 
-        const isNumber = property.type === "number";
+        const isNumber = property.type === "number" && !property.schema.options;
         const isArray = property.isArray();
 
         this.targets.push({ property, isNumber, isArray });
@@ -270,8 +270,8 @@ export default class CTweenMachine extends Component
             this._currentValues.push(property.cloneValue());
         }
 
-        console.log("CTweenMachine.addTargetProperty - component: %s, property: %s",
-            (property.group.linkable as Component).displayName, property.path);
+        //console.log("CTweenMachine.addTargetProperty - component: %s, property: %s",
+        //    (property.group.linkable as Component).displayName, property.path);
     }
 
     removeTargetProperty(property: Property)
@@ -284,8 +284,8 @@ export default class CTweenMachine extends Component
 
         this.removeTarget(target);
 
-        console.log("CTweenMachine.removeTargetProperty - component: %s, property: %s",
-            (property.group.linkable as Component).displayName, property.path);
+        //console.log("CTweenMachine.removeTargetProperty - component: %s, property: %s",
+        //    (property.group.linkable as Component).displayName, property.path);
     }
 
     hasTargetProperty(property: Property)
@@ -309,7 +309,7 @@ export default class CTweenMachine extends Component
                 const property = this.getProperty(jsonTarget.id, jsonTarget.key);
                 return {
                     property,
-                    isNumber: !!property && property.type === "number",
+                    isNumber: !!property && property.type === "number" && !property.schema.options,
                     isArray: !!property && property.isArray(),
                 };
             });
