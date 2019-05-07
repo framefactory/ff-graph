@@ -150,7 +150,7 @@ export default class Property<T = any> extends Publisher
         this.emit<IPropertyDisposeEvent>({ type: "dispose", property: this });
     }
 
-    setValue(value: T, silent?: boolean)
+    setValue(value: T, silent?: boolean, noevent?: boolean)
     {
         this.value = value;
 
@@ -162,7 +162,10 @@ export default class Property<T = any> extends Publisher
             }
         }
 
-        this.emit("value", value);
+        // TODO: Demo hack
+        if (!noevent) {
+            this.emit("value", value);
+        }
 
         const outLinks = this.outLinks;
         for (let i = 0, n = outLinks.length; i < n; ++i) {
