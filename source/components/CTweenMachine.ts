@@ -269,9 +269,6 @@ export default class CTweenMachine extends Component
         if (this._currentValues) {
             this._currentValues.push(property.cloneValue());
         }
-
-        //console.log("CTweenMachine.addTargetProperty - component: %s, property: %s",
-        //    (property.group.linkable as Component).displayName, property.path);
     }
 
     removeTargetProperty(property: Property)
@@ -283,9 +280,6 @@ export default class CTweenMachine extends Component
         }
 
         this.removeTarget(target);
-
-        //console.log("CTweenMachine.removeTargetProperty - component: %s, property: %s",
-        //    (property.group.linkable as Component).displayName, property.path);
     }
 
     hasTargetProperty(property: Property)

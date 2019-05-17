@@ -496,7 +496,7 @@ export default class CHierarchy extends Component
         return super.toString() + ` - children: ${this.children.length}`;
     }
 
-    dump(indent: string)
+    dump(indent: string = "")
     {
         super.dump(indent);
 
