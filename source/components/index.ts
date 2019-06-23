@@ -35,7 +35,7 @@ export {
     CTweenMachine,
 };
 
-export const componentTypes = [
+export const components = [
     CComponentProvider,
     CController,
     CDocument,
