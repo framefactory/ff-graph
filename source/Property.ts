@@ -173,6 +173,19 @@ export default class Property<T = any> extends Publisher
         }
     }
 
+    setOption(option: string, silent?: boolean, noevent?: boolean)
+    {
+        if (!this.schema.options) {
+            throw new Error("not an 'option' type");
+        }
+
+        const value = this.schema.options.indexOf(option);
+        if (value >= 0) {
+            this.setValue(value as any, silent, noevent);
+        }
+
+    }
+
     copyValue(value: T, silent?: boolean)
     {
         if (Array.isArray(value)) {
