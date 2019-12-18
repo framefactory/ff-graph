@@ -124,6 +124,8 @@ export default function() {
 
         test("linking/sort", function() {
             const system = new System();
+            system.registry.add(TestComponent);
+
             const node = system.graph.createNode("Test");
             const comps = new Array(10).fill(null).map(el => {
                 return node.createComponent(TestComponent);
@@ -136,9 +138,11 @@ export default function() {
             }
             system.graph.sort();
             const sorted = system.graph.components.getArray();
-            assert.equal(sorted.length, comps.length);
+            console.log(sorted);
+            console.log(system.graph.components["_objLists"]["Component"]);
+            assert.equal(sorted.length, comps.length, "arrays have same length");
             for (let i = 0; i < comps.length; ++i) {
-                assert.equal(comps[indices[i]], sorted[i]);
+                assert.equal(comps[indices[i]], sorted[i], "correct sort order");
             }
         });
     });

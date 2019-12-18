@@ -49,7 +49,8 @@ const outs = {
 
 export default class TestComponent extends Component
 {
-    static readonly type: string = "TestComponent";
+    static readonly typeName: string = "TestComponent";
+
     static readonly isNodeSingleton: boolean = false;
 
     ins = this.addInputs(ins);
