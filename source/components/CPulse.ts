@@ -53,7 +53,7 @@ export default class CPulse extends Component
     private _secondsStopped: number;
     private _animHandler: number;
     private _pulseEvent: IPulseEvent;
-    private _systemUpdated = false;
+    private _tockUpdated = false;
 
     constructor(node: Node, id: string)
     {
@@ -99,23 +99,15 @@ export default class CPulse extends Component
         }
     }
 
-    // reset()
-    // {
-    //     const context = this.context;
-    //     context.time = new Date();
-    //     context.secondsElapsed = 0;
-    //     context.secondsDelta = 0;
-    //     context.frameNumber = 0;
-    //
-    //     this._secondsStarted = Date.now() * 0.001;
-    //     this._secondsStopped = this._secondsStarted;
-    // }
-
     pulse(milliseconds: number)
     {
-        const context = this.context;
-        const outs = this.outs;
+        const {
+            outs,
+            context,
+            _pulseEvent
+        } = this;
 
+        // update context
         context.time.setTime(milliseconds);
         const elapsed = milliseconds * 0.001 - this._secondsStarted;
         context.secondsDelta = elapsed - context.secondsElapsed;
@@ -125,10 +117,15 @@ export default class CPulse extends Component
         outs.time.setValue(context.secondsElapsed);
         outs.frame.setValue(context.frameNumber);
 
-        // indicate if system was updated either during current tick or previous tock
-        this._pulseEvent.systemUpdated = this.system.graph.tick(this.context) || this._systemUpdated;
-        this.emit<IPulseEvent>(this._pulseEvent);
-        this._systemUpdated = this.system.graph.tock(this.context);
+        // execute tick
+        const tickUpdated = this.system.graph.tick(context);
+
+        // emit pulse event
+        _pulseEvent.systemUpdated = tickUpdated || this._tockUpdated;
+        this.emit<IPulseEvent>(_pulseEvent);
+
+        // execute tock
+        this._tockUpdated = this.system.graph.tock(context);
     }
 
     protected onAnimationFrame()
