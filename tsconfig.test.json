@@ -2,19 +2,23 @@
     "compilerOptions": {
         "composite": true,
         "target": "ES6",
-        "module": "commonjs",
+        "module": "CommonJS",
         "experimentalDecorators": true,
-
-        "declaration": true,
         "sourceMap": true,
 
+        "outDir": "built/test",
         "rootDir": "test",
-        "outDir": "../../node_modules/@ff/test/graph"
+
+        "baseUrl": ".",
+        "paths": {
+            "@ff/graph/*": [ "source/*" ],
+            "@ff/core/*": [ "../ff-core/source/*" ]
+        }
     },
     "include": [
         "test/**/*"
     ],
     "references": [{
-        "path": "tsconfig.module.json"
+        "path": "tsconfig.json"
     }]
 }
