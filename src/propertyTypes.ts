@@ -58,7 +58,7 @@ export const makeType = function<T>(schema: IPropertySchema<T>, path: string, pr
     return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<T>;
 };
 
-export const makeEnumType = function<T>(enumeration: T, path: string, props: SchemaProps<PropOf<T>>) {
+export const makeEnumType = function<T extends object>(enumeration: T, path: string, props: SchemaProps<PropOf<T>>) {
     props = parseProps(props);
     const schema = { enum: enumeration, options: enumToArray(enumeration), preset: 0 as any as PropOf<T> };
     return { path, schema: props ? Object.assign({}, schema, props) : schema } as IPropertyTemplate<PropOf<T>>;
@@ -125,7 +125,7 @@ export const types = {
     Boolean: (path: string, props?: SchemaProps<boolean>) => makeType<boolean>(schemas.Boolean, path, props),
     String: (path: string, props?: SchemaProps<string>) => makeType<string>(schemas.String, path, props),
     AssetPath: (path: string, props?: SchemaProps<string>) => makeType<string>(schemas.AssetPath, path, props),
-    Enum: <T>(path: string, enumeration: T, props?: SchemaProps<PropOf<T>>) => makeEnumType(enumeration, path, props),
+    Enum: <T extends object>(path: string, enumeration: T, props?: SchemaProps<PropOf<T>>) => makeEnumType(enumeration, path, props),
     Option: (path: string, options: string[], props?: SchemaProps<number>) => makeOptionType(options, path, props),
     Object: <T>(path: string, type: TypeOf<T>, props?: SchemaProps<T>) => makeObjectType(type, path, props),
     Event: (path: string, props?: SchemaProps<number>) => makeType<number>(schemas.Event, path, props)

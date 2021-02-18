@@ -291,7 +291,7 @@ export default class CHierarchy extends Component
      * @param acrossGraphs When arriving at the root hierarchy component, continues traversal at the parent graph.
      * @param callback The callback function to execute for each visited component.
      */
-    traverseUp(includeThis: boolean, includeSiblings: boolean, acrossGraphs: boolean, callback: (component: Component) => boolean)
+    traverseUp(includeThis: boolean, includeSiblings: boolean, acrossGraphs: boolean, callback: (component: Component) => boolean | void)
     {
         if (includeThis) {
             if (includeSiblings) {
@@ -327,7 +327,7 @@ export default class CHierarchy extends Component
      * @param acrossGraphs Includes subgraphs in traversal.
      * @param callback The callback function to execute for each visited component.
      */
-    traverseDown(includeThis: boolean, includeSiblings: boolean, acrossGraphs: boolean, callback: (component: Component) => boolean)
+    traverseDown(includeThis: boolean, includeSiblings: boolean, acrossGraphs: boolean, callback: (component: Component) => boolean | void)
     {
         if (includeThis) {
             if (includeSiblings) {
