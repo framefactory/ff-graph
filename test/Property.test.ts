@@ -1,17 +1,18 @@
 /**
- * FF Typescript/React Foundation Library
+ * FF Typescript Foundation Library
  * Copyright 2022 Ralph Wiedemeier, Frame Factory GmbH
  *
  * License: MIT
  */
 
 import { assert } from "chai";
-import System from "@ff/graph/System";
-import TestComponent from "./TestComponent";
+
+import { System } from "@ffweb/graph/System.js";
+import { TestComponent } from "./TestComponent.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default function() {
+export function Property_test() {
     suite("Property", function() {
         const system = new System();
         system.registry.add(TestComponent);

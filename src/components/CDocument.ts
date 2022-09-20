@@ -5,13 +5,12 @@
  * License: MIT
  */
 
-import { types } from "../Component";
-
-import CGraph from "./CGraph";
+import { types } from "../Component.js";
+import { CGraph } from "./CGraph.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class CDocument extends CGraph
+export class CDocument extends CGraph
 {
     static readonly typeName: string = "CDocument";
 

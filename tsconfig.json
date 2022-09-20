@@ -1,23 +1,22 @@
 {
+    "extends": "./tsconfig.base.json",
+
     "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "NodeNext",
+
         "composite": true,
-        "target": "ES2020",
-        "module": "CommonJS",
-        "experimentalDecorators": true,
-        "sourceMap": true,
-
-        "outDir": "dist/exports",
-        "rootDir": "src",
-
-        "baseUrl": ".",
-        "paths": {
-            "@ff/core/*": [ "../core/src/*" ]
-        }
+        "declaration": true,
+        "declarationMap": true,
+        "declarationDir": "./build/types",
+        "outDir": "./build/esm",
+        "rootDir": "./src"
     },
     "include": [
-        "src/**/*"
+        "./src/**/*"
     ],
     "references": [
-        { "path": "../core" }
+        { "path": "../core/tsconfig.json" }
     ]
 }

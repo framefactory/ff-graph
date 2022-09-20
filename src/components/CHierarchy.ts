@@ -5,11 +5,11 @@
  * License: MIT
  */
 
-import { IPropagatingEvent, ITypedEvent } from "@ff/core/Publisher";
+import { IPropagatingEvent, ITypedEvent } from "@ffweb/core/Publisher.js";
 
-import Component, { ComponentOrType, IComponentEvent, types } from "../Component";
-import Node, { NodeOrType } from "../Node";
-import CGraph from "./CGraph";
+import { Component, ComponentOrType, IComponentEvent, types } from "../Component.js";
+import { Node, NodeOrType } from "../Node.js";
+import { CGraph } from "./CGraph.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -118,7 +118,7 @@ export interface IChildEvent extends ITypedEvent<"child">
  * - *"hierarchy"* - emits [[IHierarchyEvent]] if a hierarchy relation has changed in the component's tree line.
  * - *"child-component"* - emits [[IChildComponentEvent]] if a child component has been added or removed.
  */
-export default class CHierarchy extends Component
+export class CHierarchy extends Component
 {
     static readonly typeName: string = "CHierarchy";
 

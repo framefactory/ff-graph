@@ -5,13 +5,13 @@
  * License: MIT
  */
 
-import State from "./State";
-import Rule from "./Rule";
-import PropertyTrack from "./PropertyTrack";
+import { State } from "./State.js";
+import { Rule } from "./Rule.js";
+import { PropertyTrack } from "./PropertyTrack.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class Transition
+export class Transition
 {
     rules: Set<Rule>;
 

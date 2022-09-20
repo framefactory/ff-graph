@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import Node, { NodeOrType } from "../Node";
-import CHierarchy from "../components/CHierarchy";
+import { Node, NodeOrType } from "../Node.js";
+import { CHierarchy } from "../components/CHierarchy.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -83,8 +83,7 @@ const _findChildNode = (node: Node, name: string, recursive: boolean): Node | nu
 
 ////////////////////////////////////////////////////////////////////////////////
 
-
-export default class NHierarchy extends Node
+export class NHierarchy extends Node
 {
     static readonly typeName: string = "NHierarchy";
 

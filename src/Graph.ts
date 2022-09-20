@@ -5,19 +5,21 @@
  * License: MIT
  */
 
-import uniqueId from "@ff/core/uniqueId";
-import Publisher from "@ff/core/Publisher";
+import { uniqueId } from "@ffweb/core/uniqueId.js";
+import { Publisher } from "@ffweb/core/Publisher.js";
+import { ObjectRegistry } from "@ffweb/core/ObjectRegistry.js";
 
-import LinkableSorter from "./LinkableSorter";
-import Component, { ComponentOrType, IUpdateContext } from "./Component";
-import Node, { NodeOrType } from "./Node";
-import System from "./System";
+import { LinkableSorter } from "./LinkableSorter.js";
+import { Component, ComponentOrType, IUpdateContext } from "./Component.js";
+import { Node, NodeOrType } from "./Node.js";
+import { System } from "./System.js";
 
-import CHierarchy from "./components/CHierarchy";
-import CGraph from "./components/CGraph";
-import ObjectRegistry from "@ff/core/ObjectRegistry";
+import { CHierarchy } from "./components/CHierarchy.js";
+import { CGraph } from "./components/CGraph.js";
 
 ////////////////////////////////////////////////////////////////////////////////
+
+export { ObjectRegistry };
 
 /**
  * Graph in a graph/node/component system. A graph contains a collection of nodes.
@@ -28,7 +30,7 @@ import ObjectRegistry from "@ff/core/ObjectRegistry";
  * - [[Node]]
  * - [[System]]
  */
-export default class Graph extends Publisher
+export class Graph extends Publisher
 {
     /** The system this graph belongs to. */
     readonly system: System;

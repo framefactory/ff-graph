@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import { types } from "./propertyTypes";
-import Component from "./Component";
+import { types } from "./propertyTypes.js";
+import { Component } from "./Component.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +19,7 @@ export class Base extends Component
     });
 }
 
-export default class Derived extends Base
+export class Derived extends Base
 {
     static readonly type: string = "Derived";
 

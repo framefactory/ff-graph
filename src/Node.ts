@@ -5,15 +5,15 @@
  * License: MIT
  */
 
-import uniqueId from "@ff/core/uniqueId";
-import { Dictionary, TypeOf } from "@ff/core/types";
-import Publisher, { ITypedEvent } from "@ff/core/Publisher";
-import ObjectRegistry, { IObjectEvent } from "@ff/core/ObjectRegistry";
+import { uniqueId } from "@ffweb/core/uniqueId.js";
+import { Dictionary, TypeOf } from "@ffweb/core/types.js";
+import { Publisher, ITypedEvent } from "@ffweb/core/Publisher.js";
+import { ObjectRegistry, IObjectEvent } from "@ffweb/core/ObjectRegistry.js";
 
-import { ILinkable } from "./PropertyGroup";
-import Component, { ComponentOrType, IComponentEvent } from "./Component";
-import Graph from "./Graph";
-import CHierarchy, { IChildEvent } from "./components/CHierarchy";
+//import { ILinkable } from "./PropertyGroup";
+import { Component, ComponentOrType, IComponentEvent } from "./Component.js";
+import { Graph } from "./Graph.js";
+//import { CHierarchy, IChildEvent } from "./components/CHierarchy";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -57,7 +57,7 @@ export type NodeOrType<T extends Node = Node> = T | TypeOf<T> | string;
  * - [[Graph]]
  * - [[System]]
  */
-export default class Node extends Publisher
+export class Node extends Publisher
 {
     static readonly typeName: string = "Node";
 

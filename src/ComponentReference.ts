@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType } from "./Component";
-import System from "./System";
+import { Component, ComponentOrType } from "./Component.js";
+import { System } from "./System.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -14,7 +14,7 @@ import System from "./System";
  * Maintains a weak reference to a component.
  * The reference is set to null after the linked component is removed.
  */
-export default class ComponentReference<T extends Component = Component>
+export class ComponentReference<T extends Component = Component>
 {
     private _id: string;
     private readonly _typeName: string;

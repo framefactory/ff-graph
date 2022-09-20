@@ -5,9 +5,9 @@
  * License: MIT
  */
 
-import ObjectRegistry, { IObjectEvent } from "@ff/core/ObjectRegistry";
+import { ObjectRegistry, IObjectEvent } from "@ffweb/core/ObjectRegistry.js";
 
-import Component, { ComponentOrType } from "./Component";
+import { Component, ComponentOrType } from "./Component.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -16,7 +16,7 @@ import Component, { ComponentOrType } from "./Component";
  * Maintains a reference to the component if found and executes
  * callbacks if the component of the tracked type is added or removed.
  */
-export default class ComponentTracker<T extends Component = Component>
+export class ComponentTracker<T extends Component = Component>
 {
     /** The type of component to track. */
     readonly typeName: string;

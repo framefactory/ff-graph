@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import Component, { types, IUpdateContext, ITypedEvent, Node } from "../Component";
+import { Component, types, IUpdateContext, ITypedEvent, Node } from "../Component.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +35,7 @@ export interface IPulseEvent extends ITypedEvent<"pulse">
 /**
  * Generates a steady stream of events based on `window.requestAnimationFrame`.
  */
-export default class CPulse extends Component
+export class CPulse extends Component
 {
     static readonly typeName: string = "CPulse";
     static readonly isSystemSingleton: boolean = true;

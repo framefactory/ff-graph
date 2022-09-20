@@ -5,19 +5,19 @@
  * License: MIT
  */
 
-import Publisher from "@ff/core/Publisher";
-import ObjectRegistry from "@ff/core/ObjectRegistry";
-import TypeRegistry from "@ff/core/TypeRegistry";
+import { Publisher } from "@ffweb/core/Publisher.js";
+import { ObjectRegistry } from "@ffweb/core/ObjectRegistry.js";
+import { TypeRegistry } from "@ffweb/core/TypeRegistry.js";
 
-import Component, { ComponentOrType, IComponentEvent } from "./Component";
-import Node, { INodeEvent, NodeOrType } from "./Node";
-import Graph from "./Graph";
+import { Component, ComponentOrType, IComponentEvent } from "./Component.js";
+import { Node, INodeEvent, NodeOrType } from "./Node.js";
+import { Graph } from "./Graph.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { IComponentEvent, INodeEvent };
 
-export default class System extends Publisher
+export class System extends Publisher
 {
     readonly registry: TypeRegistry;
     readonly graph: Graph;

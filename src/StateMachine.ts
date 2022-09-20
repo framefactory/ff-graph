@@ -5,17 +5,17 @@
  * License: MIT
  */
 
-import Publisher from "@ff/core/Publisher";
+import { Publisher } from "@ffweb/core/Publisher.js";
 
-import State from "./State";
-import Transition from "./Transition";
-import Rule from "./Rule";
+import { State } from "./State.js";
+import { Transition } from "./Transition.js";
+import { Rule } from "./Rule.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 enum EMachineState { OnState, InTransition }
 
-export default class StateMachine extends Publisher
+export class StateMachine extends Publisher
 {
     private _activeState: State;
     private _activeTransition: Transition;

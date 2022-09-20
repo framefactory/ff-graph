@@ -5,17 +5,17 @@
  * License: MIT
  */
 
-import { ReturnType } from "@ff/core/types";
-import Commander from "@ff/core/Commander";
+import { ReturnType } from "@ffweb/core/types.js";
+import { Commander } from "@ffweb/core/Commander.js";
 
-import Component, { types } from "../Component";
+import { Component, types } from "../Component.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Commander, types  };
 export type Actions<T extends CController<any>> = ReturnType<T["createActions"]>;
 
-export default class CController<T extends CController<any>> extends Component
+export class CController<T extends CController<any>> extends Component
 {
     static readonly typeName: string = "CController";
     static readonly isSystemSingleton: boolean = true;

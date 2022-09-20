@@ -5,11 +5,12 @@
  * License: MIT
  */
 
-import { EEasingCurve, getEasingFunction } from "@ff/core/easing";
+import { EEasingCurve, getEasingFunction } from "@ffweb/core/easing.js";
 
-import { types } from "../propertyTypes";
-import { IPulseContext } from "./CPulse";
-import Component from "../Component";
+import { types } from "../propertyTypes.js";
+import { Component } from "../Component.js";
+
+import { IPulseContext } from "./CPulse.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -19,7 +20,7 @@ export enum ETimeBase { Relative, Absolute }
 export enum EInterpolationMode { Forward, Backward, Alternate }
 
 
-export default class COscillator extends Component
+export class COscillator extends Component
 {
     static readonly typeName: string = "COscillator";
 

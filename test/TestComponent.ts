@@ -1,12 +1,12 @@
 /**
- * FF Typescript/React Foundation Library
+ * FF Typescript Foundation Library
  * Copyright 2022 Ralph Wiedemeier, Frame Factory GmbH
  *
  * License: MIT
  */
 
-import Component, { IUpdateContext } from "@ff/graph/Component";
-import { types } from "@ff/graph/propertyTypes";
+import { Component, IUpdateContext } from "@ffweb/graph/Component.js";
+import { types } from "@ffweb/graph/propertyTypes.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -47,7 +47,7 @@ const outs = {
     obj0: types.Object("Test.Object0", Object)
 };
 
-export default class TestComponent extends Component
+export class TestComponent extends Component
 {
     static readonly typeName: string = "TestComponent";
 

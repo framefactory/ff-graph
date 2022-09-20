@@ -5,16 +5,16 @@
  * License: MIT
  */
 
-import { Dictionary, TypeOf } from "@ff/core/types";
-import Publisher, { ITypedEvent } from "@ff/core/Publisher";
-import { IObjectEvent } from "@ff/core/ObjectRegistry";
+import { Dictionary, TypeOf } from "@ffweb/core/types.js";
+import { Publisher, ITypedEvent } from "@ffweb/core/Publisher.js";
+import { IObjectEvent } from "@ffweb/core/ObjectRegistry.js";
 
-import Property, { types, IPropertySchema, IPropertyTemplate, PropertiesFromTemplates } from "./Property";
-import PropertyGroup, { ILinkable } from "./PropertyGroup";
-import ComponentTracker from "./ComponentTracker";
-import ComponentReference from "./ComponentReference";
-import Node, { NodeOrType } from "./Node";
-import System from "./System";
+import { Property, types, IPropertySchema, IPropertyTemplate, PropertiesFromTemplates } from "./Property.js";
+import { PropertyGroup, ILinkable } from "./PropertyGroup.js";
+import { ComponentTracker } from "./ComponentTracker.js";
+import { ComponentReference } from "./ComponentReference.js";
+import { Node, NodeOrType } from "./Node.js";
+import { System } from "./System.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -70,7 +70,7 @@ export type ComponentOrType<T extends Component = Component> = T | TypeOf<T> | s
  * - [[Graph]]
  * - [[System]]
  */
-export default class Component extends Publisher implements ILinkable
+export class Component extends Publisher implements ILinkable
 {
     static readonly typeName: string = "Component";
 

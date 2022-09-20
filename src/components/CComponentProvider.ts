@@ -5,11 +5,11 @@
  * License: MIT
  */
 
-import Component, { ComponentOrType, ITypedEvent } from "../Component";
+import { Component, ComponentOrType, ITypedEvent } from "../Component.js";
+import { Node } from "../Node.js";
 
-import Node from "../Node";
-import CGraph from "./CGraph";
-import CSelection, { INodeEvent, IComponentEvent } from "./CSelection";
+import { CGraph } from "./CGraph.js";
+import { CSelection, INodeEvent, IComponentEvent } from "./CSelection.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ export interface IScopedComponentsEvent extends ITypedEvent<"scoped-components">
  * ### Events
  * - *"active-component"* - Emits [[IActiveComponentEvent]] if the active component changes.
  */
-export default class CComponentProvider<T extends Component = Component> extends Component
+export class CComponentProvider<T extends Component = Component> extends Component
 {
     static readonly typeName: string = "CComponentProvider";
 

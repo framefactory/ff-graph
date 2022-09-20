@@ -5,8 +5,8 @@
  * License: MIT
  */
 
-import { TypeOf, PropOf, Dictionary } from "@ff/core/types";
-import { enumToArray } from "@ff/core/enum";
+import { TypeOf, PropOf, Dictionary } from "@ffweb/core/types.js";
+import { enumToArray } from "@ffweb/core/enum.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 

@@ -5,7 +5,7 @@
  * License: MIT
  */
 
-import NHierarchy from "./NHierarchy";
+import { NHierarchy } from "./NHierarchy.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 

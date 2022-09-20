@@ -5,14 +5,14 @@
  * License: MIT
  */
 
-import isSubclass from "@ff/core/isSubclass";
-import { Dictionary } from "@ff/core/types";
-import Publisher, { ITypedEvent } from "@ff/core/Publisher";
+import { isSubclass } from "@ffweb/core/isSubclass.js";
+import { Dictionary } from "@ffweb/core/types.js";
+import { Publisher, ITypedEvent } from "@ffweb/core/Publisher.js";
 
-import { ValueType, canConvert } from "./convert";
-import PropertyGroup, { ILinkable } from "./PropertyGroup";
-import PropertyLink from "./PropertyLink";
-import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTypes";
+import { ValueType, canConvert } from "./convert.js";
+import { PropertyGroup, ILinkable } from "./PropertyGroup.js";
+import { PropertyLink } from "./PropertyLink.js";
+import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTypes.js";
 
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +42,7 @@ export interface IPropertyDisposeEvent extends ITypedEvent<"dispose">
 /**
  * Linkable property.
  */
-export default class Property<T = any> extends Publisher
+export class Property<T = any> extends Publisher
 {
     value: T;
     changed: boolean;

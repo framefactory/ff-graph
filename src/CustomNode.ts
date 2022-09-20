@@ -5,13 +5,11 @@
  * License: MIT
  */
 
-import Node from "./Node";
+import { Node } from "./Node.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class CustomNode extends Node
+export class CustomNode extends Node
 {
     static readonly type: string = "CustomNode";
-
-
 }

@@ -5,18 +5,18 @@
  * License: MIT
  */
 
-import CComponentProvider from "./CComponentProvider";
-import CController from "./CController";
-import CDocument from "./CDocument";
-import CGraph from "./CGraph";
-import CHierarchy from "./CHierarchy";
-import CIns from "./CIns";
-import CNodeProvider from "./CNodeProvider";
-import COscillator from "./COscillator";
-import COuts from "./COuts";
-import CPulse from "./CPulse";
-import CSelection from "./CSelection";
-import CTweenMachine from "./CTweenMachine";
+import { CComponentProvider } from "./CComponentProvider.js";
+import { CController } from "./CController.js";
+import { CDocument } from "./CDocument.js";
+import { CGraph } from "./CGraph.js";
+import { CHierarchy } from "./CHierarchy.js";
+import { CIns } from "./CIns.js";
+import { CNodeProvider } from "./CNodeProvider.js";
+import { COscillator } from "./COscillator.js";
+import { COuts } from "./COuts.js";
+import { CPulse } from "./CPulse.js";
+import { CSelection } from "./CSelection.js";
+import { CTweenMachine } from "./CTweenMachine.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 

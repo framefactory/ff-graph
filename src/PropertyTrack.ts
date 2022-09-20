@@ -5,14 +5,14 @@
  * License: MIT
  */
 
-import AnimationTrack from "@ff/core/AnimationTrack";
-import SplineTrack from "@ff/core/SplineTrack";
+import { AnimationTrack, IKeyItem } from "@ffweb/core/AnimationTrack.js";
+import { SplineTrack } from "@ffweb/core/SplineTrack.js";
 
-import Property from "./Property";
+import { Property } from "./Property.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class PropertyTrack
+export class PropertyTrack
 {
     readonly property: Property;
     readonly tracks: AnimationTrack[];
@@ -81,7 +81,7 @@ export default class PropertyTrack
         }
     }
 
-    getKeys(index?: number) {
+    getKeys(index?: number): IKeyItem<any>[] {
         if (index >= 0) {
             return this.tracks[index].keys.items;
         }

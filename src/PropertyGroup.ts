@@ -5,11 +5,11 @@
  * License: MIT
  */
 
-import { Dictionary } from "@ff/core/types";
-import Publisher, { ITypedEvent } from "@ff/core/Publisher";
+import { Dictionary } from "@ffweb/core/types.js";
+import { Publisher, ITypedEvent } from "@ffweb/core/Publisher.js";
 
-import Property, { IPropertySchema, PropertiesFromTemplates } from "./Property";
-import uniqueId from "@ff/core/uniqueId";
+import { Property, IPropertySchema, PropertiesFromTemplates } from "./Property.js";
+import { uniqueId } from "@ffweb/core/uniqueId.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -51,7 +51,7 @@ export interface IPropertyGroupPropertyEvent extends ITypedEvent<"property">
  * ### Events
  * - *"change"* - emits [[IPropertiesChangeEvent]] after properties have been added, removed, or renamed.
  */
-export default class PropertyGroup extends Publisher
+export class PropertyGroup extends Publisher
 {
     linkable: ILinkable;
     properties: Property[];

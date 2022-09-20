@@ -5,12 +5,12 @@
  * License: MIT
  */
 
-import StateMachine from "./StateMachine";
-import Rule from "./Rule";
+import { StateMachine } from "./StateMachine.js";
+import { Rule } from "./Rule.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class State
+export class State
 {
     rules: Set<Rule>;
 

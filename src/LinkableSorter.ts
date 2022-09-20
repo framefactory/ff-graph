@@ -5,15 +5,15 @@
  * License: MIT
  */
 
-import { Dictionary } from "@ff/core/types";
-import { ILinkable } from "./PropertyGroup";
+import { Dictionary } from "@ffweb/core/types.js";
+import { ILinkable } from "./PropertyGroup.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Sorts an array of [[ILinkable]] such that if a is linked to b, a comes before b.
  */
-export default class LinkableSorter
+export class LinkableSorter
 {
     protected visited: Dictionary<boolean>;
     protected visiting: Dictionary<boolean>;

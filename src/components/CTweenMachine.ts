@@ -1,27 +1,18 @@
 /**
- * 3D Foundation Project
- * Copyright 2022 Smithsonian Institution
+ * FF Typescript Foundation Library
+ * Copyright 2022 Ralph Wiedemeier, Frame Factory GmbH
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * License: MIT
  */
 
-import { Dictionary } from "@ff/core/types";
-import { getEasingFunction, EEasingCurve } from "@ff/core/easing";
+import { Dictionary } from "@ffweb/core/types.js";
+import { uniqueId } from "@ffweb/core/uniqueId.js";
+import { getEasingFunction, EEasingCurve } from "@ffweb/core/easing.js";
 
-import Component, { types } from "../Component";
-import Property, { IPropertyDisposeEvent } from "../Property";
-import { IPulseContext } from "./CPulse";
-import uniqueId from "@ff/core/uniqueId";
+import { Component, types } from "../Component.js";
+import { Property, IPropertyDisposeEvent } from "../Property.js";
+
+import { IPulseContext } from "./CPulse.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -57,7 +48,7 @@ export interface ITargetEntry
     isArray: boolean;
 }
 
-export default class CTweenMachine extends Component
+export class CTweenMachine extends Component
 {
     static readonly typeName: string = "CTweenMachine";
 

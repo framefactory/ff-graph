@@ -5,15 +5,15 @@
  * License: MIT
  */
 
-import StateMachine from "./StateMachine";
-import State from "./State";
-import Transition from "./Transition";
+import { StateMachine } from "./StateMachine.js";
+import { State } from "./State.js";
+import { Transition } from "./Transition.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 enum ECondition { Always, Never, Idle, Targeted }
 
-export default class Rule
+export class Rule
 {
     machine: StateMachine;
     events: Set<string>;

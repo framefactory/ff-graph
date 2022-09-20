@@ -1,43 +1,56 @@
 {
-    "name": "@framefactory/graph",
-    "version": "2.1.0",
+    "name": "@ffweb/graph",
+    "version": "2.2.0",
+    "license": "MIT",
     "description": "FF Graph Typescript Foundation Library",
     "keywords": [
         "typescript",
         "graph",
         "entity-component-system"
     ],
-    "type": "commonjs",
-    "exports": {
-        "./": "./dist/exports/"
-    },
-    "scripts": {
-        "build": "tsc",
-        "clean": "(rimraf dist && mkdirp dist) || exit 1",
-        "test": "tsc -b test; mocha -c --ui tdd dist/test/test.js || exit 0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/framefactory/ff-graph.git"
-    },
+    "homepage": "https://github.com/framefactory/ff-graph#readme",
     "author": {
         "name": "Ralph Wiedemeier",
         "email": "opensource@framefactory.ch",
         "url": "https://github.com/framefactory"
     },
-    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/framefactory/ff-graph.git"
+    },
     "bugs": {
         "url": "https://github.com/framefactory/ff-graph/issues"
     },
-    "homepage": "https://github.com/framefactory/ff-graph#readme",
+    "type": "module",
+    "packageManager": "pnpm@7.12.1",
+    "files": [
+        "build/types/**/*",
+        "build/esm/**/*",
+        "build/cjs/**/*",
+        "src/**/*"
+    ],
+    "exports": {
+        "./*": {
+            "types": "./build/types/*",
+            "import": "./build/esm/*",
+            "require": "./build/cjs/*"
+        }
+    },
+    "scripts": {
+        "build": "pnpm build:cjs && pnpm build:esm",
+        "build:esm": "tsc -b tsconfig.json",
+        "build:cjs": "tsc -b tsconfig.cjs.json",
+        "clean": "rm -rf ./build",
+        "test": "rm -rf ./build/test && tsc -b test && mocha -c --ui tdd build/test/index.js"
+    },
+    "dependencies": {
+        "@ffweb/core": "workspace:*"
+    },
     "devDependencies": {
         "@types/chai": "^4.3.3",
         "@types/mocha": "^9.1.1",
         "chai": "^4.3.6",
-        "mkdirp": "^1.0.4",
         "mocha": "^10.0.0",
-        "module-alias": "^2.2.2",
-        "rimraf": "^3.0.2",
         "typescript": "^4.8.3"
     }
 }

@@ -5,18 +5,18 @@
  * License: MIT
  */
 
-import { ITypedEvent } from "@ff/core/Publisher";
-import Commander from "@ff/core/Commander";
-import ObjectRegistry from "@ff/core/ObjectRegistry";
+import { ITypedEvent } from "@ffweb/core/Publisher.js";
+import { Commander } from "@ffweb/core/Commander.js";
+import { ObjectRegistry } from "@ffweb/core/ObjectRegistry.js";
 
-import { types } from "../propertyTypes";
+import { types } from "../propertyTypes.js";
 
-import Component, { ComponentOrType, IComponentEvent } from "../Component";
-import Node, { INodeEvent, NodeOrType } from "../Node";
-import Graph from "../Graph";
+import { Component, ComponentOrType, IComponentEvent } from "../Component.js";
+import { Node, INodeEvent, NodeOrType } from "../Node.js";
+import { Graph } from "../Graph.js";
 
-import CGraph from "./CGraph";
-import CController, { Actions } from "./CController";
+import { CGraph } from "./CGraph.js";
+import { CController, Actions } from "./CController.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ export type SelectionActions = Actions<CSelection>;
  * - *<ComponentType>* - [[CSelection.selectedComponents]] emits an [[IComponentEvent]] if a component is selected/unselected.
  * - *<NodeType>* - [[CSelection.selectedNodes]] emits an [[INodeEvent]] if a node is selected/unselected.
  */
-export default class CSelection extends CController<CSelection>
+export class CSelection extends CController<CSelection>
 {
     static readonly typeName: string = "CSelection";
 

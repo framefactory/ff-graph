@@ -5,17 +5,17 @@
  * License: MIT
  */
 
-import Component, { types, ComponentOrType, IUpdateContext } from "../Component";
-import Graph from "../Graph";
+import { Component, types, ComponentOrType, IUpdateContext } from "../Component.js";
+import { Graph, ObjectRegistry } from "../Graph.js";
+import { Node, NodeOrType } from "../Node.js";
 
-import CHierarchy from "./CHierarchy";
-import Node, { NodeOrType } from "../Node";
+import { CHierarchy } from "./CHierarchy.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { Node, types };
 
-export default class CGraph extends Component
+export class CGraph extends Component
 {
     static readonly typeName: string = "CGraph";
 
@@ -34,16 +34,16 @@ export default class CGraph extends Component
         this._innerGraph = new Graph(this.system, this);
     }
 
-    get innerGraph() {
+    get innerGraph(): Graph {
         return this._innerGraph;
     }
-    get innerNodes() {
+    get innerNodes(): ObjectRegistry<Node> {
         return this._innerGraph.nodes;
     }
-    get innerComponents() {
+    get innerComponents(): ObjectRegistry<Component> {
         return this._innerGraph.components;
     }
-    get innerRoots() {
+    get innerRoots(): CHierarchy[] {
         return this._innerGraph.roots;
     }
 

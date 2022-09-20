@@ -5,12 +5,12 @@
  * License: MIT
  */
 
-import Component from "../Component";
-import Property, { IPropertySchema } from "../Property";
+import { Component } from "../Component.js";
+import { Property, IPropertySchema } from "../Property.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export default class COuts extends Component
+export class COuts extends Component
 {
     static readonly typeName: string = "COuts";
 

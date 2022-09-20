@@ -5,14 +5,14 @@
  * License: MIT
  */
 
-import Property from "./Property";
-import { getConversionFunction, getElementCopyFunction, getMultiCopyFunction } from "./convert";
+import { Property } from "./Property.js";
+import { getConversionFunction, getElementCopyFunction, getMultiCopyFunction } from "./convert.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 type ConversionFunction = (inVal: any, outVal: any) => any;
 
-export default class PropertyLink
+export class PropertyLink
 {
     source: Property;
     destination: Property;
