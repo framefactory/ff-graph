@@ -9,8 +9,15 @@ import { Dictionary, TypeOf } from "@ffweb/core/types.js";
 import { Publisher, ITypedEvent } from "@ffweb/core/Publisher.js";
 import { IObjectEvent } from "@ffweb/core/ObjectRegistry.js";
 
-import { Property, types, IPropertySchema, IPropertyTemplate, PropertiesFromTemplates } from "./Property.js";
-import { PropertyGroup, ILinkable } from "./PropertyGroup.js";
+import {
+    Property,
+    types,
+    type IPropertySchema,
+    type IPropertyTemplate,
+    type PropertiesFromTemplates
+} from "./Property.js";
+
+import { PropertyGroup, type ILinkable } from "./PropertyGroup.js";
 import { ComponentTracker } from "./ComponentTracker.js";
 import { ComponentReference } from "./ComponentReference.js";
 import { Node, NodeOrType } from "./Node.js";

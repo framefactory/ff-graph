@@ -38,8 +38,7 @@ export interface IPropertySchema<T = any>
 
 export type SchemaProps<T> = Partial<IPropertySchema<T>> | T;
 
-type Vector<T = number> = T[];
-type Matrix<T = number> = T[];
+export type Vector<T = number> = T[];
 
 export const labels = {
     xyzw: [ "X", "Y", "Z", "W" ],
