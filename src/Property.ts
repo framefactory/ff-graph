@@ -16,7 +16,7 @@ import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTy
 
 /////////////////////////////////////////////////////////////////////////////////
 
-export { schemas, types, IPropertySchema, IPropertyTemplate };
+export { schemas, types, type IPropertySchema, type IPropertyTemplate };
 
 export type PropertyFromTemplate<T> = T extends IPropertyTemplate<infer U> ? Property<U> : never;
 export type PropertiesFromTemplates<T> = { [P in keyof T]: PropertyFromTemplate<T[P]> };

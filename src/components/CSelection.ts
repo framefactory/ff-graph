@@ -20,7 +20,7 @@ import { CController, Actions } from "./CController.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { INodeEvent, IComponentEvent };
+export { type INodeEvent, type IComponentEvent };
 
 export interface IActiveGraphEvent extends ITypedEvent<"active-graph">
 {

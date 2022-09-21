@@ -15,7 +15,7 @@ import { Graph } from "./Graph.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IComponentEvent, INodeEvent };
+export { type IComponentEvent, type INodeEvent };
 
 export class System extends Publisher
 {

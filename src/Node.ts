@@ -17,11 +17,9 @@ import { Graph } from "./Graph.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { IComponentEvent }
+export { type IComponentEvent }
 
-export interface INodeEvent<T extends Node = Node> extends IObjectEvent<T>
-{
-}
+export type INodeEvent<T extends Node = Node> = IObjectEvent<T>;
 
 /**
  * Emitted by [[Node]] after the instance's state has changed.

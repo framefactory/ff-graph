@@ -18,16 +18,11 @@ import { System } from "./System.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { types, ITypedEvent, Node };
+export { Node, types, type ITypedEvent };
 
+export type IUpdateContext = any;
 
-export interface IUpdateContext
-{
-}
-
-export interface IComponentEvent<T extends Component = Component> extends IObjectEvent<T>
-{
-}
+export type IComponentEvent<T extends Component = Component> = IObjectEvent<T>;
 
 /**
  * Emitted by [[Component]] after the instance's state has changed.
@@ -94,10 +89,10 @@ export class Component extends Publisher implements ILinkable
     ins: PropertyGroup = new PropertyGroup(this);
     outs: PropertyGroup = new PropertyGroup(this);
 
-    changed: boolean = true;
-    updated: boolean = false;
+    changed = true;
+    updated = false;
 
-    private _name: string = "";
+    private _name = "";
     private _tags = new Set<string>();
     private _trackers: ComponentTracker[] = [];
 
@@ -202,15 +197,15 @@ export class Component extends Publisher implements ILinkable
         return (this.constructor as typeof Component).icon;
     }
 
+    get displayName() {
+        return this._name || this.text || this.displayTypeName;
+    }
+
     /**
      * Returns the name of this component.
      */
     get name() {
         return this._name;
-    }
-
-    get displayName() {
-        return this._name || this.text || this.displayTypeName;
     }
 
     /**
@@ -284,7 +279,7 @@ export class Component extends Publisher implements ILinkable
         return this.graph.isActive;
     }
 
-    getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+    getComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow = false) {
         return this.node.components.get(componentOrType, nothrow);
     }
 
@@ -292,7 +287,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.components.getArray(componentOrType);
     }
 
-    getComponentsByTag<T extends Component = Component>(tag: string) {
+    getComponentsByTag(tag: string): readonly Component[] {
         return this.node.components.getByTag(tag);
     }
 
@@ -309,7 +304,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.components.has(componentOrType);
     }
 
-    getGraphComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+    getGraphComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow = false) {
         return this.node.graph.components.get(componentOrType, nothrow);
     }
 
@@ -317,7 +312,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.graph.components.getArray(componentOrType);
     }
 
-    getGraphComponentsByTag<T extends Component = Component>(tag: string) {
+    getGraphComponentsByTag(tag: string): readonly Component[] {
         return this.node.graph.components.getByTag(tag);
     }
 
@@ -325,7 +320,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.graph.components.has(componentOrType);
     }
 
-    getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+    getMainComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow = false) {
         return this.node.system.graph.components.get(componentOrType, nothrow);
     }
 
@@ -333,7 +328,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.graph.components.getArray(componentOrType);
     }
 
-    getMainComponentsByTag<T extends Component = Component>(tag: string) {
+    getMainComponentsByTag(tag: string): readonly Component[] {
         return this.node.system.graph.components.getByTag(tag);
     }
 
@@ -341,7 +336,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.graph.components.has(componentOrType);
     }
 
-    getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow: boolean = false) {
+    getSystemComponent<T extends Component = Component>(componentOrType?: ComponentOrType<T>, nothrow = false) {
         return this.node.system.components.get(componentOrType, nothrow);
     }
 
@@ -349,7 +344,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.components.getArray(componentOrType);
     }
 
-    getSystemComponentsByTag<T extends Component = Component>(tag: string) {
+    getSystemComponentsByTag(tag: string): readonly Component[] {
         return this.node.system.components.getByTag(tag);
     }
 
@@ -361,7 +356,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.components.getById(id);
     }
 
-    getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+    getNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow = false) {
         return this.node.graph.nodes.get(nodeOrType, nothrow);
     }
 
@@ -369,7 +364,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.graph.nodes.getArray(nodeOrType);
     }
 
-    getNodesByTag<T extends Node = Node>(tag: string) {
+    getNodesByTag(tag: string): readonly Node[] {
         return this.node.graph.nodes.getByTag(tag);
     }
 
@@ -377,7 +372,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.graph.nodes.has(nodeOrType);
     }
 
-    getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+    getMainNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow = false) {
         return this.node.system.graph.nodes.get(nodeOrType, nothrow);
     }
 
@@ -385,7 +380,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.graph.nodes.getArray(nodeOrType);
     }
 
-    getMainNodesByTag<T extends Node = Node>(tag: string) {
+    getMainNodesByTag(tag: string): readonly Node[] {
         return this.node.system.graph.nodes.getByTag(tag);
     }
 
@@ -393,7 +388,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.graph.nodes.has(nodeOrType);
     }
 
-    getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow: boolean = false) {
+    getSystemNode<T extends Node = Node>(nodeOrType?: NodeOrType<T>, nothrow = false) {
         return this.node.system.nodes.get(nodeOrType, nothrow);
     }
 
@@ -401,7 +396,7 @@ export class Component extends Publisher implements ILinkable
         return this.node.system.nodes.getArray(nodeOrType);
     }
 
-    getSystemNodesByTag<T extends Node = Node>(tag: string) {
+    getSystemNodesByTag(tag: string): readonly Node[] {
         return this.node.system.nodes.getByTag(tag);
     }
 
@@ -415,6 +410,7 @@ export class Component extends Publisher implements ILinkable
 
     activate()
     {
+        // optional override
     }
 
     /**
@@ -423,7 +419,7 @@ export class Component extends Publisher implements ILinkable
      * @param context Information about the current update cycle.
      * @returns True if the state of the component has changed.
      */
-    update(context: IUpdateContext): boolean
+    update(_context: IUpdateContext): boolean
     {
         throw new Error("this should never be called");
     }
@@ -434,7 +430,7 @@ export class Component extends Publisher implements ILinkable
      * @param context Information about the current update cycle.
      * @returns True if the state of the component has changed.
      */
-    tick(context: IUpdateContext): boolean
+    tick(_context: IUpdateContext): boolean
     {
         throw new Error("this should never be called");
     }
@@ -446,13 +442,14 @@ export class Component extends Publisher implements ILinkable
      * @param context Information about the current update cycle.
      * @returns True if the state of the component has changed.
      */
-    tock(context: IUpdateContext): boolean
+    tock(_context: IUpdateContext): boolean
     {
         throw new Error("this should never be called");
     }
 
     deactivate()
     {
+        // optional override
     }
 
     requestSort()
@@ -543,7 +540,7 @@ export class Component extends Publisher implements ILinkable
         return `${this.typeName}${this.name ? " (" + this.name + ")" : ""}`;
     }
 
-    dump(indent: string = "")
+    dump(indent = "")
     {
         console.log(indent + `%cComponent '${this.typeName}' (${this.displayName})`, "color: green");
         this.ins.properties.forEach(prop => prop.dump(indent + "  IN  "));
@@ -552,7 +549,7 @@ export class Component extends Publisher implements ILinkable
 
     toJSON()
     {
-        let json: any = {};
+        const json: any = {};
 
         const jsonIns = this.ins.toJSON();
         if (jsonIns) {
@@ -594,7 +591,7 @@ export class Component extends Publisher implements ILinkable
         return this.ins.createCustomProperty(path, schema, index);
     }
 
-    allowCustomInput(schema: IPropertySchema): boolean
+    allowCustomInput(_schema: IPropertySchema): boolean
     {
         return false;
     }
@@ -604,7 +601,7 @@ export class Component extends Publisher implements ILinkable
         return this.outs.createCustomProperty(path, schema, index);
     }
 
-    allowCustomOutput(schema: IPropertySchema): boolean
+    allowCustomOutput(_schema: IPropertySchema): boolean
     {
         return false;
     }
