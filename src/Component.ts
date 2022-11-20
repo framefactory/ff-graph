@@ -17,7 +17,7 @@ import {
     type PropertiesFromTemplates
 } from "./Property.js";
 
-import { PropertyGroup, type ILinkable } from "./PropertyGroup.js";
+import { PropertySocketGroup, type ILinkable } from "./PropertySocketGroup.js";
 import { ComponentTracker } from "./ComponentTracker.js";
 import { ComponentReference } from "./ComponentReference.js";
 import { Node, NodeOrType } from "./Node.js";
@@ -93,8 +93,8 @@ export class Component extends Publisher implements ILinkable
     readonly id: string;
     readonly node: Node;
 
-    ins: PropertyGroup = new PropertyGroup(this);
-    outs: PropertyGroup = new PropertyGroup(this);
+    ins = new PropertySocketGroup(this);
+    outs = new PropertySocketGroup(this);
 
     changed = true;
     updated = false;
@@ -459,7 +459,7 @@ export class Component extends Publisher implements ILinkable
         // optional override
     }
 
-    requestSort()
+    topologyChanged()
     {
         this.graph.requestSort();
     }
@@ -619,7 +619,7 @@ export class Component extends Publisher implements ILinkable
      * @param index Optional index at which to insert the new properties.
      */
     protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
-    (templates: U, index?: number) : PropertyGroup & T["ins"] & PropertiesFromTemplates<U>
+    (templates: U, index?: number) : PropertySocketGroup & T["ins"] & PropertiesFromTemplates<U>
     {
         return this.ins.createProperties(templates, index) as any;
     }
@@ -630,7 +630,7 @@ export class Component extends Publisher implements ILinkable
      * @param index Optional index at which to insert the new properties.
      */
     protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
-    (templates: U, index?: number) : PropertyGroup & T["outs"] & PropertiesFromTemplates<U>
+    (templates: U, index?: number) : PropertySocketGroup & T["outs"] & PropertiesFromTemplates<U>
     {
         return this.outs.createProperties(templates, index) as any;
     }

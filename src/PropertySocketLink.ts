@@ -5,17 +5,17 @@
  * License: MIT
  */
 
-import { Property } from "./Property.js";
+import { PropertySocket } from "./PropertySocket.js";
 import { getConversionFunction, getElementCopyFunction, getMultiCopyFunction } from "./convert.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 type ConversionFunction = (inVal: any, outVal: any) => any;
 
-export class PropertyLink
+export class PropertySocketLink
 {
-    source: Property;
-    destination: Property;
+    source: PropertySocket;
+    destination: PropertySocket;
 
     sourceIndex: number | undefined;
     destinationIndex: number | undefined;
@@ -23,7 +23,7 @@ export class PropertyLink
     protected fnConvert: ConversionFunction;
     protected fnCopy: (inVal: any, outVal: any, fnConvert: ConversionFunction) => any;
 
-    constructor(source: Property, destination: Property, sourceIndex?: number, destinationIndex?: number)
+    constructor(source: PropertySocket, destination: PropertySocket, sourceIndex?: number, destinationIndex?: number)
     {
         if (source.elementCount === 1 && sourceIndex >= 0) {
             throw new Error("non-array source property; can't link to element");

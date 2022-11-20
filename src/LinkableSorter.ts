@@ -6,7 +6,7 @@
  */
 
 import { Dictionary } from "@ffweb/core/types.js";
-import { ILinkable } from "./PropertyGroup.js";
+import { ILinkable } from "./SocketGroup.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -53,17 +53,17 @@ export class LinkableSorter
         visiting[linkable.id] = true;
 
         // for each in/out property, follow all outgoing links
-        const outProps = linkable.outs.properties.concat(linkable.ins.properties);
+        const outProps = linkable.outs.sockets.concat(linkable.ins.sockets);
 
         for (let i0 = 0, n0 = outProps.length; i0 < n0; ++i0) {
             const outLinks = outProps[i0].outLinks;
             for (let i1 = 0, n1 = outLinks.length; i1 < n1; ++i1) {
                 const ins = outLinks[i1].destination.group;
 
-                // follow outgoing links at input properties
-                const inProps = ins.properties;
-                for (let i2 = 0, n2 = inProps.length; i2 < n2; ++i2) {
-                    const links = inProps[i2].outLinks;
+                // follow outgoing links at input sockets
+                const inSocks = ins.sockets;
+                for (let i2 = 0, n2 = inSocks.length; i2 < n2; ++i2) {
+                    const links = inSocks[i2].outLinks;
                     for (let i3 = 0, n3 = links.length; i3 < n3; ++i3) {
                         const linkedIns = links[i3].destination.group;
                         this.visit(linkedIns.linkable);
