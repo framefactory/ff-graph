@@ -351,7 +351,7 @@ export class Graph extends Publisher
             node.createComponents();
 
             // TODO: Temporarily disabled
-            node.unlock();
+            node.unfreeze();
 
             // prohibit adding/removing components
             //node.lock();
@@ -375,7 +375,7 @@ export class Graph extends Publisher
         }
 
         // allow adding/removing components
-        node.unlock();
+        node.unfreeze();
 
         return node;
     }

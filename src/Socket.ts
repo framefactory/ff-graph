@@ -56,7 +56,6 @@ export class Socket extends Publisher
         this.inLinks = [];
         this.outLinks = [];
 
-
         this._path = path;
     }
 

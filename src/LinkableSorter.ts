@@ -52,7 +52,7 @@ export class LinkableSorter
 
         visiting[linkable.id] = true;
 
-        // for each in/out property, follow all outgoing links
+        // for each in/out socket, follow all outgoing links
         const outProps = linkable.outs.sockets.concat(linkable.ins.sockets);
 
         for (let i0 = 0, n0 = outProps.length; i0 < n0; ++i0) {

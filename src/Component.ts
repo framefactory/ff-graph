@@ -10,12 +10,12 @@ import { Publisher, ITypedEvent } from "@ffweb/core/Publisher.js";
 import { IObjectEvent } from "@ffweb/core/ObjectRegistry.js";
 
 import {
-    Property,
+    PropertySocket,
     types,
     type IPropertySchema,
     type IPropertyTemplate,
     type PropertiesFromTemplates
-} from "./Property.js";
+} from "./PropertySocket.js";
 
 import { PropertySocketGroup, type ILinkable } from "./PropertySocketGroup.js";
 import { ComponentTracker } from "./ComponentTracker.js";
@@ -193,7 +193,7 @@ export class Component extends Publisher implements ILinkable
     }
     get displayTypeName() {
         const typeName = this.typeName;
-        return typeName === "Component" ? typeName : typeName.substr(1);
+        return typeName === "Component" ? typeName : typeName.substring(1);
     }
 
     get text() {
@@ -489,10 +489,10 @@ export class Component extends Publisher implements ILinkable
     /**
      * Removes links from all input and output properties.
      */
-    unlinkAllProperties()
+    unlinkAllSockets()
     {
-        this.ins.unlinkAllProperties();
-        this.outs.unlinkAllProperties();
+        this.ins.unlinkAllSockets();
+        this.outs.unlinkAllSockets();
     }
 
     /**
@@ -592,7 +592,7 @@ export class Component extends Publisher implements ILinkable
         }
     }
 
-    addCustomInput(path: string, schema: IPropertySchema, index?: number): Property
+    addCustomInput(path: string, schema: IPropertySchema, index?: number): PropertySocket
     {
         this.changed = true;
         return this.ins.createCustomProperty(path, schema, index);
@@ -603,7 +603,7 @@ export class Component extends Publisher implements ILinkable
         return false;
     }
 
-    addCustomOutput(path: string, schema: IPropertySchema, index?: number): Property
+    addCustomOutput(path: string, schema: IPropertySchema, index?: number): PropertySocket
     {
         return this.outs.createCustomProperty(path, schema, index);
     }

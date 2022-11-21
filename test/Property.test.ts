@@ -8,26 +8,32 @@
 import { assert } from "chai";
 
 import { System } from "@ffweb/graph/System.js";
-import { TestComponent } from "./TestComponent.js";
+import { CTest } from "./CTest.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export function Property_test() {
     suite("Property", function() {
         const system = new System();
-        system.registry.add(TestComponent);
+        system.registry.add(CTest);
 
         const node = system.graph.createNode("Test");
-        const comp0 = node.createComponent(TestComponent, "one");
-        const comp1 = node.createComponent(TestComponent, "two");
-        const comp2 = node.createComponent(TestComponent, "three");
+        const comp0 = node.createComponent(CTest, "one");
+        const comp1 = node.createComponent(CTest, "two");
+        const comp2 = node.createComponent(CTest, "three");
 
         test("construction/path", function() {
             const ins = comp0.ins;
-            assert.strictEqual(ins.num0.path, "Test.Number0");
-            assert.strictEqual(ins.vec3.path, "Test.Vector3");
-            assert.strictEqual(ins.obj0.path, "Test.Object0");
+            assert.strictEqual(ins.num0.path, "TestPath.Number0");
+            assert.strictEqual(ins.vec3.path, "TestPath.Vector3");
+            assert.strictEqual(ins.obj0.path, "TestPath.Object0");
         });
+
+        test("construction/kind", function() {
+            const ins = comp0.ins;
+            assert.strictEqual(ins.num0.kind, "property");
+            assert.strictEqual(ins.obj0.kind, "property");
+        })
 
         test("construction/preset", function() {
             const ins = comp0.ins;
@@ -88,15 +94,15 @@ export function Property_test() {
             assert.deepStrictEqual(comp1.ins.vec3.value, [ 21, 22, 23 ]);
 
             assert.isTrue(comp0.outs.str1.canLinkTo(comp1.ins.str0));
-            assert.strictEqual(comp0.outs.str1.value, "Hello");
-            assert.strictEqual(comp1.ins.str0.value, "");
+            assert.strictEqual(comp0.outs.str1.value, "Hello", "out before linking");
+            assert.strictEqual(comp1.ins.str0.value, "", "in before linking");
             comp0.outs.str1.linkTo(comp1.ins.str0);
-            assert.strictEqual(comp1.ins.str0.value, "Hello");
+            assert.strictEqual(comp1.ins.str0.value, "Hello", "in after linking");
             comp0.outs.str1.setValue("World");
-            assert.strictEqual(comp1.ins.str0.value, "World");
+            assert.strictEqual(comp1.ins.str0.value, "World", "in after setting out");
 
-            comp0.unlinkAllProperties();
-            comp1.unlinkAllProperties();
+            comp0.unlinkAllSockets();
+            comp1.unlinkAllSockets();
         });
 
         test("linking/conversion", function() {
@@ -125,23 +131,25 @@ export function Property_test() {
 
         test("linking/sort", function() {
             const system = new System();
-            system.registry.add(TestComponent);
+            system.registry.add(CTest);
 
             const node = system.graph.createNode("Test");
-            const comps = new Array(10).fill(null).map(el => {
-                return node.createComponent(TestComponent);
-            });
+            const comps = [];
+            for (let i = 0; i < 10; ++i) {
+                comps.push(node.createComponent(CTest, `CTest${i}`));
+            }
+
             const indices = [ 5, 7, 1, 0, 6, 9, 4, 8, 2, 3 ];
             for (let i = 1; i < indices.length; ++i) {
                 const c0 = comps[indices[i - 1]];
                 const c1 = comps[indices[i]];
                 c0.outs.num0.linkTo(c1.ins.num0);
             }
+
             system.graph.sort();
-            const sorted = system.graph.components.getArray();
-            console.log(sorted);
-            console.log(system.graph.components["_objLists"]["Component"]);
+            const sorted = system.graph["_sortedList"];
             assert.equal(sorted.length, comps.length, "arrays have same length");
+
             for (let i = 0; i < comps.length; ++i) {
                 assert.equal(comps[indices[i]], sorted[i], "correct sort order");
             }

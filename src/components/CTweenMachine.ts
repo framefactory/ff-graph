@@ -10,7 +10,7 @@ import { uniqueId } from "@ffweb/core/uniqueId.js";
 import { getEasingFunction, EEasingCurve } from "@ffweb/core/easing.js";
 
 import { Component, types } from "../Component.js";
-import { Property, IPropertyDisposeEvent } from "../Property.js";
+import { PropertySocket, ISocketDisposeEvent } from "../PropertySocket.js";
 
 import { IPulseContext } from "./CPulse.js";
 
@@ -43,7 +43,7 @@ export interface ITweenTarget
 
 export interface ITargetEntry
 {
-    property: Property;
+    property: PropertySocket;
     isNumber: boolean;
     isArray: boolean;
 }
@@ -235,7 +235,7 @@ export class CTweenMachine extends Component
         return true;
     }
 
-    addTargetProperty(property: Property)
+    addTargetProperty(property: PropertySocket)
     {
         if (property.type === "object" || property.schema.event) {
             throw new Error("can't add object or event properties");
@@ -245,7 +245,7 @@ export class CTweenMachine extends Component
             throw new Error("can't add, target already exists");
         }
 
-        property.on<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
+        property.on<ISocketDisposeEvent>("dispose", this.onPropertyDispose, this);
 
         const isNumber = property.type === "number" && !property.schema.options;
         const isArray = property.isArray();
@@ -262,7 +262,7 @@ export class CTweenMachine extends Component
         }
     }
 
-    removeTargetProperty(property: Property)
+    removeTargetProperty(property: PropertySocket)
     {
         const target = this.getTarget(property);
 
@@ -273,7 +273,7 @@ export class CTweenMachine extends Component
         this.removeTarget(target);
     }
 
-    hasTargetProperty(property: Property)
+    hasTargetProperty(property: PropertySocket)
     {
         return !!this.getTarget(property);
     }
@@ -342,11 +342,11 @@ export class CTweenMachine extends Component
         return this.targets.map(target => target.property);
     }
 
-    protected onPropertyDispose(event: IPropertyDisposeEvent)
+    protected onPropertyDispose(event: ISocketDisposeEvent)
     {
-        event.property.off<IPropertyDisposeEvent>("dispose", this.onPropertyDispose, this);
+        event.socket.off<ISocketDisposeEvent>("dispose", this.onPropertyDispose, this);
 
-        const target = this.getTarget(event.property);
+        const target = this.getTarget(event.socket as PropertySocket);
         this.removeTarget(target);
     }
 
@@ -369,12 +369,12 @@ export class CTweenMachine extends Component
         }
     }
 
-    protected getTarget(property: Property)
+    protected getTarget(property: PropertySocket)
     {
         return this.targets.find(target => target.property === property);
     }
 
-    protected getProperty(componentId: string, propertyKey: string): Property | undefined
+    protected getProperty(componentId: string, propertyKey: string): PropertySocket | undefined
     {
         const component = this.system.components.getById(componentId);
         if (!component) {

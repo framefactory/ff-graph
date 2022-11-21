@@ -77,16 +77,18 @@ export class Node extends Publisher
 
     private _name: string = "";
     private _tags = new Set<string>();
-    private _isLocked: boolean = undefined;
+    private _isFrozen: boolean = undefined;
 
     /**
-     * Protected constructor. Please use [[Graph.createNode]] / [[Graph.createCustomNode]] to create node instances.
+     * Protected constructor. Use {@link Graph.createNode} or
+     * {@link Graph.createCustomNode} to create node instances.
      * @param graph
-     * @param id Unique id for the node. A unique id is usually created automatically,
-     * do not specify except while de-serializing the component.
+     * @param id Unique id for the node. A unique id is usually created
+     * automatically, do not specify except while de-serializing the component.
      *
-     * Note that during execution of the constructor, the node is not yet attached to a graph/system.
-     * Do not try to get access to other nodes, components, the parent graph, or the system here.
+     * Note that during execution of the constructor, the node is not yet attached
+     * to a graph/system. Do not try to get access to other nodes, components,
+     * the parent graph, or the system here.
      */
     constructor(graph: Graph, id: string)
     {
@@ -104,11 +106,11 @@ export class Node extends Publisher
     }
     get displayTypeName() {
         const typeName = this.typeName;
-        return typeName === "Node" ? typeName : typeName.substr(1);
+        return typeName === "Node" ? typeName : typeName.substring(1);
     }
 
-    get isLocked() {
-        return this._isLocked;
+    get isFrozen() {
+        return this._isFrozen;
     }
 
     get text() {
@@ -302,18 +304,22 @@ export class Node extends Publisher
         return this.graph.system.nodes.getById(id);
     }
 
-    lock()
+    /**
+     * If a node is frozen, no components can be added or removed. Node types with
+     * a predefined set of components usually are frozen.
+     */
+    freeze()
     {
-        if (this._isLocked === false) {
-            throw new Error("can't lock an unlocked node again");
+        if (this._isFrozen === false) {
+            throw new Error("can't freeze an unfrozen node again");
         }
 
-        this._isLocked = true;
+        this._isFrozen = true;
     }
 
-    unlock()
+    unfreeze()
     {
-        this._isLocked = false;
+        this._isFrozen = false;
     }
 
     /**
@@ -372,8 +378,8 @@ export class Node extends Publisher
      */
     createComponent<T extends Component>(componentOrType: ComponentOrType<T>, name?: string, id?: string): T
     {
-        if (this._isLocked === true) {
-            throw new Error("node is locked, can't create component");
+        if (this._isFrozen === true) {
+            throw new Error("node is frozen, can't create component");
         }
 
         const type = this.system.registry.getType(componentOrType);
@@ -444,8 +450,8 @@ export class Node extends Publisher
         const json: any = {};
         const jsonComponents = [];
 
-        if (this._isLocked) {
-            json.locked = true;
+        if (this._isFrozen) {
+            json.frozen = true;
         }
 
         const components = this.components.getArray();
@@ -478,7 +484,7 @@ export class Node extends Publisher
      */
     fromJSON(json)
     {
-        this._isLocked = !!json.locked;
+        this._isFrozen = !!json.frozen || !!json.locked;
 
         if (json.components) {
             json.components.forEach(jsonComp => this.componentFromJSON(jsonComp));

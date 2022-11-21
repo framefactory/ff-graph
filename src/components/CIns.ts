@@ -6,7 +6,7 @@
  */
 
 import { Component } from "../Component.js";
-import { Property, IPropertySchema } from "../Property.js";
+import { PropertySocket, IPropertySchema } from "../PropertySocket.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -14,7 +14,7 @@ export class CIns extends Component
 {
     static readonly typeName: string = "CIns";
 
-    protected customOuts: Property[] = [];
+    protected customOuts: PropertySocket[] = [];
 
     update(context)
     {

@@ -13,15 +13,21 @@ import { schemas, types, IPropertySchema, IPropertyTemplate } from "./propertyTy
 
 import { PropertySocketLink } from "./PropertySocketLink.js";
 import { ILinkable } from "./PropertySocketGroup.js";
-import { Socket, ISocketChangeEvent } from "./Socket.js";
+
+import {
+    Socket,
+    type ISocketChangeEvent,
+    type ISocketLinkEvent,
+    type ISocketDisposeEvent
+} from "./Socket.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export { schemas, types, type IPropertySchema, type IPropertyTemplate };
+export { ISocketChangeEvent, ISocketLinkEvent, ISocketDisposeEvent };
 
 export type PropertyFromTemplate<T> = T extends IPropertyTemplate<infer U> ? PropertySocket<U> : never;
 export type PropertiesFromTemplates<T> = { [P in keyof T]: PropertyFromTemplate<T[P]> };
-
 
 export class PropertySocket<T = unknown> extends Socket
 {
@@ -37,6 +43,7 @@ export class PropertySocket<T = unknown> extends Socket
     constructor(path: string, schema: IPropertySchema<T>, custom?: boolean)
     {
         super(path, "property", custom);
+        this.addEvent("value");
 
         if (!schema || schema.preset === undefined) {
             throw new Error("missing schema/preset");
@@ -276,6 +283,20 @@ export class PropertySocket<T = unknown> extends Socket
         this.removeInLink(link);
 
         return true;
+    }
+
+    addOutLink(link: PropertySocketLink)
+    {
+        super.addOutLink(link);
+        link.push();
+    }
+
+    removeInLink(link: PropertySocketLink)
+    {
+        super.removeInLink(link);
+        if (this.inLinks.length === 0 && this.type === "object") {
+            this.reset();
+        }
     }
 
     canLinkTo(destination: PropertySocket, sourceIndex?: number, destinationIndex?: number): boolean

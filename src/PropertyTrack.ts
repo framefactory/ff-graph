@@ -8,16 +8,16 @@
 import { AnimationTrack, IKeyItem } from "@ffweb/core/AnimationTrack.js";
 import { SplineTrack } from "@ffweb/core/SplineTrack.js";
 
-import { Property } from "./Property.js";
+import { PropertySocket } from "./PropertySocket.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
 export class PropertyTrack
 {
-    readonly property: Property;
+    readonly property: PropertySocket;
     readonly tracks: AnimationTrack[];
 
-    constructor(property: Property)
+    constructor(property: PropertySocket)
     {
         this.property = property;
         this.tracks = [];
