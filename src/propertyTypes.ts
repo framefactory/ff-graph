@@ -13,6 +13,7 @@ import { enumToArray } from "@ffweb/core/enum.js";
 export interface IPropertyTemplate<T = any>
 {
     path: string;
+    kind?: string;
     schema: IPropertySchema<T>;
 }
 
@@ -34,6 +35,7 @@ export interface IPropertySchema<T = any>
     event?: boolean;
     static?: boolean; // not linkable if true
     semantic?: string;
+    kind?: string; // socket kind, defaults to "property"
 }
 
 export type SchemaProps<T> = Partial<IPropertySchema<T>> | T;
@@ -52,6 +54,10 @@ const parseProps = function<T>(props: SchemaProps<T>) {
 
     return { preset: props } as SchemaProps<T>;
 };
+
+export const makeSocket = function(kind: string, path: string) {
+    return { path, kind } as IPropertyTemplate<never>;
+}
 
 export const makeType = function<T>(schema: IPropertySchema<T>, path: string, props: SchemaProps<T>) {
     props = parseProps(props);

@@ -38,7 +38,7 @@ export class COuts extends Component
     {
         const property = super.addCustomInput(path, schema, index);
         this.graph.parent.outs.createProperty(path, schema, property.key, index);
-        this.customIns = this.ins.customProperties;
+        this.customIns = this.ins.customSockets as PropertySocket[];
         return property;
     }
 
@@ -53,7 +53,7 @@ export class COuts extends Component
 
         const outerComponent = this.graph.parent;
         if (outerComponent) {
-            this.customIns = this.ins.customProperties;
+            this.customIns = this.ins.customSockets as PropertySocket[];
             this.customIns.forEach(property => {
                 outerComponent.outs.createProperty(property.path, property.schema, property.key);
             });

@@ -39,7 +39,7 @@ export class CIns extends Component
     {
         const property = super.addCustomOutput(path, schema, index);
         this.graph.parent.ins.createProperty(path, schema, property.key, index);
-        this.customOuts = this.outs.customProperties;
+        this.customOuts = this.outs.customSockets as PropertySocket[];
         return property;
     }
 
@@ -54,7 +54,7 @@ export class CIns extends Component
 
         const outerComponent = this.graph.parent;
         if (outerComponent) {
-            this.customOuts = this.outs.customProperties;
+            this.customOuts = this.outs.customSockets as PropertySocket[];
             this.customOuts.forEach(property => {
                 outerComponent.ins.createProperty(property.path, property.schema, property.key);
             });

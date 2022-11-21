@@ -8,20 +8,15 @@
 import { Dictionary } from "@ffweb/core/types.js";
 
 import { Socket } from "./Socket.js";
-import { PropertySocket, IPropertySchema, PropertiesFromTemplates } from "./PropertySocket.js";
+import { PropertySocket, IPropertySchema, type PropertiesFromTemplates } from "./PropertySocket.js";
 import { SocketGroup, type ILinkable } from "./SocketGroup.js";
 
 ////////////////////////////////////////////////////////////////////////////////
 
-export { ILinkable };
+export { type ILinkable };
 
 /**
- * A set of property sockets. Sockets can be linked, such that one property updates another.
- * After adding sockets to the set, they are available on the set using their key.
- * To make use of linkable sockets, classes must implement the [[ILinkable]] interface.
- *
- * ### Events
- * - *"change"* - emits [[ISocketGroupChangeEvent]] after sockets have been added, removed, or renamed.
+ * A set of property sockets.
  */
 export class PropertySocketGroup extends SocketGroup
 {
@@ -41,19 +36,32 @@ export class PropertySocketGroup extends SocketGroup
      * Appends properties to the set.
      * @param templates plain object with property templates.
      * @param index Optional index at which to insert the properties.
+     * @returns this
      */
     createProperties<U>(templates: U, index?: number): this & PropertiesFromTemplates<U>
     {
         Object.keys(templates).forEach((key, i) => {
             const ii = index === undefined ? undefined : index + i;
             const template = templates[key];
-            this.createProperty(template.path, template.schema, key, ii);
+            if (template.schema) {
+                this.createProperty(template.path, template.schema, key, ii);
+            }
+            else {
+                this.createSocket(template.path, template.kind, key, ii);
+            }
         });
 
         return this as this & PropertiesFromTemplates<U>;
     }
 
-    createProperty(path: string, schema: IPropertySchema, key: string, index?: number)
+    createSocket(path: string, kind: string, key: string, index?: number): Socket
+    {
+        const socket = new Socket(path, kind);
+        this.addSocket(socket, key, index);
+        return socket;
+    }
+
+    createProperty(path: string, schema: IPropertySchema, key: string, index?: number): PropertySocket
     {
         const property = new PropertySocket(path, schema);
         this.addSocket(property, key, index);

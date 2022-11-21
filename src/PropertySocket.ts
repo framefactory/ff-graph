@@ -42,7 +42,7 @@ export class PropertySocket<T = unknown> extends Socket
 
     constructor(path: string, schema: IPropertySchema<T>, custom?: boolean)
     {
-        super(path, "property", custom);
+        super(path, schema.kind || "property", custom);
         this.addEvent("value");
 
         if (!schema || schema.preset === undefined) {
@@ -88,20 +88,8 @@ export class PropertySocket<T = unknown> extends Socket
 
     set(silent?: boolean)
     {
-        if (!silent) {
-            this.changed = true;
-
-            if (this.isInput()) {
-                this._group.linkable.changed = true;
-            }
-        }
-
+        super.set(silent);
         this.emit("value", this.value);
-
-        const outLinks = this.outLinks;
-        for (let i = 0, n = outLinks.length; i < n; ++i) {
-            outLinks[i].push();
-        }
     }
 
     setOption(option: string, silent?: boolean, noevent?: boolean)
@@ -314,6 +302,11 @@ export class PropertySocket<T = unknown> extends Socket
         // sockets must be of same kind
         if (this.kind !== source.kind) {
             return false;
+        }
+
+        // same kind, output is not a property => can link
+        if (source.kind !== "property") {
+            return true;
         }
 
         const hasSrcIndex = sourceIndex >= 0;

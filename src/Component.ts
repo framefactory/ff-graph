@@ -93,8 +93,8 @@ export class Component extends Publisher implements ILinkable
     readonly id: string;
     readonly node: Node;
 
-    ins = new PropertySocketGroup(this);
-    outs = new PropertySocketGroup(this);
+    ins: PropertySocketGroup = new PropertySocketGroup(this);
+    outs: PropertySocketGroup = new PropertySocketGroup(this);
 
     changed = true;
     updated = false;
@@ -502,12 +502,12 @@ export class Component extends Publisher implements ILinkable
     {
         this.changed = false;
 
-        const ins = this.ins.properties;
+        const ins = this.ins.sockets;
         for (let i = 0, n = ins.length; i < n; ++i) {
             ins[i].changed = false;
         }
 
-        const outs = this.outs.properties;
+        const outs = this.outs.sockets;
         for (let i = 0, n = outs.length; i < n; ++i) {
             outs[i].changed = false;
         }
@@ -550,8 +550,8 @@ export class Component extends Publisher implements ILinkable
     dump(indent = "")
     {
         console.log(indent + `%cComponent '${this.typeName}' (${this.displayName})`, "color: green");
-        this.ins.properties.forEach(prop => prop.dump(indent + "  IN  "));
-        this.outs.properties.forEach(prop => prop.dump(indent + "  OUT "));
+        this.ins.sockets.forEach(sock => sock.dump(indent + "  IN  "));
+        this.outs.sockets.forEach(sock => sock.dump(indent + "  OUT "));
     }
 
     toJSON()
@@ -621,7 +621,7 @@ export class Component extends Publisher implements ILinkable
     protected addInputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
     (templates: U, index?: number) : PropertySocketGroup & T["ins"] & PropertiesFromTemplates<U>
     {
-        return this.ins.createProperties(templates, index) as any;
+        return this.ins.createProperties(templates, index);
     }
 
     /**
@@ -632,7 +632,7 @@ export class Component extends Publisher implements ILinkable
     protected addOutputs<T extends Component = Component, U extends Dictionary<IPropertyTemplate> = {}>
     (templates: U, index?: number) : PropertySocketGroup & T["outs"] & PropertiesFromTemplates<U>
     {
-        return this.outs.createProperties(templates, index) as any;
+        return this.outs.createProperties(templates, index);
     }
 }
 

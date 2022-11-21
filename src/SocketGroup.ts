@@ -44,12 +44,14 @@ export interface ISocketGroupChangeEvent extends ITypedEvent<"change">
 }
 
 /**
- * A set of properties. Properties can be linked, such that one property updates another.
- * After adding properties to the set, they are available on the set using their key.
- * To make use of linkable properties, classes must implement the [[ILinkable]] interface.
+ * A set of sockets. Sockets can be linked, such that one socket updates another.
+ * After adding sockets to the group, they are available on the group using their key.
+ * To make use of linkable properties, classes must implement the {@link ILinkable}
+ * interface.
  *
  * ### Events
- * - *"change"* - emits [[IPropertiesChangeEvent]] after properties have been added, removed, or renamed.
+ * - *"change"* - emits {@link ISocketGroupChangeEvent} after properties have
+ *   been added, removed, or renamed.
  */
 export class SocketGroup extends Publisher
 {

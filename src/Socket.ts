@@ -63,6 +63,10 @@ export class Socket extends Publisher
         return this._group;
     }
 
+    get linkable(): ILinkable {
+        return this._group.linkable;
+    }
+
     get key(): string {
         return this._key;
     }
@@ -78,6 +82,22 @@ export class Socket extends Publisher
     set path(path: string) {
         this._path = path;
         this.emit<ISocketChangeEvent>({ type: "change", what: "path", socket: this });
+    }
+
+    set(silent?: boolean)
+    {
+        if (!silent) {
+            this.changed = true;
+
+            if (this.isInput()) {
+                this._group.linkable.changed = true;
+            }
+        }
+
+        const outLinks = this.outLinks;
+        for (let i = 0, n = outLinks.length; i < n; ++i) {
+            outLinks[i].push();
+        }
     }
 
     topologyChanged()
@@ -214,11 +234,7 @@ export class Socket extends Publisher
         }
 
         // sockets must be of same kind
-        if (this.kind !== source.kind) {
-            return false;
-        }
-
-        return true;
+        return this.kind === source.kind;
     }
 
     hasLinks()

@@ -19,4 +19,9 @@ export class SocketLink
         this.source = source;
         this.destination = destination;
     }
+
+    push()
+    {
+        this.destination.set();
+    }
 }
