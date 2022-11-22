@@ -338,16 +338,25 @@ export class PropertySocket<T = unknown> extends Socket
         return canConvert(source.type, this.type);
     }
 
-    hasInLinks(index?: number)
+    hasInLinks(indexOrKind?: number | string)
     {
         const links = this.inLinks;
 
-        if (!(index >= 0)) {
+        if (typeof indexOrKind === "string") {
+            for (let i = 0, n = links.length; i < n; ++i) {
+                if (links[i].source.kind === indexOrKind) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (!(indexOrKind >= 0)) {
             return links.length > 0;
         }
 
         for (let i = 0, n = links.length; i < n; ++i) {
-            if (links[i].destinationIndex === index) {
+            if (links[i].destinationIndex === indexOrKind) {
                 return true;
             }
         }
@@ -368,16 +377,25 @@ export class PropertySocket<T = unknown> extends Socket
         return false;
     }
 
-    hasOutLinks(index?: number)
+    hasOutLinks(indexOrKind?: number | string)
     {
         const links = this.outLinks;
 
-        if (!(index >= 0)) {
+        if (typeof indexOrKind === "string") {
+            for (let i = 0, n = links.length; i < n; ++i) {
+                if (links[i].destination.kind === indexOrKind) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (!(indexOrKind >= 0)) {
             return links.length > 0;
         }
 
         for (let i = 0, n = links.length; i < n; ++i) {
-            if (links[i].sourceIndex === index) {
+            if (links[i].sourceIndex === indexOrKind) {
                 return true;
             }
         }
