@@ -1,6 +1,6 @@
 {
   "name": "@ffweb/graph",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "MIT",
   "description": "FF Graph Typescript Foundation Library",
   "keywords": [
@@ -22,7 +22,7 @@
     "url": "https://github.com/framefactory/ff-graph/issues"
   },
   "type": "module",
-  "packageManager": "pnpm@7.12.1",
+  "packageManager": "pnpm@9.12.1",
   "files": [
     "build/types/**/*",
     "build/esm/**/*",
@@ -47,10 +47,10 @@
     "@ffweb/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.4",
-    "@types/mocha": "^9.1.1",
-    "chai": "^4.3.7",
-    "mocha": "^10.1.0",
-    "typescript": "^4.9.4"
+    "@types/chai": "^5.0.0",
+    "@types/mocha": "^10.0.9",
+    "chai": "^5.1.1",
+    "mocha": "^10.7.3",
+    "typescript": "^5.6.3"
   }
 }
